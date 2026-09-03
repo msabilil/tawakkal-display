@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jadwal Sholat</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="layar">
+  <a id="tombol-admin" href="admin.html" title="Pengaturan">⚙</a>
+
+  <div id="mode-normal">
+    <header class="header">
+      <h1 id="nama-masjid"></h1>
+      <p id="lokasi"></p>
+    </header>
+
+    <section class="jam-blok">
+      <div id="jam">--:--:--</div>
+      <div class="tanggal">
+        <span id="tanggal-masehi"></span>
+        <span id="tanggal-hijriah"></span>
+      </div>
+    </section>
+
+    <section id="grid-sholat" class="grid-sholat"></section>
+
+    <section class="countdown">
+      <span id="countdown-label">Menuju —</span>
+      <span id="countdown-waktu">--:--:--</span>
+    </section>
+  </div>
+
+  <div id="mode-iqomah" hidden>
+    <p class="iqomah-judul">Waktu <span id="iqomah-nama"></span> telah masuk</p>
+    <p class="iqomah-sub">Menunggu Iqomah</p>
+    <div id="iqomah-waktu">--:--</div>
+  </div>
+
+  <div id="offline-indikator" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
