@@ -7,6 +7,7 @@ function render() {
   const settings = loadIqomah();
   const wrap = $("baris-sholat");
   wrap.innerHTML = "";
+  $("admin-hint").hidden = true;
   for (const { key, label } of SHOLAT) {
     const s = settings[key];
     const row = document.createElement("div");
