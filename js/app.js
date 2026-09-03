@@ -83,7 +83,13 @@ function renderGrid(next) {
   for (const { key, label, icon } of WAKTU_HARIAN) {
     const div = document.createElement("div");
     div.className = "kartu-waktu" + (next && next.key === key ? " aktif" : "");
-    div.innerHTML = `<span class="ikon">${ICONS[icon] || ""}</span><span class="nama">${label}</span><span class="jam">${jadwal[key] || "--:--"}</span>`;
+    div.innerHTML = `
+      <span class="kartu-waktu-header">
+        <span class="nama">${label}</span>
+        <span class="ikon">${ICONS[icon] || ""}</span>
+      </span>
+      <span class="jam">${jadwal[key] || "--:--"}</span>
+    `;
     grid.appendChild(div);
   }
 }
@@ -101,6 +107,28 @@ function renderOffline() {
 
 function renderTesting() {
   $("testing-indikator").hidden = !loadOverride().aktif;
+}
+
+const IKON_MAXIMIZE = `<path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" />`;
+const IKON_MINIMIZE = `<path d="M15 19v-2a2 2 0 0 1 2 -2h2" /><path d="M15 5v2a2 2 0 0 0 2 2h2" /><path d="M5 15h2a2 2 0 0 1 2 2v2" /><path d="M5 9h2a2 2 0 0 0 2 -2v-2" />`;
+
+function setupFullscreen() {
+  const btn = $("tombol-fullscreen");
+  const svg = btn.querySelector("svg");
+  function sync() {
+    const full = !!document.fullscreenElement;
+    svg.innerHTML = full ? IKON_MINIMIZE : IKON_MAXIMIZE;
+    btn.setAttribute("aria-label", full ? "Keluar layar penuh" : "Layar penuh");
+  }
+  btn.addEventListener("click", () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  });
+  document.addEventListener("fullscreenchange", sync);
+  sync();
 }
 
 async function muatJadwal(now) {
@@ -146,6 +174,7 @@ function tick() {
 
 async function init() {
   renderStatis();
+  setupFullscreen();
   localStorage.removeItem(IQOMAH_KEY); // kembali dari iqomah.html, bersihkan state lama
   await muatJadwal(new Date());
   tick();

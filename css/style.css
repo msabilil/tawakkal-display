@@ -32,7 +32,9 @@ body { background: var(--bg); color: var(--text); }
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-#tombol-admin {
+.topbar-aksi { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+#tombol-admin,
+#tombol-fullscreen {
   width: 40px;
   height: 40px;
   display: flex;
@@ -41,10 +43,14 @@ body { background: var(--bg); color: var(--text); }
   border-radius: 10px;
   color: var(--text-dim);
   text-decoration: none;
-  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 #tombol-admin:hover,
-#tombol-admin:focus-visible {
+#tombol-admin:focus-visible,
+#tombol-fullscreen:hover,
+#tombol-fullscreen:focus-visible {
   color: var(--hijau-teks);
   background: var(--surface-active);
   outline: none;
@@ -121,14 +127,20 @@ body.layar {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 1.4vh;
+  padding: 1.6vh 1vw;
+}
+.kartu-waktu-header {
+  display: flex;
   align-items: center;
-  gap: 1.2vh;
-  padding: 1.5vh 0.5vw;
+  justify-content: space-between;
+  gap: 0.5vw;
 }
 .kartu-waktu .ikon {
-  width: clamp(20px, 3vw, 40px);
-  height: clamp(20px, 3vw, 40px);
+  width: clamp(16px, 2.2vw, 30px);
+  height: clamp(16px, 2.2vw, 30px);
   color: var(--text-dim);
+  flex-shrink: 0;
 }
 .kartu-waktu .ikon svg { width: 100%; height: 100%; }
 .kartu-waktu .nama {
