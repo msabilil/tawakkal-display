@@ -34,3 +34,124 @@ export function iqomahState(now, jadwal, iqomahSettings) {
   }
   return null;
 }
+
+import { NAMA_MASJID, LOKASI_LABEL } from "./config.js";
+import { getJadwal, dateKey } from "./api.js";
+import { loadIqomah } from "./settings.js";
+
+// State modul
+let jadwal = null;         // {subuh,...}
+let jadwalDateKey = null;  // "YYYY-MM-DD" jadwal yang sedang dipakai
+let offline = false;
+let fetchedAt = null;
+
+const $ = (id) => document.getElementById(id);
+
+function pad(n) { return String(n).padStart(2, "0"); }
+
+function fmtDurasi(totalDetik) {
+  const jam = Math.floor(totalDetik / 3600);
+  const menit = Math.floor((totalDetik % 3600) / 60);
+  const detik = totalDetik % 60;
+  return jam > 0 ? `${pad(jam)}:${pad(menit)}:${pad(detik)}` : `${pad(menit)}:${pad(detik)}`;
+}
+
+function renderStatis() {
+  $("nama-masjid").textContent = NAMA_MASJID;
+  $("lokasi").textContent = LOKASI_LABEL;
+}
+
+function renderTanggal(now) {
+  $("tanggal-masehi").textContent = now.toLocaleDateString("id-ID", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+  try {
+    $("tanggal-hijriah").textContent = new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
+      day: "numeric", month: "long", year: "numeric",
+    }).format(now) + " H";
+  } catch {
+    $("tanggal-hijriah").textContent = "";
+  }
+}
+
+function renderGrid(next) {
+  const grid = $("grid-sholat");
+  grid.innerHTML = "";
+  for (const { key, label } of SHOLAT) {
+    const div = document.createElement("div");
+    div.className = "kartu-sholat" + (next && next.key === key ? " aktif" : "");
+    div.innerHTML = `<span class="nama">${label}</span><span class="waktu">${jadwal[key]}</span>`;
+    grid.appendChild(div);
+  }
+}
+
+function renderOffline() {
+  const el = $("offline-indikator");
+  if (offline && fetchedAt) {
+    const t = new Date(fetchedAt);
+    el.textContent = `⚠ data offline — update terakhir ${pad(t.getDate())}/${pad(t.getMonth()+1)} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
+    el.hidden = false;
+  } else {
+    el.hidden = true;
+  }
+}
+
+async function muatJadwal(now) {
+  try {
+    const r = await getJadwal(now);
+    jadwal = r.jadwal;
+    offline = r.fromCache;
+    fetchedAt = r.fetchedAt;
+    jadwalDateKey = dateKey(now);
+  } catch (e) {
+    // tidak ada jadwal & tidak ada cache
+    jadwal = null;
+    offline = true;
+  }
+  renderOffline();
+}
+
+function tick() {
+  const now = new Date();
+  $("jam").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  renderTanggal(now);
+
+  if (!jadwal) return; // belum ada data
+
+  const iqSettings = loadIqomah();
+  const iq = iqomahState(now, jadwal, iqSettings);
+
+  if (iq) {
+    $("mode-normal").hidden = true;
+    $("mode-iqomah").hidden = false;
+    $("iqomah-nama").textContent = iq.label;
+    $("iqomah-waktu").textContent = fmtDurasi(iq.sisaDetik);
+  } else {
+    $("mode-iqomah").hidden = true;
+    $("mode-normal").hidden = false;
+    const next = nextSholat(now, jadwal);
+    renderGrid(next);
+    $("countdown-label").textContent = `Menuju ${next.label}`;
+    $("countdown-waktu").textContent = fmtDurasi(Math.max(0, Math.ceil((next.time - now) / 1000)));
+  }
+}
+
+async function init() {
+  renderStatis();
+  await muatJadwal(new Date());
+  tick();
+  setInterval(() => {
+    const now = new Date();
+    // Ganti hari: fetch jadwal baru (dipicu setelah lewat tengah malam)
+    if (jadwalDateKey && dateKey(now) !== jadwalDateKey) {
+      muatJadwal(now);
+    }
+    tick();
+  }, 1000);
+}
+
+// Guard: jangan auto-jalan saat file ini di-import untuk unit test (app.test.html),
+// yang tidak punya elemen DOM layar utama seperti #jam.
+if (typeof document !== "undefined" && document.getElementById("jam")) {
+  init();
+}
