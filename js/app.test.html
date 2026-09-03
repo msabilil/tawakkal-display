@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test app.js</title>
+<pre id="out"></pre>
+<script type="module">
+import { parseHM, nextSholat, iqomahState } from "./app.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+const jadwal = { subuh:"04:34", dzuhur:"11:52", ashar:"15:09", maghrib:"17:56", isya:"19:01" };
+const iq = { subuh:{menit:10,aktif:true}, dzuhur:{menit:10,aktif:true}, ashar:{menit:10,aktif:true}, maghrib:{menit:5,aktif:true}, isya:{menit:10,aktif:true} };
+
+// parseHM: gunakan Kamis 2026-09-03 (bukan Jumat) untuk uji dzuhur
+const kamis = new Date(2026, 8, 3, 0, 0, 0);
+eq("parseHM jam", parseHM("11:52", kamis).getHours(), 11);
+eq("parseHM menit", parseHM("11:52", kamis).getMinutes(), 52);
+
+// nextSholat: jam 10:00 Kamis -> berikutnya Dzuhur
+const t1 = new Date(2026, 8, 3, 10, 0, 0);
+eq("next pagi", nextSholat(t1, jadwal).key, "dzuhur");
+// jam 20:00 -> semua lewat -> Subuh besok
+const t2 = new Date(2026, 8, 3, 20, 0, 0);
+eq("next malam key", nextSholat(t2, jadwal).key, "subuh");
+eq("next malam besok", nextSholat(t2, jadwal).time.getDate(), 4);
+
+// iqomahState: Kamis 11:55 (3 menit setelah dzuhur, window 10 mnt) -> aktif
+const t3 = new Date(2026, 8, 3, 11, 55, 0);
+const s3 = iqomahState(t3, jadwal, iq);
+eq("iqomah aktif key", s3 && s3.key, "dzuhur");
+eq("iqomah sisa detik", s3 && s3.sisaDetik, 7*60); // 10mnt-3mnt=7mnt
+// Kamis 12:05 (13 menit setelah dzuhur) -> lewat window -> null
+eq("iqomah lewat", iqomahState(new Date(2026,8,3,12,5,0), jadwal, iq), null);
+// Kamis 10:00 -> bukan waktu sholat -> null
+eq("iqomah bukan waktu", iqomahState(t1, jadwal, iq), null);
+// Jumat 11:55 dzuhur -> dilewati -> null
+eq("iqomah jumat dzuhur null", iqomahState(new Date(2026,8,4,11,55,0), jadwal, iq), null);
+// sholat nonaktif -> null
+const iqOff = JSON.parse(JSON.stringify(iq)); iqOff.dzuhur.aktif=false;
+eq("iqomah nonaktif null", iqomahState(t3, jadwal, iqOff), null);
+// menit 0 -> null
+const iqZero = JSON.parse(JSON.stringify(iq)); iqZero.dzuhur.menit=0;
+eq("iqomah menit0 null", iqomahState(t3, jadwal, iqZero), null);
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>
