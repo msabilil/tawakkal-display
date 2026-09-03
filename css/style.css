@@ -133,8 +133,8 @@ body.layar {
 .kartu-waktu-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5vw;
+  justify-content: center;
+  gap: 0.4em;
 }
 .kartu-waktu .ikon {
   width: clamp(16px, 2.2vw, 30px);
