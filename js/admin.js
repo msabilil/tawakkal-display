@@ -1,9 +1,10 @@
-import { SHOLAT } from "./config.js";
+import { SHOLAT, WAKTU_HARIAN } from "./config.js";
 import { loadIqomah, saveIqomah } from "./settings.js";
+import { loadOverride, saveOverride, clearOverride } from "./testing.js";
 
 const $ = (id) => document.getElementById(id);
 
-function render() {
+function renderIqomah() {
   const settings = loadIqomah();
   const wrap = $("baris-sholat");
   wrap.innerHTML = "";
@@ -21,7 +22,7 @@ function render() {
   }
 }
 
-function simpan(e) {
+function simpanIqomah(e) {
   e.preventDefault();
   const settings = {};
   for (const { key } of SHOLAT) {
@@ -32,10 +33,49 @@ function simpan(e) {
     };
   }
   saveIqomah(settings);
-  const status = $("status-simpan");
-  status.hidden = false;
-  setTimeout(() => { status.hidden = true; }, 2000);
+  tampilkanStatus("status-simpan");
 }
 
-render();
-$("form-iqomah").addEventListener("submit", simpan);
+function renderTesting() {
+  const ov = loadOverride();
+  $("testing-aktif").checked = ov.aktif;
+  const wrap = $("baris-testing");
+  wrap.innerHTML = "";
+  for (const { key, label } of WAKTU_HARIAN) {
+    const row = document.createElement("div");
+    row.className = "baris baris-testing";
+    row.innerHTML = `
+      <span class="label-sholat">${label}</span>
+      <input type="time" id="ov-${key}" value="${ov.jadwal[key] || ""}">
+    `;
+    wrap.appendChild(row);
+  }
+}
+
+function simpanTesting(e) {
+  e.preventDefault();
+  const jadwal = {};
+  for (const { key } of WAKTU_HARIAN) {
+    jadwal[key] = $(`ov-${key}`).value || "";
+  }
+  saveOverride({ aktif: $("testing-aktif").checked, jadwal });
+  tampilkanStatus("status-testing");
+}
+
+function resetTesting() {
+  clearOverride();
+  renderTesting();
+  tampilkanStatus("status-testing");
+}
+
+function tampilkanStatus(id) {
+  const el = $(id);
+  el.hidden = false;
+  setTimeout(() => { el.hidden = true; }, 2000);
+}
+
+renderIqomah();
+renderTesting();
+$("form-iqomah").addEventListener("submit", simpanIqomah);
+$("form-testing").addEventListener("submit", simpanTesting);
+$("tombol-reset-testing").addEventListener("click", resetTesting);

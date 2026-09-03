@@ -7,43 +7,34 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="layar">
-  <a id="tombol-admin" href="admin.html" aria-label="Pengaturan iqomah">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true">
-      <line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/>
-      <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/>
-      <line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/>
-    </svg>
-  </a>
+  <header class="topbar">
+    <span id="nama-masjid" class="topbar-nama"></span>
+    <a id="tombol-admin" href="admin.html" aria-label="Pengaturan iqomah">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true">
+        <line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/>
+        <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/>
+        <line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/>
+      </svg>
+    </a>
+  </header>
 
-  <div id="mode-normal">
-    <header class="header">
-      <h1 id="nama-masjid"></h1>
-      <p id="lokasi"></p>
-    </header>
-
-    <section class="jam-blok">
-      <div id="jam">--:--:--</div>
-      <div class="tanggal">
-        <span id="tanggal-masehi"></span>
-        <span class="pemisah">•</span>
-        <span id="tanggal-hijriah"></span>
+  <main class="konten">
+    <section class="ringkasan">
+      <div class="ringkasan-kiri">
+        <p class="menuju">Menuju <span id="next-nama">-</span></p>
+        <div id="jam" class="jam-besar">--:--:--</div>
+        <p id="countdown-waktu" class="countdown-kecil">--:--:--</p>
+      </div>
+      <div class="ringkasan-kanan">
+        <p id="tanggal-hijriah" class="tanggal-hijriah"></p>
+        <p id="tanggal-masehi" class="tanggal-masehi"></p>
       </div>
     </section>
 
     <section id="grid-sholat" class="grid-sholat"></section>
+  </main>
 
-    <section class="countdown">
-      <span id="countdown-label">Menuju —</span>
-      <span id="countdown-waktu">--:--:--</span>
-    </section>
-  </div>
-
-  <div id="mode-iqomah" hidden>
-    <p class="iqomah-judul">Waktu <span id="iqomah-nama"></span> telah masuk</p>
-    <p class="iqomah-sub">Menunggu Iqomah</p>
-    <div id="iqomah-waktu">--:--</div>
-  </div>
-
+  <div id="testing-indikator" hidden>Mode pengujian aktif, jadwal di-override lewat halaman admin</div>
   <div id="offline-indikator" hidden></div>
 
   <script type="module" src="js/app.js"></script>

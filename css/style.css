@@ -1,20 +1,53 @@
 :root {
-  --bg: #0a1420;
-  --surface: #111f30;
-  --surface-active: rgba(242, 193, 78, 0.10);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-active: #f2c14e;
-  --text: #eef2f6;
-  --text-dim: #93a7bc;
-  --emas: #f2c14e;
-  --warn-bg: rgba(179, 82, 42, 0.92);
+  --bg: #f6f8f6;
+  --surface: #ffffff;
+  --surface-active: rgba(21, 128, 61, 0.07);
+  --border: #e3e8e3;
+  --border-active: #15803d;
+  --text: #16201a;
+  --text-dim: #5f7167;
+  --hijau: #15803d;
+  --hijau-teks: #0f6b30;
+  --warn-bg: #b45309;
   font-family: system-ui, "Segoe UI", Tahoma, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
-body {
-  background: var(--bg);
-  color: var(--text);
+body { background: var(--bg); color: var(--text); }
+
+/* ---------- Header (dipakai index.html) ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3.5vw;
+  height: 9vh;
+  min-height: 64px;
+  max-height: 84px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.topbar-nama {
+  font-size: clamp(20px, 2.6vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+#tombol-admin {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--text-dim);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+#tombol-admin:hover,
+#tombol-admin:focus-visible {
+  color: var(--hijau-teks);
+  background: var(--surface-active);
+  outline: none;
 }
 
 /* ---------- Layar utama ---------- */
@@ -24,55 +57,64 @@ body.layar {
   display: flex;
   flex-direction: column;
 }
-
-#mode-normal {
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  padding: 3vh 3.5vw;
-  gap: 2.2vh;
+.konten {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2.5vh 3.5vw;
+  gap: 2.5vh;
+  min-height: 0;
 }
 
-.header { text-align: center; }
-#nama-masjid {
-  font-size: clamp(24px, 4vw, 56px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+.ringkasan {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 3vw;
 }
-#lokasi {
-  font-size: clamp(13px, 1.5vw, 22px);
+.ringkasan-kiri { text-align: left; }
+.menuju {
+  font-size: clamp(14px, 1.7vw, 24px);
   color: var(--text-dim);
-  margin-top: 0.4vh;
-  font-weight: 500;
+  font-weight: 600;
 }
-
-.jam-blok { text-align: center; }
+.menuju span { color: var(--hijau-teks); }
 #jam {
-  font-size: clamp(56px, 11vw, 160px);
+  font-size: clamp(48px, 9vw, 128px);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.05;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
-.tanggal {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 1.2vw;
+.countdown-kecil {
   font-size: clamp(14px, 1.8vw, 26px);
-  color: var(--text-dim);
-  margin-top: 0.8vh;
+  color: var(--hijau-teks);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.4vh;
 }
-#tanggal-hijriah { color: var(--emas); font-weight: 600; }
-.tanggal .pemisah { color: var(--border); }
+
+.ringkasan-kanan { text-align: right; }
+.tanggal-hijriah {
+  font-size: clamp(16px, 2vw, 28px);
+  color: var(--hijau-teks);
+  font-weight: 700;
+}
+.tanggal-masehi {
+  font-size: clamp(13px, 1.5vw, 20px);
+  color: var(--text-dim);
+  margin-top: 0.3vh;
+}
 
 .grid-sholat {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 1vw;
   align-items: stretch;
+  min-height: 0;
 }
-.kartu-sholat {
+.kartu-waktu {
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 14px;
@@ -80,56 +122,47 @@ body.layar {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 1vh;
-  padding: 2vh 0;
+  gap: 1.2vh;
+  padding: 1.5vh 0.5vw;
 }
-.kartu-sholat .nama {
-  font-size: clamp(15px, 1.9vw, 28px);
+.kartu-waktu .ikon {
+  width: clamp(20px, 3vw, 40px);
+  height: clamp(20px, 3vw, 40px);
+  color: var(--text-dim);
+}
+.kartu-waktu .ikon svg { width: 100%; height: 100%; }
+.kartu-waktu .nama {
+  font-size: clamp(13px, 1.5vw, 22px);
   color: var(--text-dim);
   font-weight: 600;
-  letter-spacing: 0.02em;
 }
-.kartu-sholat .waktu {
-  font-size: clamp(26px, 4.6vw, 72px);
+.kartu-waktu .jam {
+  font-size: clamp(18px, 3vw, 44px);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.kartu-sholat.aktif {
+.kartu-waktu.aktif {
   background: var(--surface-active);
   border-color: var(--border-active);
 }
-.kartu-sholat.aktif .nama { color: var(--text); }
-.kartu-sholat.aktif .waktu { color: var(--emas); }
+.kartu-waktu.aktif .ikon,
+.kartu-waktu.aktif .nama { color: var(--hijau-teks); }
+.kartu-waktu.aktif .jam { color: var(--hijau-teks); }
 
-.countdown {
-  text-align: center;
-  font-size: clamp(18px, 2.6vw, 40px);
-  font-weight: 500;
-}
-#countdown-label { color: var(--text-dim); margin-right: 0.8vw; }
-#countdown-waktu {
-  color: var(--emas);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Mode iqomah ---------- */
-#mode-iqomah {
+/* ---------- Halaman iqomah (terpisah) ---------- */
+body.iqomah-page {
   height: 100vh;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 2.5vh;
-  text-align: center;
-  background: var(--bg);
 }
+.iqomah-isi { text-align: center; display: flex; flex-direction: column; gap: 2.5vh; }
 .iqomah-judul {
   font-size: clamp(26px, 4.4vw, 68px);
   color: var(--text);
   font-weight: 700;
 }
-#iqomah-nama { color: var(--emas); text-transform: capitalize; }
+#iqomah-nama { color: var(--hijau-teks); text-transform: capitalize; }
 .iqomah-sub {
   font-size: clamp(18px, 2.6vw, 38px);
   color: var(--text-dim);
@@ -139,74 +172,47 @@ body.layar {
   font-size: clamp(90px, 20vw, 300px);
   font-weight: 700;
   line-height: 1;
-  color: var(--emas);
+  color: var(--hijau-teks);
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Elemen tambahan ---------- */
-#tombol-admin {
-  position: fixed;
-  right: 14px;
-  bottom: 12px;
-  z-index: 10;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.18);
-  text-decoration: none;
-}
-#tombol-admin:hover,
-#tombol-admin:focus-visible {
-  color: var(--text);
-  background: var(--surface);
-  outline: none;
-}
-
-#offline-indikator {
+/* ---------- Indikator ---------- */
+#offline-indikator,
+#testing-indikator {
   position: fixed;
   left: 14px;
   bottom: 12px;
-  background: var(--warn-bg);
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 8px;
+  max-width: 60vw;
 }
+#offline-indikator { background: var(--warn-bg); }
+#testing-indikator { background: var(--hijau); bottom: 44px; }
 
 /* ---------- Admin ---------- */
-body.admin {
-  min-height: 100vh;
+body.admin { padding: 5vh 4vw; }
+.admin-wrap {
+  max-width: 640px;
+  margin: 0 auto;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 6vh 4vw;
+  flex-direction: column;
+  gap: 24px;
 }
 .admin-kotak {
-  width: 100%;
-  max-width: 620px;
   background: var(--surface);
   border: 1px solid var(--border);
   padding: 32px;
   border-radius: 16px;
 }
-.admin-kotak h1 {
-  font-size: 26px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-.admin-ket {
-  color: var(--text-dim);
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
+.admin-kotak h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.admin-ket { color: var(--text-dim); margin-bottom: 8px; line-height: 1.5; }
 .hint {
   color: var(--text-dim);
   font-size: 14px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg);
   border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 10px 12px;
@@ -222,10 +228,11 @@ body.admin {
   border-bottom: 1px solid var(--border);
 }
 .baris:last-of-type { border-bottom: none; }
-.baris .label-sholat { font-size: 18px; font-weight: 600; }
-.baris input[type="number"] {
-  width: 84px;
-  font-size: 18px;
+.baris-testing { grid-template-columns: 1fr auto; }
+.baris .label-sholat { font-size: 17px; font-weight: 600; }
+.baris input[type="number"],
+.baris input[type="time"] {
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
   padding: 9px 10px;
   border-radius: 8px;
@@ -233,8 +240,9 @@ body.admin {
   background: var(--bg);
   color: var(--text);
 }
-.baris input[type="number"]:focus-visible {
-  outline: 2px solid var(--emas);
+.baris input[type="number"] { width: 84px; }
+.baris input:focus-visible {
+  outline: 2px solid var(--hijau);
   outline-offset: 1px;
 }
 .baris label.aktif-cek {
@@ -244,26 +252,36 @@ body.admin {
   color: var(--text-dim);
   font-size: 15px;
 }
-.baris input[type="checkbox"] {
-  width: 22px;
-  height: 22px;
-  accent-color: var(--emas);
+.baris input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--hijau); }
+
+.testing-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 12px 0 4px;
 }
-.admin-aksi { display: flex; gap: 12px; margin-top: 24px; }
-#tombol-simpan {
-  font-size: 17px;
+.testing-toggle input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--hijau); }
+
+.admin-aksi { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+#tombol-simpan,
+#tombol-simpan-testing {
+  font-size: 16px;
   font-weight: 700;
   padding: 12px 26px;
   border: none;
   border-radius: 8px;
-  background: var(--emas);
-  color: #241a06;
+  background: var(--hijau);
+  color: #ffffff;
   cursor: pointer;
 }
-#tombol-simpan:hover { filter: brightness(1.06); }
-#tombol-simpan:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+#tombol-simpan:hover,
+#tombol-simpan-testing:hover { filter: brightness(1.08); }
+#tombol-simpan:focus-visible,
+#tombol-simpan-testing:focus-visible { outline: 2px solid var(--hijau-teks); outline-offset: 2px; }
 .tombol-sekunder {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   padding: 12px 26px;
   border-radius: 8px;
@@ -273,6 +291,7 @@ body.admin {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  cursor: pointer;
 }
-.tombol-sekunder:hover { border-color: var(--text-dim); }
-.status { margin-top: 16px; color: var(--emas); font-weight: 600; }
+.tombol-sekunder:hover { border-color: var(--hijau); color: var(--hijau-teks); }
+.status { margin-top: 16px; color: var(--hijau-teks); font-weight: 600; }

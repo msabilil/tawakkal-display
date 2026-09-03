@@ -35,12 +35,16 @@ export function iqomahState(now, jadwal, iqomahSettings) {
   return null;
 }
 
-import { NAMA_MASJID, LOKASI_LABEL } from "./config.js";
+import { NAMA_MASJID, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
 import { loadIqomah } from "./settings.js";
+import { loadOverride, terapkanOverride } from "./testing.js";
+import { ICONS } from "./icons.js";
+
+const IQOMAH_KEY = "iqomahAktif";
 
 // State modul
-let jadwal = null;         // {subuh,...}
+let jadwal = null;         // {imsak,subuh,terbit,dzuhur,ashar,maghrib,isya}
 let jadwalDateKey = null;  // "YYYY-MM-DD" jadwal yang sedang dipakai
 let offline = false;
 let fetchedAt = null;
@@ -58,7 +62,6 @@ function fmtDurasi(totalDetik) {
 
 function renderStatis() {
   $("nama-masjid").textContent = NAMA_MASJID;
-  $("lokasi").textContent = LOKASI_LABEL;
 }
 
 function renderTanggal(now) {
@@ -77,10 +80,10 @@ function renderTanggal(now) {
 function renderGrid(next) {
   const grid = $("grid-sholat");
   grid.innerHTML = "";
-  for (const { key, label } of SHOLAT) {
+  for (const { key, label, icon } of WAKTU_HARIAN) {
     const div = document.createElement("div");
-    div.className = "kartu-sholat" + (next && next.key === key ? " aktif" : "");
-    div.innerHTML = `<span class="nama">${label}</span><span class="waktu">${jadwal[key]}</span>`;
+    div.className = "kartu-waktu" + (next && next.key === key ? " aktif" : "");
+    div.innerHTML = `<span class="ikon">${ICONS[icon] || ""}</span><span class="nama">${label}</span><span class="jam">${jadwal[key] || "--:--"}</span>`;
     grid.appendChild(div);
   }
 }
@@ -89,26 +92,36 @@ function renderOffline() {
   const el = $("offline-indikator");
   if (offline && fetchedAt) {
     const t = new Date(fetchedAt);
-    el.textContent = `⚠ data offline — update terakhir ${pad(t.getDate())}/${pad(t.getMonth()+1)} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
+    el.textContent = `Data offline, update terakhir ${pad(t.getDate())}/${pad(t.getMonth()+1)} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
     el.hidden = false;
   } else {
     el.hidden = true;
   }
 }
 
+function renderTesting() {
+  $("testing-indikator").hidden = !loadOverride().aktif;
+}
+
 async function muatJadwal(now) {
   try {
     const r = await getJadwal(now);
-    jadwal = r.jadwal;
+    jadwal = terapkanOverride(r.jadwal);
     offline = r.fromCache;
     fetchedAt = r.fetchedAt;
     jadwalDateKey = dateKey(now);
   } catch (e) {
-    // tidak ada jadwal & tidak ada cache
     jadwal = null;
     offline = true;
   }
   renderOffline();
+  renderTesting();
+}
+
+function mulaiIqomah(iq) {
+  const endTime = new Date(Date.now() + iq.sisaDetik * 1000).toISOString();
+  localStorage.setItem(IQOMAH_KEY, JSON.stringify({ key: iq.key, label: iq.label, endTime }));
+  location.href = "iqomah.html";
 }
 
 function tick() {
@@ -120,24 +133,20 @@ function tick() {
 
   const iqSettings = loadIqomah();
   const iq = iqomahState(now, jadwal, iqSettings);
-
   if (iq) {
-    $("mode-normal").hidden = true;
-    $("mode-iqomah").hidden = false;
-    $("iqomah-nama").textContent = iq.label;
-    $("iqomah-waktu").textContent = fmtDurasi(iq.sisaDetik);
-  } else {
-    $("mode-iqomah").hidden = true;
-    $("mode-normal").hidden = false;
-    const next = nextSholat(now, jadwal);
-    renderGrid(next);
-    $("countdown-label").textContent = `Menuju ${next.label}`;
-    $("countdown-waktu").textContent = fmtDurasi(Math.max(0, Math.ceil((next.time - now) / 1000)));
+    mulaiIqomah(iq);
+    return;
   }
+
+  const next = nextSholat(now, jadwal);
+  renderGrid(next);
+  $("next-nama").textContent = next.label;
+  $("countdown-waktu").textContent = fmtDurasi(Math.max(0, Math.ceil((next.time - now) / 1000)));
 }
 
 async function init() {
   renderStatis();
+  localStorage.removeItem(IQOMAH_KEY); // kembali dari iqomah.html, bersihkan state lama
   await muatJadwal(new Date());
   tick();
   setInterval(() => {

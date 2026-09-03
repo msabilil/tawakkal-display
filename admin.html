@@ -3,22 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pengaturan Iqomah</title>
+<title>Pengaturan</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="admin">
-  <div class="admin-kotak">
-    <h1>Pengaturan Iqomah</h1>
-    <p class="admin-ket">Atur jeda menit dari azan ke iqomah untuk tiap sholat.</p>
-    <p id="admin-hint" class="hint">Memuat pengaturan&hellip; Jika daftar sholat tidak muncul, halaman ini harus dibuka lewat server lokal (bukan dobel-klik file), lihat README.</p>
-    <form id="form-iqomah">
-      <div id="baris-sholat"></div>
-      <div class="admin-aksi">
-        <button type="submit" id="tombol-simpan">Simpan</button>
-        <a href="index.html" class="tombol-sekunder">Kembali ke Layar</a>
-      </div>
-      <p id="status-simpan" class="status" hidden>Tersimpan.</p>
-    </form>
+  <div class="admin-wrap">
+    <div class="admin-kotak">
+      <h1>Pengaturan Iqomah</h1>
+      <p class="admin-ket">Atur jeda menit dari azan ke iqomah untuk tiap sholat.</p>
+      <p id="admin-hint" class="hint">Memuat pengaturan&hellip; Jika daftar sholat tidak muncul, halaman ini harus dibuka lewat server lokal (bukan dobel-klik file), lihat README.</p>
+      <form id="form-iqomah">
+        <div id="baris-sholat"></div>
+        <div class="admin-aksi">
+          <button type="submit" id="tombol-simpan">Simpan</button>
+          <a href="index.html" class="tombol-sekunder">Kembali ke Layar</a>
+        </div>
+        <p id="status-simpan" class="status" hidden>Tersimpan.</p>
+      </form>
+    </div>
+
+    <div class="admin-kotak">
+      <h1>Pengujian</h1>
+      <p class="admin-ket">Override jadwal hari ini untuk testing (misal set Dzuhur ke 1 menit lagi biar halaman iqomah langsung bisa dicoba). Kosongkan field yang tidak mau di-override.</p>
+      <form id="form-testing">
+        <label class="aktif-cek testing-toggle">
+          <input type="checkbox" id="testing-aktif"> Aktifkan override jadwal
+        </label>
+        <div id="baris-testing"></div>
+        <div class="admin-aksi">
+          <button type="submit" id="tombol-simpan-testing">Simpan Override</button>
+          <button type="button" id="tombol-reset-testing" class="tombol-sekunder">Reset ke Jadwal Asli</button>
+        </div>
+        <p id="status-testing" class="status" hidden>Tersimpan.</p>
+      </form>
+    </div>
   </div>
   <script type="module" src="js/admin.js"></script>
 </body>

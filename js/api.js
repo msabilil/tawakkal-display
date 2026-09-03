@@ -30,8 +30,8 @@ export async function getJadwal(date) {
     }
     const j = body.data.jadwal;
     const jadwal = {
-      subuh: j.subuh, dzuhur: j.dzuhur, ashar: j.ashar,
-      maghrib: j.maghrib, isya: j.isya,
+      imsak: j.imsak, subuh: j.subuh, terbit: j.terbit, dzuhur: j.dzuhur,
+      ashar: j.ashar, maghrib: j.maghrib, isya: j.isya,
     };
     const fetchedAt = new Date().toISOString();
     localStorage.setItem(CACHE_KEY, JSON.stringify({
