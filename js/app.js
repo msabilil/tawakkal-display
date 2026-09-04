@@ -35,7 +35,7 @@ export function iqomahState(now, jadwal, iqomahSettings) {
   return null;
 }
 
-import { NAMA_MASJID, WAKTU_HARIAN } from "./config.js";
+import { NAMA_MASJID, TAGLINE, PENGUMUMAN, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
 import { loadIqomah } from "./settings.js";
 import { loadOverride, terapkanOverride } from "./testing.js";
@@ -62,6 +62,13 @@ function fmtDurasi(totalDetik) {
 
 function renderStatis() {
   $("nama-masjid").textContent = NAMA_MASJID;
+  $("tagline").textContent = TAGLINE;
+}
+
+function renderMarquee() {
+  const item = (teks) => `<span class="marquee-item"><span class="marquee-bullet">&#10022;</span>${teks}</span>`;
+  const isi = PENGUMUMAN.map(item).join("");
+  $("marquee-track").innerHTML = isi + isi; // digandakan biar animasi loop mulus
 }
 
 function renderTanggal(now) {
@@ -81,14 +88,15 @@ function renderGrid(next) {
   const grid = $("grid-sholat");
   grid.innerHTML = "";
   for (const { key, label, icon } of WAKTU_HARIAN) {
+    const aktif = next && next.key === key;
     const div = document.createElement("div");
-    div.className = "kartu-waktu" + (next && next.key === key ? " aktif" : "");
+    div.className = "kartu-waktu" + (aktif ? " aktif" : "");
     div.innerHTML = `
-      <span class="kartu-waktu-header">
-        <span class="nama">${label}</span>
-        <span class="ikon">${ICONS[icon] || ""}</span>
-      </span>
+      ${aktif ? '<span class="kartu-pita">Waktu Berikutnya</span>' : ""}
+      <span class="kartu-ikon">${ICONS[icon] || ""}</span>
+      <span class="nama">${label}</span>
       <span class="jam">${jadwal[key] || "--:--"}</span>
+      <span class="unit">WIB</span>
     `;
     grid.appendChild(div);
   }
@@ -174,6 +182,7 @@ function tick() {
 
 async function init() {
   renderStatis();
+  renderMarquee();
   setupFullscreen();
   localStorage.removeItem(IQOMAH_KEY); // kembali dari iqomah.html, bersihkan state lama
   await muatJadwal(new Date());

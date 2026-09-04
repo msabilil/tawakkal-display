@@ -1,6 +1,14 @@
 export const ID_KOTA = "1219";
 export const NAMA_MASJID = "Masjid At-Tawakkal 2";
 export const LOKASI_LABEL = "Astana Anyar, Kota Bandung";
+export const TAGLINE = "Sistem Informasi Display Digital & Waktu Sholat";
+
+// Teks pengumuman berjalan di footer layar utama. Edit array ini untuk ganti isi.
+export const PENGUMUMAN = [
+  "Lurus dan rapatkan shaf untuk kesempurnaan sholat berjamaah.",
+  "Mohon matikan atau senyapkan nada dering ponsel saat berada di dalam ruang utama masjid.",
+  "Salurkan infaq, sedekah, dan wakaf terbaik Anda melalui kotak amal atau QRIS resmi masjid.",
+];
 
 // Semua waktu yang ditampilkan di grid layar utama, urut kronologis.
 // `sholat: true` menandai waktu yang punya iqomah dan dihitung sebagai "sholat berikutnya".
