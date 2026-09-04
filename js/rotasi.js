@@ -88,11 +88,7 @@ export function renderSlotRotasi(slotEl, now) {
   }
   slotEl.hidden = false;
   const htmlBaru = state.aktif === "jadwal" ? renderKartuJadwal(now) : renderKartuQr(qr);
-  // Hanya tulis ulang bila kartu aktif berganti, agar tidak reflow tiap detik.
-  if (slotEl.dataset.aktif !== state.aktif) {
-    slotEl.dataset.aktif = state.aktif;
-    slotEl.innerHTML = htmlBaru;
-  } else if (state.aktif === "jadwal") {
-    slotEl.innerHTML = htmlBaru; // jadwal bisa berubah isi seiring waktu; murah
-  }
+  slotEl.dataset.aktif = state.aktif;
+  slotEl.innerHTML = htmlBaru;
 }
+
