@@ -25,6 +25,27 @@ Buat shortcut Chrome dengan target:
 ```
 Atau tanpa server: ganti dengan `file:///` path ke `index.html`.
 
+## Suara (murotal & nada iqomah)
+
+Agar murotal sebelum adzan dan nada iqomah bisa berbunyi otomatis tanpa
+interaksi, jalankan Chrome kiosk dengan flag autoplay:
+
+    chrome --kiosk --autoplay-policy=no-user-gesture-required "file:///path/index.html"
+
+Tanpa flag ini, browser memblokir autoplay dan layar menampilkan overlay
+"Ketuk layar untuk mengaktifkan suara" — cukup diketuk sekali.
+
+File murotal offline dan nada iqomah kustom diunggah lewat halaman admin dan
+disimpan di IndexedDB browser perangkat kiosk (tetap ada walau tanpa internet).
+Murotal juga bisa memakai audio dari API EQuran.id (butuh koneksi saat diputar).
+
+## Pengaturan tambahan (admin)
+
+- Murotal: aktif/nonaktif, menit mulai & berhenti sebelum adzan, per-sholat, playlist (file + API).
+- Nada iqomah: unggah nada kustom atau pakai beep default.
+- QR donasi: unggah gambar QR, tampil bergilir di layar.
+- Jadwal pengajian: kegiatan mingguan atau tanggal khusus, tampil bergilir di layar.
+
 ## Pengaturan
 
 - **Nama masjid:** edit `NAMA_MASJID` di `js/config.js`.
