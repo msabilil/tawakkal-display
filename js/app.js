@@ -35,7 +35,7 @@ export function iqomahState(now, jadwal, iqomahSettings) {
   return null;
 }
 
-import { NAMA_MASJID, TAGLINE, PENGUMUMAN, WAKTU_HARIAN } from "./config.js";
+import { NAMA_MASJID, PENGUMUMAN, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
 import { loadIqomah } from "./settings.js";
 import { loadOverride, terapkanOverride } from "./testing.js";
@@ -62,7 +62,6 @@ function fmtDurasi(totalDetik) {
 
 function renderStatis() {
   $("nama-masjid").textContent = NAMA_MASJID;
-  $("tagline").textContent = TAGLINE;
 }
 
 function renderMarquee() {

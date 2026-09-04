@@ -15,7 +15,9 @@
   --emerald-600: #059669;
   --emerald-700: #047857;
   --teal-600: #0d9488;
-  --brand-grad: linear-gradient(135deg, var(--emerald-300) 0%, var(--emerald-500) 55%, var(--emerald-700) 100%);
+  --sky-300: #7dd3fc;
+  --sky-800: #075985;
+  --brand-grad: linear-gradient(135deg, var(--emerald-300) 0%, var(--emerald-700) 38%, var(--sky-800) 65%, var(--sky-300) 100%);
   --emas-bg: #fef3c7;
   --emas-border: #fcd34d;
   --emas-teks: #b45309;
@@ -100,13 +102,6 @@ body.layar {
   font-weight: 800;
   letter-spacing: -0.01em;
 }
-.topbar-tagline {
-  font-size: clamp(11px, 1.1vw, 15px);
-  color: var(--text-mute);
-  font-weight: 500;
-  margin-top: 2px;
-}
-
 .topbar-aksi { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 #tombol-admin,
 #tombol-fullscreen {
@@ -175,7 +170,11 @@ body.layar {
   background: #fff;
   box-shadow: 0 0 0 rgba(255, 255, 255, 0.6);
   animation: pill-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  flex-shrink: 0;
 }
+.pill-menuju svg { width: 17px; height: 17px; flex-shrink: 0; }
+.pill-pemisah { opacity: 0.6; }
+.pill-menuju .tabular { font-variant-numeric: tabular-nums; }
 @keyframes pill-ping {
   0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6); }
   70% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
@@ -191,45 +190,27 @@ body.layar {
   margin-top: 1vh;
 }
 
-.pill-countdown {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 1.4vh;
-  padding: 9px 18px;
-  border-radius: 14px;
-  background: var(--surface);
-  border: 1.5px solid var(--emerald-500);
-  box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.2);
-  font-size: clamp(15px, 1.6vw, 22px);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.pill-countdown svg { width: 20px; height: 20px; color: var(--emerald-600); flex-shrink: 0; }
-
 .hero-kanan {
+  position: relative;
   border-radius: 24px;
   padding: 2vh 1.6vw;
+  overflow: hidden;
 }
+.hero-kanan-bg {
+  position: absolute;
+  right: -12%;
+  bottom: -18%;
+  width: 46%;
+  aspect-ratio: 1;
+  color: var(--emas-teks);
+  opacity: 0.14;
+  pointer-events: none;
+}
+.hero-kanan-bg svg { width: 100%; height: 100%; }
+.hero-kanan-isi { position: relative; z-index: 1; }
 .hero-kanan-baris { display: flex; align-items: center; gap: 12px; }
 .hero-kanan-baris-bawah { justify-content: space-between; align-items: flex-start; }
 .hero-garis { height: 1px; background: var(--border); margin: 1.6vh 0; }
-
-.chip-ikon {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.chip-ikon svg { width: 20px; height: 20px; }
-.chip-ikon-emas {
-  background: var(--emas-bg);
-  border: 1px solid var(--emas-border);
-  color: var(--emas-teks);
-}
 
 .label-kecil {
   font-size: clamp(10px, 0.95vw, 13px);
@@ -284,8 +265,9 @@ body.layar {
 .kartu-pita {
   position: absolute;
   top: 0; left: 0; right: 0;
-  background: linear-gradient(90deg, var(--emerald-300), var(--emerald-600), var(--emerald-300));
-  color: #022c22;
+  background: var(--brand-grad);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -324,9 +306,9 @@ body.layar {
 }
 
 .kartu-waktu.aktif {
-  background: linear-gradient(155deg, var(--emerald-400) 0%, var(--emerald-600) 55%, var(--emerald-700) 100%);
+  background: var(--brand-grad);
   border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 16px 36px -8px rgba(5, 150, 105, 0.4), 0 0 25px rgba(52, 211, 153, 0.28);
+  box-shadow: 0 16px 36px -8px rgba(5, 150, 105, 0.35), 0 0 25px rgba(7, 89, 133, 0.22);
   transform: translateY(-4px);
   padding-top: 3.2vh;
 }

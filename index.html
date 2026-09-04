@@ -18,10 +18,7 @@
           <path d="M9 20v-3a3 3 0 0 1 6 0v3"/><circle cx="12" cy="4" r="1"/>
         </svg>
       </div>
-      <div>
-        <h1 id="nama-masjid" class="topbar-nama"></h1>
-        <p id="tagline" class="topbar-tagline"></p>
-      </div>
+      <h1 id="nama-masjid" class="topbar-nama"></h1>
     </div>
     <div class="topbar-aksi">
       <button id="tombol-fullscreen" type="button" aria-label="Layar penuh">
@@ -46,33 +43,38 @@
         <div class="pill-menuju">
           <span class="pill-titik"></span>
           <span>Menuju <span id="next-nama">-</span></span>
-        </div>
-        <div id="jam" class="jam-besar">--:--:--</div>
-        <div class="pill-countdown">
+          <span class="pill-pemisah">&bull;</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          <span id="countdown-waktu">--:--:--</span>
+          <span id="countdown-waktu" class="tabular">--:--:--</span>
         </div>
+        <div id="jam" class="jam-besar">--:--:--</div>
       </div>
 
       <div class="hero-kanan glass-panel">
-        <div class="hero-kanan-baris">
-          <span class="chip-ikon chip-ikon-emas">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm0 18a8.25 8.25 0 110-16.5 8.25 8.25 0 010 16.5zm.75-12.75h-1.5v6.25l4.5 2.67.75-1.23-3.75-2.22V7.5z"/></svg>
-          </span>
+        <span class="hero-kanan-bg" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <mask id="mask-bulan">
+              <rect width="100" height="100" fill="#fff"/>
+              <circle cx="62" cy="36" r="34" fill="#000"/>
+            </mask>
+            <circle cx="50" cy="50" r="45" fill="currentColor" mask="url(#mask-bulan)"/>
+          </svg>
+        </span>
+        <div class="hero-kanan-isi">
           <div>
             <p class="label-kecil">Kalender Hijriyah</p>
             <p id="tanggal-hijriah" class="tanggal-hijriah"></p>
           </div>
-        </div>
-        <div class="hero-garis"></div>
-        <div class="hero-kanan-baris hero-kanan-baris-bawah">
-          <div>
-            <p class="label-kecil">Kalender Masehi</p>
-            <p id="tanggal-masehi" class="tanggal-masehi"></p>
+          <div class="hero-garis"></div>
+          <div class="hero-kanan-baris hero-kanan-baris-bawah">
+            <div>
+              <p class="label-kecil">Kalender Masehi</p>
+              <p id="tanggal-masehi" class="tanggal-masehi"></p>
+            </div>
+            <span class="chip-zona">WIB</span>
           </div>
-          <span class="chip-zona">WIB</span>
         </div>
       </div>
     </section>
