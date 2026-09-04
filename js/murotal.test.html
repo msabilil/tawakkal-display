@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test murotal.js</title>
+<pre id="out"></pre>
+<script type="module">
+import { murotalWindow } from "./murotal.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+const jadwal = { subuh:"04:34", dzuhur:"11:52", ashar:"15:09", maghrib:"17:56", isya:"19:01" };
+const set = {
+  aktif: true, mulaiMenit: 15, berhentiMenit: 3,
+  perSholat: { subuh:true, dzuhur:true, ashar:true, maghrib:true, isya:true },
+};
+const hari = (h, m) => new Date(2026, 8, 3, h, m, 0);
+
+// Dzuhur 11:52. Jendela = [11:37, 11:49). 11:40 -> aktif dzuhur.
+eq("dalam jendela dzuhur", murotalWindow(hari(11,40), jadwal, set), { key: "dzuhur" });
+// 11:37 tepat awal -> aktif (inklusif)
+eq("awal jendela inklusif", murotalWindow(hari(11,37), jadwal, set), { key: "dzuhur" });
+// 11:49 tepat akhir -> null (eksklusif, sudah masuk jeda hening)
+eq("akhir jendela eksklusif", murotalWindow(hari(11,49), jadwal, set), null);
+// 11:52 (jam adzan) -> null
+eq("jam adzan null", murotalWindow(hari(11,52), jadwal, set), null);
+// 11:30 (sebelum mulai) -> null
+eq("sebelum mulai null", murotalWindow(hari(11,30), jadwal, set), null);
+
+// perSholat dzuhur false -> null walau dalam jendela
+const setOff = { ...set, perSholat: { ...set.perSholat, dzuhur: false } };
+eq("perSholat off null", murotalWindow(hari(11,40), jadwal, setOff), null);
+
+// aktif global false -> null
+eq("aktif false null", murotalWindow(hari(11,40), jadwal, { ...set, aktif: false }), null);
+
+// berhentiMenit 0 -> jendela sampai pas adzan. 11:50 -> aktif.
+eq("berhenti0 sampai adzan", murotalWindow(hari(11,50), jadwal, { ...set, berhentiMenit: 0 }), { key: "dzuhur" });
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>
