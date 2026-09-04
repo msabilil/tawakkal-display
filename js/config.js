@@ -31,3 +31,23 @@ export const DEFAULT_IQOMAH = {
   maghrib: { menit: 5, aktif: true },
   isya: { menit: 10, aktif: true },
 };
+
+export const QORI = {
+  "01": "Abdullah Al-Juhany",
+  "02": "Abdul Muhsin Al-Qasim",
+  "03": "Abdurrahman as-Sudais",
+  "04": "Ibrahim Al-Dossari",
+  "05": "Misyari Rasyid Al-Afasi",
+  "06": "Yasser Al-Dosari",
+};
+
+export const DEFAULT_MUROTAL = {
+  aktif: false,               // baru main setelah pengurus aktifkan & isi playlist
+  mulaiMenit: 15,             // mulai murotal X menit sebelum jam sholat
+  berhentiMenit: 3,           // berhenti Y menit sebelum jam sholat (0 = sampai pas adzan)
+  perSholat: { subuh: true, dzuhur: true, ashar: true, maghrib: true, isya: true },
+  playlist: [],               // item: {id,tipe:"offline",label,mediaKey} atau {id,tipe:"api",label,surah,qori,url}
+  posisi: { index: 0, detik: 0 },
+};
+
+export const DEFAULT_ROTASI = { jadwalPengajianDetik: 20, qrDonasiDetik: 15 };

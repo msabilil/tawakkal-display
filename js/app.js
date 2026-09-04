@@ -1,11 +1,6 @@
 import { SHOLAT } from "./config.js";
-
-export function parseHM(hhmm, baseDate) {
-  const [h, m] = hhmm.split(":").map(Number);
-  const d = new Date(baseDate);
-  d.setHours(h, m, 0, 0);
-  return d;
-}
+import { parseHM } from "./waktu.js";
+export { parseHM };
 
 export function nextSholat(now, jadwal) {
   for (const { key, label } of SHOLAT) {
