@@ -9,12 +9,13 @@
   --text: #0f172a;
   --text-dim: #475569;
   --text-mute: #64748b;
+  --emerald-300: #6ee7b7;
   --emerald-400: #34d399;
   --emerald-500: #10b981;
   --emerald-600: #059669;
+  --emerald-700: #047857;
   --teal-600: #0d9488;
-  --sky-600: #0284c7;
-  --brand-grad: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 45%, var(--sky-600) 100%);
+  --brand-grad: linear-gradient(135deg, var(--emerald-300) 0%, var(--emerald-500) 55%, var(--emerald-700) 100%);
   --emas-bg: #fef3c7;
   --emas-border: #fcd34d;
   --emas-teks: #b45309;
@@ -51,12 +52,12 @@ body {
 .ambient-glow-1 {
   top: -10%;
   left: 12%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(2, 132, 199, 0.10) 55%, transparent 75%);
+  background: radial-gradient(circle, rgba(110, 231, 183, 0.32) 0%, rgba(5, 150, 105, 0.14) 55%, transparent 75%);
 }
 .ambient-glow-2 {
   bottom: 0%;
   right: 10%;
-  background: radial-gradient(circle, rgba(2, 132, 199, 0.18) 0%, rgba(16, 185, 129, 0.10) 55%, transparent 80%);
+  background: radial-gradient(circle, rgba(4, 120, 87, 0.24) 0%, rgba(110, 231, 183, 0.16) 55%, transparent 80%);
 }
 
 /* ---------- Layar utama ---------- */
@@ -87,7 +88,7 @@ body.layar {
   border-radius: 16px;
   background: var(--brand-grad);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,7 +166,7 @@ body.layar {
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.28);
 }
 .pill-titik {
   width: 8px;
@@ -198,8 +199,8 @@ body.layar {
   padding: 9px 18px;
   border-radius: 14px;
   background: var(--surface);
-  border: 1.5px solid var(--sky-600);
-  box-shadow: 0 6px 20px -4px rgba(2, 132, 199, 0.18);
+  border: 1.5px solid var(--emerald-500);
+  box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.2);
   font-size: clamp(15px, 1.6vw, 22px);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -251,10 +252,9 @@ body.layar {
 .chip-zona {
   padding: 4px 12px;
   border-radius: 8px;
-  background: var(--emerald-500);
-  background: linear-gradient(90deg, #ecfdf5, #e0f2fe);
-  color: #0369a1;
-  border: 1px solid #7dd3fc;
+  background: linear-gradient(90deg, #ecfdf5, #d1fae5);
+  color: var(--emerald-700);
+  border: 1px solid var(--emerald-300);
   font-size: 11px;
   font-weight: 800;
 }
@@ -284,7 +284,7 @@ body.layar {
 .kartu-pita {
   position: absolute;
   top: 0; left: 0; right: 0;
-  background: linear-gradient(90deg, var(--emerald-400), var(--sky-600), var(--emerald-400));
+  background: linear-gradient(90deg, var(--emerald-300), var(--emerald-600), var(--emerald-300));
   color: #022c22;
   font-size: 9px;
   font-weight: 800;
@@ -324,9 +324,9 @@ body.layar {
 }
 
 .kartu-waktu.aktif {
-  background: linear-gradient(155deg, var(--emerald-500) 0%, var(--emerald-600) 55%, var(--sky-600) 100%);
+  background: linear-gradient(155deg, var(--emerald-400) 0%, var(--emerald-600) 55%, var(--emerald-700) 100%);
   border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 16px 36px -8px rgba(2, 132, 199, 0.4), 0 0 25px rgba(16, 185, 129, 0.22);
+  box-shadow: 0 16px 36px -8px rgba(5, 150, 105, 0.4), 0 0 25px rgba(52, 211, 153, 0.28);
   transform: translateY(-4px);
   padding-top: 3.2vh;
 }
@@ -387,7 +387,7 @@ body.iqomah-page {
   letter-spacing: 0.06em;
   padding: 7px 14px;
   border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
 }
 .marquee-viewport { flex: 1; overflow: hidden; }
 .marquee-track {
