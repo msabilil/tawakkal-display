@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test jadwal-pengajian.js</title>
+<pre id="out"></pre>
+<script type="module">
+import { entriAktif, kejadianBerikutnya } from "./jadwal-pengajian.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+// Acuan: Kamis 2026-09-03 pukul 08:00. getDay(): Kamis = 4.
+const now = new Date(2026, 8, 3, 8, 0, 0);
+
+const mingguanJumat = { id: "a", tipe: "mingguan", hari: 5, jam: "05:00", nama: "Kajian Subuh", pengisi: "Ust. A" };
+const tanggalLampau = { id: "b", tipe: "tanggal", tanggal: "2026-09-01", jam: "19:30", nama: "Tabligh", pengisi: "Ust. B" };
+const tanggalNanti = { id: "c", tipe: "tanggal", tanggal: "2026-09-10", jam: "19:30", nama: "Tabligh Akbar", pengisi: "Ust. C" };
+const mingguanKamisSore = { id: "d", tipe: "mingguan", hari: 4, jam: "15:30", nama: "Kajian Ashar", pengisi: "Ust. D" };
+
+// kejadianBerikutnya mingguan Jumat 05:00 dari Kamis 08:00 -> besok (Jumat 2026-09-04 05:00)
+const kb = kejadianBerikutnya(mingguanJumat, now);
+eq("mingguan berikutnya tanggal", kb.getDate(), 4);
+eq("mingguan berikutnya jam", kb.getHours(), 5);
+
+// mingguan Kamis 15:30, sekarang Kamis 08:00 -> hari ini (belum lewat)
+const kb2 = kejadianBerikutnya(mingguanKamisSore, now);
+eq("mingguan hari ini blm lewat", kb2.getDate(), 3);
+
+// tanggal lampau di-hide, tanggal nanti + mingguan tampil
+const aktif = entriAktif(now, [mingguanJumat, tanggalLampau, tanggalNanti, mingguanKamisSore]);
+eq("tanggal lampau disembunyikan", aktif.find(e => e.id === "b"), undefined);
+eq("jumlah aktif", aktif.length, 3);
+
+// urutan: kejadian terdekat dulu. Kamis 15:30 (id d) < Jumat 05:00 (id a) < 10 Sep (id c)
+eq("urutan terdekat dulu", aktif.map(e => e.id), ["d", "a", "c"]);
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>
