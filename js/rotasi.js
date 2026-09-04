@@ -50,9 +50,8 @@ export function rotasiMaju(state, nowMs, kartu, durasiDetik) {
 
 const HARI_NAMA = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-function renderKartuJadwal(now) {
-  const entri = entriAktif(now, loadJadwalPengajian()).slice(0, 3);
-  const baris = entri.map((e) => {
+function renderKartuJadwal(entri) {
+  const baris = entri.slice(0, 3).map((e) => {
     const kapan = e.tipe === "mingguan"
       ? `${HARI_NAMA[e.hari]} ${e.jam}`
       : `${e.tanggal.split("-").reverse().join("/")} ${e.jam}`;
@@ -70,25 +69,30 @@ function renderKartuQr(qr) {
   </div>`;
 }
 
+// Durasi rotasi hanya diubah lewat admin.html (reload halaman terpisah), jadi
+// aman di-cache sekali saat modul dimuat - tidak perlu baca localStorage tiap detik.
+const durasiSetting = loadRotasi();
+const durasi = { jadwal: durasiSetting.jadwalPengajianDetik, qr: durasiSetting.qrDonasiDetik };
+
 let state = null;
+let htmlTerakhir = ""; // skip nulis ulang DOM kalau kontennya sama persis dgn render sebelumnya
 
 export function renderSlotRotasi(slotEl, now) {
-  const durasiSetting = loadRotasi();
-  const durasi = { jadwal: durasiSetting.jadwalPengajianDetik, qr: durasiSetting.qrDonasiDetik };
+  // qr & jadwal pengajian TETAP dibaca fresh tiap render (bukan cache) - itu
+  // yang bikin perubahan dari admin.html kepakai tanpa reload index.html.
   const qr = loadQr();
+  const entriPengajian = entriAktif(now, loadJadwalPengajian());
   const kartu = [];
-  if (entriAktif(now, loadJadwalPengajian()).length) kartu.push("jadwal");
+  if (entriPengajian.length) kartu.push("jadwal");
   if (qr) kartu.push("qr");
 
   state = rotasiMaju(state, now.getTime(), kartu, durasi);
-  if (!state.aktif) {
-    slotEl.hidden = true;
-    slotEl.innerHTML = "";
-    return;
+  slotEl.hidden = !state.aktif;
+  if (state.aktif) slotEl.dataset.aktif = state.aktif;
+  const htmlBaru = !state.aktif ? "" : state.aktif === "jadwal" ? renderKartuJadwal(entriPengajian) : renderKartuQr(qr);
+  if (htmlBaru !== htmlTerakhir) {
+    slotEl.innerHTML = htmlBaru;
+    htmlTerakhir = htmlBaru;
   }
-  slotEl.hidden = false;
-  const htmlBaru = state.aktif === "jadwal" ? renderKartuJadwal(now) : renderKartuQr(qr);
-  slotEl.dataset.aktif = state.aktif;
-  slotEl.innerHTML = htmlBaru;
 }
 

@@ -61,4 +61,4 @@ Murotal juga bisa memakai audio dari API EQuran.id (butuh koneksi saat diputar).
 
 ## Menjalankan test logika
 
-Fungsi murni (hitung sholat berikutnya, state iqomah) diuji lewat `js/app.test.html` - buka file itu di Chrome, hasil PASS/FAIL tampil di layar dan console.
+Fungsi murni (hitung sholat berikutnya, state iqomah) diuji lewat `js/app.test.html` - buka file itu di Chrome, hasil PASS/FAIL tampil di layar dan console. Test serupa juga ada untuk fitur lain: `js/media-db.test.html`, `js/jadwal-pengajian.test.html`, `js/rotasi.test.html`, `js/murotal.test.html` - dibuka dengan cara yang sama (lewat server lokal, sama seperti `app.test.html`).

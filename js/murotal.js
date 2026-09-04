@@ -43,6 +43,8 @@ let sedangMain = false;
 let objectUrl = null;         // URL blob offline yang perlu di-revoke
 let gagalBeruntun = 0;        // guard anti-loop kalau semua track gagal
 let simpanTerakhir = 0;       // throttle simpan posisi
+let winAktifKey = null;       // key jendela sholat yang sedang diamati tickMurotal (snapshot per tick)
+let jendelaGagal = null;      // key jendela yang baru saja gagal total, biar tidak retry tiap detik
 
 export function initMurotal(refs) {
   audioEl = refs.audioEl;
@@ -51,6 +53,7 @@ export function initMurotal(refs) {
   overlayEl = refs.overlayEl;
 
   audioEl.addEventListener("ended", () => {
+    if (!sedangMain) return;
     gagalBeruntun = 0;
     majuTrack(+1, 0);
   });
@@ -58,7 +61,7 @@ export function initMurotal(refs) {
     if (!sedangMain) return;
     gagalBeruntun++;
     const s = loadMurotal();
-    if (gagalBeruntun >= s.playlist.length) { hentikan(false); return; } // semua gagal
+    if (gagalBeruntun >= s.playlist.length) { hentikan(false, true); return; } // semua gagal
     majuTrack(+1, 0);
   });
   audioEl.addEventListener("timeupdate", () => {
@@ -104,18 +107,21 @@ async function mainkanIndex(index, detik) {
   const ok = await muatTrack(item);
   if (!ok) {
     gagalBeruntun++;
-    if (gagalBeruntun < s.playlist.length) majuTrack(+1, 0); else hentikan(false);
+    if (gagalBeruntun < s.playlist.length) majuTrack(+1, 0); else hentikan(false, true);
     return;
   }
   audioEl.currentTime = detik || 0;
   try {
     await audioEl.play();
     if (overlayEl) overlayEl.hidden = true;
-  } catch {
-    // Autoplay diblok (bukan kiosk): tampilkan overlay unlock.
-    if (overlayEl) overlayEl.hidden = false;
+    tampilIndikator(item.label);
+  } catch (err) {
+    // Cuma tampilkan overlay unlock kalau memang autoplay diblok browser.
+    // NotSupportedError (track gagal dimuat) / AbortError (src diganti duluan
+    // oleh percobaan track berikutnya) bukan soal autoplay - biarkan handler
+    // "error" pada elemen audio yang menangani retry-nya.
+    if (overlayEl && err && err.name === "NotAllowedError") overlayEl.hidden = false;
   }
-  tampilIndikator(item.label);
 }
 
 function majuTrack(arah, detik) {
@@ -130,19 +136,26 @@ function tampilIndikator(label) {
   indikatorEl.hidden = false;
 }
 
-function hentikan(simpan) {
+// gagalTotal: true kalau stop ini dipicu karena satu putaran penuh playlist
+// gagal (bukan window sholat selesai) - dipakai buat menandai jendela ini
+// supaya tidak di-retry tiap detik selama jendela masih terbuka.
+function hentikan(simpan, gagalTotal) {
   if (simpan && audioEl && !audioEl.paused) simpanPosisi();
   if (audioEl) { audioEl.pause(); }
   if (indikatorEl) indikatorEl.hidden = true;
+  if (overlayEl) overlayEl.hidden = true;
   sedangMain = false;
   gagalBeruntun = 0;
+  if (gagalTotal) jendelaGagal = winAktifKey;
 }
 
 export function tickMurotal(now, jadwal) {
   if (!audioEl) return;
   const s = loadMurotal();
   const win = murotalWindow(now, jadwal, s);
-  if (win && !sedangMain) {
+  winAktifKey = win ? win.key : null;
+  if (!win || win.key !== jendelaGagal) jendelaGagal = null; // keluar jendela gagal -> reset ingatan
+  if (win && !sedangMain && win.key !== jendelaGagal) {
     sedangMain = true;
     gagalBeruntun = 0;
     mainkanIndex(s.posisi.index, s.posisi.detik);

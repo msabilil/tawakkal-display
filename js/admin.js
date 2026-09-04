@@ -3,7 +3,7 @@ import { loadIqomah, saveIqomah } from "./settings.js";
 import { loadOverride, saveOverride, clearOverride } from "./testing.js";
 import { loadTampilan, saveTampilan } from "./tampilan.js";
 import { loadMurotal, saveMurotal } from "./murotal.js";
-import { loadRotasi, saveRotasi, loadQr, saveQr, clearQr } from "./rotasi.js";
+import { loadQr, saveQr, clearQr } from "./rotasi.js";
 import { loadJadwalPengajian, saveJadwalPengajian } from "./jadwal-pengajian.js";
 import { putMedia, delMedia } from "./media-db.js";
 import { mainkanNada } from "./nada.js";
@@ -232,16 +232,12 @@ function tesNada() {
 // ---------- QR Donasi ----------
 function renderQr() {
   const q = loadQr();
-  const r = loadRotasi();
   if (q) {
     $("qr-judul").value = q.judul || "";
     $("qr-teks").value = q.teks || "";
     $("qr-preview").src = q.dataUrl;
     $("qr-preview").hidden = false;
   }
-  // durasi rotasi dipakai bersama; sisipkan input durasi sederhana di section QR
-  $("qr-judul").dataset.durasiQr = r.qrDonasiDetik;
-  $("qr-judul").dataset.durasiJadwal = r.jadwalPengajianDetik;
 }
 
 function simpanQr(e) {
@@ -272,6 +268,7 @@ function hapusQr() {
   $("qr-preview").hidden = true;
   $("qr-judul").value = "";
   $("qr-teks").value = "";
+  $("qr-file").value = "";
   tampilkanStatus("status-qr");
 }
 

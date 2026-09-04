@@ -175,13 +175,16 @@ function tick() {
     return;
   }
 
-  tickMurotal(now, jadwal);
-  renderSlotRotasi($("slot-rotasi"), now);
-
   const next = nextSholat(now, jadwal);
   renderGrid(next);
   $("next-nama").textContent = next.label;
   $("countdown-waktu").textContent = fmtDurasi(Math.max(0, Math.ceil((next.time - now) / 1000)));
+
+  // Ditaruh terakhir dengan sengaja: kalau salah satu ini throw (mis. data
+  // hasil edit manual di localStorage rusak), grid/countdown di atas sudah
+  // sempat ter-update untuk tick ini - display utama tidak ikut macet.
+  tickMurotal(now, jadwal);
+  renderSlotRotasi($("slot-rotasi"), now);
 }
 
 async function init() {
