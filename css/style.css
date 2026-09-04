@@ -515,3 +515,31 @@ body.admin { padding: 5vh 4vw; }
 }
 .tombol-sekunder:hover { border-color: var(--emerald-500); color: var(--emerald-600); }
 .status { margin-top: 16px; color: var(--emerald-600); font-weight: 600; }
+
+/* Slot rotasi (jadwal pengajian / QR donasi) */
+.slot-rotasi {
+  margin-top: 1vh;
+  padding: 1.2vh 1.4vw;
+  min-height: 16vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rotasi-kartu { width: 100%; text-align: center; }
+.rotasi-judul { font-size: clamp(16px, 2vw, 28px); font-weight: 700; margin: 0 0 0.6vh; opacity: 0.85; }
+.rotasi-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4vh; }
+.rotasi-item { display: flex; gap: 1vw; justify-content: center; align-items: baseline; font-size: clamp(16px, 2.1vw, 30px); }
+.rotasi-nama { font-weight: 700; }
+.rotasi-kapan { opacity: 0.8; }
+.rotasi-pengisi { opacity: 0.65; font-style: italic; }
+.rotasi-qr { display: flex; flex-direction: column; align-items: center; gap: 0.6vh; }
+.rotasi-qr-img { width: clamp(90px, 12vh, 150px); height: auto; background: #fff; padding: 6px; border-radius: 8px; }
+.rotasi-qr-teks { font-size: clamp(14px, 1.6vw, 22px); opacity: 0.8; margin: 0; }
+
+/* Overlay unlock audio (hanya muncul kalau autoplay diblok) */
+.unlock-audio {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.6); color: #fff;
+  font-size: clamp(20px, 4vw, 48px); text-align: center; cursor: pointer;
+}

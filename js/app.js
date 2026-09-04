@@ -36,6 +36,8 @@ import { loadIqomah } from "./settings.js";
 import { loadOverride, terapkanOverride } from "./testing.js";
 import { loadTampilan } from "./tampilan.js";
 import { ICONS } from "./icons.js";
+import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
+import { renderSlotRotasi } from "./rotasi.js";
 
 const IQOMAH_KEY = "iqomahAktif";
 
@@ -153,6 +155,7 @@ async function muatJadwal(now) {
 }
 
 function mulaiIqomah(iq) {
+  stopMurotal();
   const endTime = new Date(Date.now() + iq.sisaDetik * 1000).toISOString();
   localStorage.setItem(IQOMAH_KEY, JSON.stringify({ key: iq.key, label: iq.label, endTime }));
   location.href = "iqomah.html";
@@ -172,6 +175,9 @@ function tick() {
     return;
   }
 
+  tickMurotal(now, jadwal);
+  renderSlotRotasi($("slot-rotasi"), now);
+
   const next = nextSholat(now, jadwal);
   renderGrid(next);
   $("next-nama").textContent = next.label;
@@ -182,6 +188,12 @@ async function init() {
   renderStatis();
   renderMarquee();
   setupFullscreen();
+  initMurotal({
+    audioEl: $("audio-murotal"),
+    indikatorEl: $("murotal-indikator"),
+    labelEl: $("murotal-label"),
+    overlayEl: $("unlock-audio"),
+  });
   localStorage.removeItem(IQOMAH_KEY); // kembali dari iqomah.html, bersihkan state lama
   await muatJadwal(new Date());
   tick();

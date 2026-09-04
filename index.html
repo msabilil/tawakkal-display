@@ -89,11 +89,18 @@
         <div id="marquee-track" class="marquee-track"></div>
       </div>
     </div>
+    <section id="slot-rotasi" class="slot-rotasi glass-panel" hidden></section>
     <div class="status-bar">
       <div id="testing-indikator" class="pill-status pill-status-hijau" hidden>Mode pengujian aktif</div>
       <div id="offline-indikator" class="pill-status pill-status-warn" hidden></div>
+      <div id="murotal-indikator" class="pill-status pill-status-hijau" hidden>
+        <span aria-hidden="true">&#128266;</span> Murotal: <span id="murotal-label"></span>
+      </div>
     </div>
   </footer>
+
+  <audio id="audio-murotal" preload="none"></audio>
+  <div id="unlock-audio" class="unlock-audio" hidden>Ketuk layar untuk mengaktifkan suara</div>
 
   <script type="module" src="js/app.js"></script>
 </body>
