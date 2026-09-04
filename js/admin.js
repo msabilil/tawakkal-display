@@ -250,13 +250,15 @@ function simpanQr(e) {
   const judul = $("qr-judul").value.trim();
   const teks = $("qr-teks").value.trim();
   const simpanObj = (dataUrl) => {
-    saveQr({ dataUrl, judul, teks });
+    try { saveQr({ dataUrl, judul, teks }); }
+    catch { alert("Gambar terlalu besar untuk disimpan. Pakai gambar QR yang lebih kecil."); return; }
     $("qr-preview").src = dataUrl;
     $("qr-preview").hidden = false;
     tampilkanStatus("status-qr");
   };
   if (file) {
     const reader = new FileReader();
+    reader.onerror = () => alert("Gagal membaca file gambar.");
     reader.onload = () => simpanObj(reader.result);
     reader.readAsDataURL(file);
   } else {
