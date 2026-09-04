@@ -71,7 +71,7 @@ body.layar {
   display: flex;
   flex-direction: column;
   padding: 2.2vh 2.5vw;
-  gap: 1.8vh;
+  gap: 4vh;
 }
 
 .topbar {
@@ -290,7 +290,7 @@ body.layar {
 }
 .kartu-ikon svg { width: 55%; height: 55%; }
 .kartu-waktu .nama {
-  font-size: clamp(12px, 1.3vw, 17px);
+  font-size: clamp(15px, 1.8vw, 24px);
   color: var(--text-dim);
   font-weight: 700;
 }
@@ -300,7 +300,7 @@ body.layar {
   font-variant-numeric: tabular-nums;
 }
 .kartu-waktu .unit {
-  font-size: 10px;
+  font-size: clamp(11px, 1.1vw, 15px);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
