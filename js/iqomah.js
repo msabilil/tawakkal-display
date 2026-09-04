@@ -1,3 +1,5 @@
+import { mainkanNada } from "./nada.js";
+
 const KEY = "iqomahAktif";
 
 function pad(n) { return String(n).padStart(2, "0"); }
@@ -32,5 +34,6 @@ function tick() {
   document.getElementById("iqomah-waktu").textContent = fmtMenitDetik(Math.ceil(sisaMs / 1000));
 }
 
+mainkanNada(document.getElementById("audio-nada"));
 tick();
 setInterval(tick, 1000);
