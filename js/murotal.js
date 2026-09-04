@@ -69,7 +69,7 @@ export function initMurotal(refs) {
 
   if (overlayEl) {
     overlayEl.addEventListener("click", () => {
-      audioEl.play().then(() => audioEl.pause()).catch(() => {});
+      audioEl.play().catch(() => {});
       overlayEl.hidden = true;
     });
   }
@@ -102,7 +102,11 @@ async function mainkanIndex(index, detik) {
   s.posisi = { index: idx, detik: detik || 0 };
   saveMurotal(s);
   const ok = await muatTrack(item);
-  if (!ok) { gagalBeruntun++; if (gagalBeruntun < s.playlist.length) majuTrack(+1, 0); return; }
+  if (!ok) {
+    gagalBeruntun++;
+    if (gagalBeruntun < s.playlist.length) majuTrack(+1, 0); else hentikan(false);
+    return;
+  }
   audioEl.currentTime = detik || 0;
   try {
     await audioEl.play();
