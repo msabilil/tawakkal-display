@@ -1,6 +1,7 @@
 import { SHOLAT, WAKTU_HARIAN } from "./config.js";
 import { loadIqomah, saveIqomah } from "./settings.js";
 import { loadOverride, saveOverride, clearOverride } from "./testing.js";
+import { loadTampilan, saveTampilan } from "./tampilan.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,6 +35,21 @@ function simpanIqomah(e) {
   }
   saveIqomah(settings);
   tampilkanStatus("status-simpan");
+}
+
+function renderTampilan() {
+  const t = loadTampilan();
+  $("tampilan-header").checked = t.header;
+  $("tampilan-maklumat").checked = t.maklumat;
+}
+
+function simpanTampilan(e) {
+  e.preventDefault();
+  saveTampilan({
+    header: $("tampilan-header").checked,
+    maklumat: $("tampilan-maklumat").checked,
+  });
+  tampilkanStatus("status-tampilan");
 }
 
 function renderTesting() {
@@ -75,7 +91,9 @@ function tampilkanStatus(id) {
 }
 
 renderIqomah();
+renderTampilan();
 renderTesting();
 $("form-iqomah").addEventListener("submit", simpanIqomah);
+$("form-tampilan").addEventListener("submit", simpanTampilan);
 $("form-testing").addEventListener("submit", simpanTesting);
 $("tombol-reset-testing").addEventListener("click", resetTesting);

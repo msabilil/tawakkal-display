@@ -39,6 +39,7 @@ import { NAMA_MASJID, PENGUMUMAN, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
 import { loadIqomah } from "./settings.js";
 import { loadOverride, terapkanOverride } from "./testing.js";
+import { loadTampilan } from "./tampilan.js";
 import { ICONS } from "./icons.js";
 
 const IQOMAH_KEY = "iqomahAktif";
@@ -62,6 +63,9 @@ function fmtDurasi(totalDetik) {
 
 function renderStatis() {
   $("nama-masjid").textContent = NAMA_MASJID;
+  const tampilan = loadTampilan();
+  $("topbar").hidden = !tampilan.header;
+  $("marquee-bar").hidden = !tampilan.maklumat;
 }
 
 function renderMarquee() {
