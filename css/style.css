@@ -15,9 +15,11 @@
   --emerald-600: #059669;
   --emerald-700: #047857;
   --teal-600: #0d9488;
-  --sky-300: #7dd3fc;
-  --sky-800: #075985;
-  --brand-grad: linear-gradient(135deg, var(--emerald-300) 0%, var(--emerald-700) 38%, var(--sky-800) 65%, var(--sky-300) 100%);
+  --grad-1: #70b941;
+  --grad-2: #399d80;
+  --grad-3: #249ea6;
+  --grad-4: #0096b9;
+  --brand-grad: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 35%, var(--grad-3) 65%, var(--grad-4) 100%);
   --emas-bg: #fef3c7;
   --emas-border: #fcd34d;
   --emas-teks: #b45309;
@@ -90,7 +92,7 @@ body.layar {
   border-radius: 16px;
   background: var(--brand-grad);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(112, 185, 65, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +163,7 @@ body.layar {
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.28);
+  box-shadow: 0 4px 14px rgba(112, 185, 65, 0.28);
 }
 .pill-titik {
   width: 8px;
@@ -308,7 +310,7 @@ body.layar {
 .kartu-waktu.aktif {
   background: var(--brand-grad);
   border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 16px 36px -8px rgba(5, 150, 105, 0.35), 0 0 25px rgba(7, 89, 133, 0.22);
+  box-shadow: 0 16px 36px -8px rgba(112, 185, 65, 0.35), 0 0 25px rgba(0, 150, 185, 0.22);
   transform: translateY(-4px);
   padding-top: 3.2vh;
 }
@@ -369,7 +371,7 @@ body.iqomah-page {
   letter-spacing: 0.06em;
   padding: 7px 14px;
   border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+  box-shadow: 0 4px 14px rgba(112, 185, 65, 0.3);
 }
 .marquee-viewport { flex: 1; overflow: hidden; }
 .marquee-track {
