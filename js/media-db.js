@@ -1,6 +1,8 @@
-// Wrapper minimal IndexedDB untuk menyimpan Blob audio (murotal offline & nada iqomah).
-// Semua fungsi menelan error dan mengembalikan nilai netral supaya fitur audio
-// bisa dilewati diam-diam kalau IndexedDB tidak tersedia (mis. mode private).
+// Wrapper minimal IndexedDB untuk menyimpan value apa pun yang structured-cloneable:
+// Blob audio (murotal offline & nada iqomah) maupun FileSystemDirectoryHandle
+// (folder project, lihat folder-proyek.js). Semua fungsi menelan error dan
+// mengembalikan nilai netral supaya fiturnya bisa dilewati diam-diam kalau
+// IndexedDB tidak tersedia (mis. mode private).
 
 const DB_NAME = "masjidMediaDB";
 const STORE = "media";

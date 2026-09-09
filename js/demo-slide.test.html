@@ -1,0 +1,41 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test demo-slide.js (slideAktif)</title>
+<pre id="out"></pre>
+<script type="module">
+import { slideAktif } from "./demo-slide.js";
+import { saveQr, clearQr } from "./rotasi.js";
+import { saveJadwalPengajian } from "./jadwal-pengajian.js";
+import { saveJumatSlides } from "./jumat-mode.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+function label(list) { return list.map((s) => s.label); }
+
+// Semua fitur opsional kosong -> cuma sisa Jadwal Sholat/Adzan/Iqomah.
+clearQr();
+saveJadwalPengajian([]);
+saveJumatSlides([]);
+eq("semua nonaktif -> cuma 3 slide wajib", label(slideAktif(new Date())), ["Jadwal Sholat", "Adzan", "Iqomah"]);
+
+// QR diisi -> slide QR ikut muncul.
+saveQr({ dataUrl: "data:image/png;base64,AAAA" });
+eq("QR terisi -> slide QR ikut", label(slideAktif(new Date())).includes("QR Donasi"), true);
+clearQr();
+
+// Jum'at ada slide -> slide Jum'at ikut, walau sekarang bukan hari Jumat/jam dzuhur.
+saveJumatSlides([{ id: "1", tipe: "gambar", file: "jumat-1.jpg", durasiDetik: 8 }]);
+eq("Jum'at ada slide -> slide Jum'at ikut", label(slideAktif(new Date())).includes("Jum'at"), true);
+saveJumatSlides([]);
+eq("Jum'at kosong lagi -> slide Jum'at hilang", label(slideAktif(new Date())).includes("Jum'at"), false);
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>

@@ -4,104 +4,250 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jadwal Sholat</title>
+<script>
+  (function () {
+    var v = localStorage.getItem("versiTampilan") || "lama";
+    document.documentElement.setAttribute("data-versi", v);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/versi-baru.css">
+<link rel="stylesheet" href="css/versi-biru.css">
 </head>
-<body class="layar">
-  <div class="ambient-glow ambient-glow-1"></div>
-  <div class="ambient-glow ambient-glow-2"></div>
+<body>
+  <div class="tombol-grup-mengambang">
+    <button id="tombol-fullscreen" type="button" aria-label="Layar penuh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" />
+        <path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+      </svg>
+    </button>
+    <a id="tombol-admin" href="admin.html" aria-label="Pengaturan iqomah">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/>
+        <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/>
+        <line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/>
+      </svg>
+    </a>
+  </div>
 
-  <header id="topbar" class="topbar glass-panel">
-    <div class="topbar-identitas">
-      <div class="topbar-dome">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 2v2"/><path d="M12 8a7 7 0 0 0-7 7v5h14v-5a7 7 0 0 0-7-7z"/>
-          <path d="M9 20v-3a3 3 0 0 1 6 0v3"/><circle cx="12" cy="4" r="1"/>
-        </svg>
-      </div>
-      <h1 id="nama-masjid" class="topbar-nama"></h1>
-    </div>
-    <div class="topbar-aksi">
-      <button id="tombol-fullscreen" type="button" aria-label="Layar penuh">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" />
-          <path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
-        </svg>
-      </button>
-      <a id="tombol-admin" href="admin.html" aria-label="Pengaturan iqomah">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/>
-          <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/>
-          <line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/>
-        </svg>
-      </a>
-    </div>
-  </header>
+  <div data-view="sholat">
+    <svg style="display:none" aria-hidden="true">
+      <!-- Warna dipakai lewat CSS custom property: selector biasa tidak menembus
+           shadow tree <use>, tapi custom property tetap diwariskan. -->
+      <symbol id="ilus-masjid" viewBox="0 0 220 180">
+        <!-- langit -->
+        <path fill="var(--i-langit)" d="M24 14 a12 12 0 1 0 11 11 a9 9 0 0 1 -11 -11 z"/>
+        <g fill="none" stroke="var(--i-burung)" stroke-width="2" stroke-linecap="round">
+          <path d="M56 34 q5 -5 10 0 q5 -5 10 0"/>
+          <path d="M78 20 q4 -4 8 0 q4 -4 8 0"/>
+          <path d="M42 52 q3.5 -3.5 7 0 q3.5 -3.5 7 0"/>
+        </g>
 
-  <main class="konten">
-    <section class="hero">
-      <div class="hero-kiri">
-        <div class="pill-menuju">
-          <span class="pill-titik"></span>
-          <span>Menuju <span id="next-nama">-</span></span>
-          <span class="pill-pemisah">&bull;</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <!-- menara kanan (tinggi) -->
+        <rect fill="var(--i-dinding)" x="176" y="40" width="15" height="115" rx="4"/>
+        <rect fill="var(--i-dinding-2)" x="171" y="76" width="25" height="7" rx="3.5"/>
+        <rect fill="var(--i-dinding-2)" x="172" y="110" width="23" height="6" rx="3"/>
+        <path fill="var(--i-gelap)" d="M180 70 v-8 a3.5 3.5 0 0 1 7 0 v8 z"/>
+        <path fill="var(--i-kubah)" d="M176 40 h15 l-7.5 -22 z"/>
+        <circle fill="var(--i-emas)" cx="183.5" cy="14" r="3.2"/>
+
+        <!-- menara kiri (pendek) -->
+        <rect fill="var(--i-dinding)" x="30" y="74" width="13" height="81" rx="4"/>
+        <rect fill="var(--i-dinding-2)" x="25.5" y="104" width="22" height="6" rx="3"/>
+        <path fill="var(--i-kubah)" d="M30 74 h13 l-6.5 -19 z"/>
+        <circle fill="var(--i-emas)" cx="36.5" cy="51" r="2.8"/>
+
+        <!-- sayap bangunan -->
+        <rect fill="var(--i-dinding-2)" x="46" y="120" width="128" height="35" rx="5"/>
+        <path fill="var(--i-kubah)" d="M56 120 q0 -18 14 -18 q14 0 14 18 z"/>
+        <path fill="var(--i-kubah)" d="M136 120 q0 -18 14 -18 q14 0 14 18 z"/>
+
+        <!-- bangunan utama -->
+        <rect fill="var(--i-dinding)" x="60" y="104" width="100" height="51" rx="5"/>
+        <rect fill="var(--i-dinding-2)" x="62" y="98" width="96" height="9" rx="4.5"/>
+
+        <!-- kubah -->
+        <path fill="var(--i-kubah)" d="M62 99 Q64 46 110 22 Q156 46 158 99 Z"/>
+        <g fill="none" stroke="var(--i-kubah-garis)" stroke-width="1.6">
+          <path d="M110 24 V98"/>
+          <path d="M88 32 Q79 64 80 98"/>
+          <path d="M132 32 Q141 64 140 98"/>
+        </g>
+        <circle fill="var(--i-emas)" cx="110" cy="19" r="3.6"/>
+        <path fill="var(--i-emas)" d="M110 6 a6 6 0 1 0 5.5 5.5 a4.5 4.5 0 0 1 -5.5 -5.5 z"/>
+
+        <!-- pintu & jendela -->
+        <path fill="var(--i-gelap)" d="M98 155 v-26 a12 12 0 0 1 24 0 v26 z"/>
+        <path fill="var(--i-gelap)" d="M74 142 v-13 a7 7 0 0 1 14 0 v13 z"/>
+        <path fill="var(--i-gelap)" d="M132 142 v-13 a7 7 0 0 1 14 0 v13 z"/>
+
+        <!-- pepohonan -->
+        <g fill="var(--i-daun-tua)">
+          <circle cx="10" cy="150" r="20"/>
+          <circle cx="204" cy="148" r="17"/>
+        </g>
+        <g fill="var(--i-daun)">
+          <circle cx="28" cy="142" r="15"/>
+          <circle cx="44" cy="152" r="13"/>
+          <circle cx="216" cy="155" r="13"/>
+          <circle cx="190" cy="154" r="11"/>
+        </g>
+      </symbol>
+
+      <symbol id="deko-awan" viewBox="0 0 300 130">
+        <rect x="0" y="0" width="248" height="52" rx="0"/>
+        <circle cx="30" cy="56" r="44"/>
+        <circle cx="104" cy="54" r="38"/>
+        <circle cx="172" cy="44" r="31"/>
+        <circle cx="224" cy="34" r="23"/>
+      </symbol>
+    </svg>
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <header id="topbar" class="topbar glass-panel">
+      <div class="topbar-identitas">
+        <div class="topbar-dome">
+          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9.5 5.5a3.6 3.6 0 1 0 3.4 3.4 2.7 2.7 0 0 1 -3.4 -3.4z"/>
+            <path d="M6 26v-7.5a10 10 0 0 1 20 0V26z"/>
+            <path d="M13 26v-4.5a3 3 0 0 1 6 0V26"/>
+            <path d="M4.5 26h23"/>
           </svg>
-          <span id="countdown-waktu" class="tabular">--:--:--</span>
         </div>
-        <div id="jam" class="jam-besar">--:--:--</div>
+        <div>
+          <h1 id="nama-masjid" class="topbar-nama"></h1>
+          <p id="topbar-sub" class="topbar-sub"></p>
+        </div>
       </div>
+    </header>
 
-      <div class="hero-kanan glass-panel">
-        <span class="hero-kanan-bg" aria-hidden="true">
-          <svg viewBox="0 0 100 100">
-            <mask id="mask-bulan">
-              <rect width="100" height="100" fill="#fff"/>
-              <circle cx="62" cy="36" r="34" fill="#000"/>
-            </mask>
-            <circle cx="50" cy="50" r="45" fill="currentColor" mask="url(#mask-bulan)"/>
-          </svg>
-        </span>
-        <div class="hero-kanan-isi">
-          <div>
-            <p class="label-kecil">Kalender Hijriyah</p>
-            <p id="tanggal-hijriah" class="tanggal-hijriah"></p>
+    <main class="konten">
+      <section class="hero">
+        <div class="hero-kiri">
+          <span class="hero-kiri-awan" aria-hidden="true">
+            <svg viewBox="0 0 300 130"><use href="#deko-awan"/></svg>
+          </span>
+          <span class="hero-kiri-bulan" aria-hidden="true"></span>
+          <span class="hero-kiri-bg" aria-hidden="true">
+            <svg viewBox="0 0 220 180"><use href="#ilus-masjid"/></svg>
+          </span>
+          <div id="jam" class="jam-besar">--:--:--</div>
+          <div class="pill-menuju">
+            <span class="pill-titik"></span>
+            <span class="pill-ikon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            </span>
+            <span id="countdown-waktu" class="tabular">--:--:--</span>
+            <span class="pill-pemisah">&bull;</span>
+            <span>Menuju <span id="next-nama">-</span></span>
           </div>
-          <div class="hero-garis"></div>
-          <div class="hero-kanan-baris hero-kanan-baris-bawah">
+        </div>
+
+        <div class="hero-kanan glass-panel">
+          <span class="hero-kanan-bg" aria-hidden="true">
+            <svg viewBox="0 0 100 100">
+              <mask id="mask-bulan">
+                <rect width="100" height="100" fill="#fff"/>
+                <circle cx="62" cy="36" r="34" fill="#000"/>
+              </mask>
+              <circle cx="50" cy="50" r="45" fill="currentColor" mask="url(#mask-bulan)"/>
+            </svg>
+          </span>
+          <span class="hero-kanan-ilustrasi" aria-hidden="true">
+            <svg viewBox="0 0 220 180"><use href="#ilus-masjid"/></svg>
+          </span>
+          <div class="hero-kanan-isi">
             <div>
-              <p class="label-kecil">Kalender Masehi</p>
-              <p id="tanggal-masehi" class="tanggal-masehi"></p>
+              <p class="label-kecil">Kalender Hijriyah</p>
+              <p id="tanggal-hijriah" class="tanggal-hijriah"></p>
             </div>
-            <span class="chip-zona">WIB</span>
+            <div class="hero-garis"></div>
+            <div class="hero-kanan-baris hero-kanan-baris-bawah">
+              <div>
+                <p class="label-kecil">Kalender Masehi</p>
+                <p id="tanggal-masehi" class="tanggal-masehi"></p>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
+
+      <section id="grid-sholat" class="grid-sholat"></section>
+
+      <div id="jam-analog" class="jam-analog" aria-hidden="true">
+        <div class="jam-analog-wajah">
+          <div id="jam-analog-angka" class="jam-analog-angka-wrap"></div>
+          <div id="jarum-jam" class="jam-analog-jarum jam-analog-jam"></div>
+          <div id="jarum-menit" class="jam-analog-jarum jam-analog-menit"></div>
+          <div id="jarum-detik" class="jam-analog-jarum jam-analog-detik"></div>
+          <div class="jam-analog-hub"></div>
+        </div>
       </div>
-    </section>
+    </main>
 
-    <section id="grid-sholat" class="grid-sholat"></section>
-  </main>
+    <footer class="footer">
+      <div id="marquee-bar" class="marquee-bar glass-panel">
+        <span class="marquee-label">
+          <span class="marquee-label-ikon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8a5 5 0 0 1 0 8" /><path d="M17.7 5a9 9 0 0 1 0 14" /><path d="M6 8h-1a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h1l3.5 4v-16l-3.5 4z" /></svg>
+          </span>
+          <span class="marquee-label-teks">Maklumat</span>
+        </span>
+        <div class="marquee-viewport">
+          <div id="marquee-track" class="marquee-track"></div>
+        </div>
+        <span class="marquee-silent" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2" /><line x1="3" y1="3" x2="21" y2="21" /></svg>
+        </span>
+      </div>
+      <div class="status-bar">
+        <div id="offline-indikator" class="pill-status pill-status-warn" hidden></div>
+        <div id="murotal-indikator" class="pill-status pill-status-hijau" hidden>
+          <span aria-hidden="true">&#128266;</span> Murotal: <span id="murotal-label"></span>
+        </div>
+      </div>
+    </footer>
 
-  <footer class="footer">
-    <div id="marquee-bar" class="marquee-bar glass-panel">
-      <span class="marquee-label">Maklumat</span>
-      <div class="marquee-viewport">
-        <div id="marquee-track" class="marquee-track"></div>
+    <audio id="audio-murotal" preload="none"></audio>
+    <div id="unlock-audio" class="unlock-audio" hidden>Ketuk layar untuk mengaktifkan suara</div>
+  </div>
+
+  <div data-view="iqomah" hidden>
+    <div class="iqomah-layar">
+      <p class="iqomah-judul" id="iqomah-judul"></p>
+      <div class="iqomah-isi">
+        <p class="iqomah-adzan-label" id="iqomah-adzan-label"></p>
+        <div id="iqomah-waktu">--:--</div>
       </div>
     </div>
-    <section id="slot-rotasi" class="slot-rotasi glass-panel" hidden></section>
-    <div class="status-bar">
-      <div id="testing-indikator" class="pill-status pill-status-hijau" hidden>Mode pengujian aktif</div>
-      <div id="offline-indikator" class="pill-status pill-status-warn" hidden></div>
-      <div id="murotal-indikator" class="pill-status pill-status-hijau" hidden>
-        <span aria-hidden="true">&#128266;</span> Murotal: <span id="murotal-label"></span>
-      </div>
+    <audio id="audio-nada" preload="auto"></audio>
+  </div>
+
+  <div data-view="qr" hidden>
+    <div class="fokus-isi">
+      <p class="fokus-judul" id="qr-judul">Donasi</p>
+      <img class="fokus-qr-img" id="qr-gambar" alt="QR Donasi">
+      <p class="fokus-qr-teks" id="qr-teks"></p>
     </div>
-  </footer>
+  </div>
 
-  <audio id="audio-murotal" preload="none"></audio>
-  <div id="unlock-audio" class="unlock-audio" hidden>Ketuk layar untuk mengaktifkan suara</div>
+  <div data-view="kegiatan" hidden>
+    <div class="fokus-isi">
+      <p class="fokus-judul">Jadwal Kegiatan</p>
+      <ul class="fokus-list" id="fokus-list"></ul>
+    </div>
+  </div>
 
-  <script type="module" src="js/app.js"></script>
+  <div data-view="jumat" hidden>
+    <div class="jumat-media" id="jumat-media"></div>
+    <p class="jumat-kosong" id="jumat-kosong" hidden>Belum ada slide Jum'at. Tambahkan lewat admin.</p>
+  </div>
+
+  <script type="module" src="js/kiosk.js"></script>
 </body>
 </html>

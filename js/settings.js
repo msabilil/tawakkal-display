@@ -1,6 +1,8 @@
-import { DEFAULT_IQOMAH, SHOLAT } from "./config.js";
+import { DEFAULT_IQOMAH, DEFAULT_ADZAN, SHOLAT, PENGUMUMAN } from "./config.js";
 
 const KEY = "iqomahSettings";
+const KEY_ADZAN = "adzanSettings";
+const KEY_PENGUMUMAN = "pengumumanSettings";
 
 export function loadIqomah() {
   let stored = {};
@@ -23,4 +25,30 @@ export function loadIqomah() {
 
 export function saveIqomah(settings) {
   localStorage.setItem(KEY, JSON.stringify(settings));
+}
+
+export function loadAdzan() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY_ADZAN));
+    return { ...DEFAULT_ADZAN, ...(s || {}) };
+  } catch {
+    return { ...DEFAULT_ADZAN };
+  }
+}
+
+export function saveAdzan(settings) {
+  localStorage.setItem(KEY_ADZAN, JSON.stringify(settings));
+}
+
+export function loadPengumuman() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(KEY_PENGUMUMAN));
+    return Array.isArray(arr) && arr.length ? arr : PENGUMUMAN;
+  } catch {
+    return PENGUMUMAN;
+  }
+}
+
+export function savePengumuman(arr) {
+  localStorage.setItem(KEY_PENGUMUMAN, JSON.stringify(arr));
 }

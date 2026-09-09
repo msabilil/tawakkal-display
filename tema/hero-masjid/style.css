@@ -1,0 +1,299 @@
+/* =========================================================
+   Tema "Hero Masjid" — foto masjid full-screen + kartu jadwal
+   klasik (ornamen geometris islami, emas tua & hijau tua).
+   Halaman berdiri sendiri, tidak bergantung pada css/js utama.
+   ========================================================= */
+
+:root {
+  /* >>> SATU-SATUNYA BARIS YANG PERLU DIGANTI setelah foto masjid
+     asli dikirim user: ganti url(...) ini ke path lokal, misal
+     url("assets/masjid.jpg"). Kalau rasio foto asli bukan 16:9,
+     sesuaikan juga `background-position` di .hero-bg supaya bagian
+     penting foto (mis. kubah/menara) tidak terpotong. */
+  --hero-image: url("https://source.unsplash.com/1600x900/?mosque");
+
+  --emas: #c9a24a;
+  --emas-terang: #e8cd82;
+  --hijau-tua: #0e3b2e;
+  --hijau-gelap: #082019;
+  --krem: #f6efe0;
+  --abu-terang: #cdd6d0;
+
+  --font-dekoratif: "Amiri", "Scheherazade New", serif;
+  --font-utama: "Poppins", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100dvh;
+  font-family: var(--font-utama);
+  color: var(--krem);
+
+  /* foto masjid full-screen sebagai background hero */
+  background-image: var(--hero-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* overlay gradasi gelap: tanpa ini teks tak terjamin kebaca di atas
+   foto sembarang (langit terang, dsb) — lebih gelap di bawah supaya
+   kartu selalu kontras walau kartu diletakkan agak ke bawah di mobile */
+.hero-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg,
+      rgba(4, 14, 11, 0.55) 0%,
+      rgba(4, 14, 11, 0.45) 35%,
+      rgba(4, 14, 11, 0.75) 100%),
+    radial-gradient(120% 90% at 50% 15%, rgba(0,0,0,0) 0%, rgba(2, 10, 8, 0.5) 100%);
+}
+
+.panggung {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 20px;
+}
+
+/* ---------- Kartu ---------- */
+
+.kartu-jadwal {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 34px 30px 26px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, rgba(14, 59, 46, 0.82), rgba(8, 32, 25, 0.88));
+  border: 1px solid rgba(201, 162, 74, 0.55);
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(201, 162, 74, 0.12);
+  backdrop-filter: blur(6px);
+}
+
+/* bingkai ganda ala manuskrip klasik, sedikit di dalam border utama */
+.kartu-jadwal::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(201, 162, 74, 0.3);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+/* aksen sudut bermotif geometris islami — hiasan, area tengah tetap bersih */
+.sudut {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  color: var(--emas);
+  opacity: 0.85;
+}
+.sudut--kiri-atas     { top: -1px; left: -1px; }
+.sudut--kanan-atas    { top: -1px; right: -1px; transform: scaleX(-1); }
+.sudut--kiri-bawah    { bottom: -1px; left: -1px; transform: scaleY(-1); }
+.sudut--kanan-bawah   { bottom: -1px; right: -1px; transform: scale(-1); }
+
+/* ---------- Kepala kartu: lokasi + tanggal ---------- */
+
+.kepala-kartu {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.lokasi {
+  margin: 0;
+  font-family: var(--font-dekoratif);
+  font-weight: 700;
+  font-size: 1.7rem;
+  color: var(--emas-terang);
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+.sub-lokasi {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--abu-terang);
+  opacity: 0.85;
+}
+
+.pemisah {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px auto;
+  max-width: 220px;
+}
+.pemisah .garis {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--emas), transparent);
+  opacity: 0.6;
+}
+.pemisah .bintang {
+  width: 12px;
+  height: 12px;
+  color: var(--emas);
+  flex-shrink: 0;
+}
+
+.tanggal {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--krem);
+  opacity: 0.9;
+}
+.tanggal .titik-pemisah {
+  margin: 0 8px;
+  color: var(--emas);
+  opacity: 0.7;
+}
+
+/* ---------- Daftar waktu sholat ---------- */
+
+.daftar-waktu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.baris-waktu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.baris-waktu .ikon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(201, 162, 74, 0.12);
+  color: var(--emas-terang);
+}
+.baris-waktu .ikon svg { width: 60%; height: 60%; }
+
+.baris-waktu .nama {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--krem);
+}
+
+.baris-waktu .jam {
+  font-family: var(--font-utama);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: var(--krem);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Penanda waktu aktif/berikutnya: BUKAN cuma beda warna teks — dapat
+   latar emas, garis kiri tebal, bayangan, dan badge teks eksplisit
+   supaya tetap jelas walau dilihat sekilas / oleh yang buta warna. */
+.baris-waktu.aktif {
+  background: linear-gradient(90deg, rgba(201, 162, 74, 0.22), rgba(201, 162, 74, 0.08));
+  border-color: rgba(201, 162, 74, 0.6);
+  box-shadow: 0 8px 20px -8px rgba(201, 162, 74, 0.4);
+}
+.baris-waktu.aktif::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 3px;
+  background: var(--emas-terang);
+}
+.baris-waktu.aktif .ikon {
+  background: var(--emas-terang);
+  color: var(--hijau-gelap);
+}
+.baris-waktu.aktif .nama,
+.baris-waktu.aktif .jam {
+  color: var(--emas-terang);
+}
+.baris-waktu.aktif .badge {
+  display: inline-flex;
+}
+
+.badge {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hijau-gelap);
+  background: var(--emas-terang);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.badge .titik {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hijau-gelap);
+  animation: kedip 1.6s ease-in-out infinite;
+}
+@keyframes kedip {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* ---------- Responsif ---------- */
+
+/* Mobile: kartu memenuhi lebar dengan padding aman, ornamen dikecilkan
+   dikit biar proporsional di layar sempit. */
+@media (max-width: 480px) {
+  .panggung { padding: 5vh 14px; }
+  .kartu-jadwal {
+    max-width: 100%;
+    padding: 26px 18px 20px;
+    border-radius: 14px;
+  }
+  .lokasi { font-size: 1.4rem; }
+  .sudut { width: 22px; height: 22px; }
+  .baris-waktu { padding: 10px 12px; gap: 10px; }
+  .baris-waktu .jam { font-size: 1.05rem; }
+}
+
+/* Desktop besar: kartu tetap di tengah, tidak melebar berlebihan */
+@media (min-width: 1024px) {
+  .kartu-jadwal { max-width: 460px; padding: 40px 36px 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge .titik { animation: none; }
+}

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jadwal Sholat — Tema Hero Masjid</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- overlay gradasi gelap: bikin teks tetap kebaca di atas foto apapun -->
+  <div class="hero-overlay"></div>
+
+  <main class="panggung">
+    <section class="kartu-jadwal" aria-label="Kartu jadwal sholat">
+
+      <!-- 4 sudut ornamen geometris islami (SVG inline, warna ikut var(--emas)) -->
+      <svg class="sudut sudut--kiri-atas" viewBox="0 0 60 60" aria-hidden="true"><use href="#motif-sudut"/></svg>
+      <svg class="sudut sudut--kanan-atas" viewBox="0 0 60 60" aria-hidden="true"><use href="#motif-sudut"/></svg>
+      <svg class="sudut sudut--kiri-bawah" viewBox="0 0 60 60" aria-hidden="true"><use href="#motif-sudut"/></svg>
+      <svg class="sudut sudut--kanan-bawah" viewBox="0 0 60 60" aria-hidden="true"><use href="#motif-sudut"/></svg>
+
+      <header class="kepala-kartu">
+        <p class="lokasi">Masjid Al-Ikhlas</p>
+        <p class="sub-lokasi">Kota Bandung</p>
+        <div class="pemisah" aria-hidden="true">
+          <span class="garis"></span>
+          <svg viewBox="0 0 24 24" class="bintang"><use href="#motif-bintang"/></svg>
+          <span class="garis"></span>
+        </div>
+        <p class="tanggal">
+          <span id="tanggalMasehi">—</span>
+          <span class="titik-pemisah">•</span>
+          <span id="tanggalHijriah">—</span>
+        </p>
+      </header>
+
+      <ul class="daftar-waktu" id="daftarWaktu">
+        <!-- diisi script.js dari data waktuSholat, termasuk penanda aktif -->
+      </ul>
+
+    </section>
+  </main>
+
+  <!-- definisi SVG dipakai ulang lewat <use>, ditulis sekali di sini -->
+  <svg style="display:none" aria-hidden="true">
+    <symbol id="motif-sudut" viewBox="0 0 60 60">
+      <path d="M2 2 L2 22 M2 2 L22 2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M10 2 L10 10 L2 10" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".75"/>
+      <path d="M2 2 L14 14" fill="none" stroke="currentColor" stroke-width="1"/>
+      <g transform="translate(2 2)">
+        <path d="M10 2 L12.35 7.65 L18 10 L12.35 12.35 L10 18 L7.65 12.35 L2 10 L7.65 7.65 Z"
+              fill="none" stroke="currentColor" stroke-width="1.1"/>
+      </g>
+    </symbol>
+    <symbol id="motif-bintang" viewBox="0 0 24 24">
+      <path d="M12 1 L14.8 8.2 L22 9.3 L16.8 14.5 L18.2 22 L12 18.3 L5.8 22 L7.2 14.5 L2 9.3 L9.2 8.2 Z"
+            fill="currentColor"/>
+    </symbol>
+    <!-- ikon waktu sholat, dipakai lewat <use> per baris -->
+    <symbol id="ikon-subuh" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm7.07 3.05 1.41 1.41-1.41 1.42-1.42-1.42Zm-14.14 0 1.42 1.41-1.42 1.42-1.41-1.42ZM12 6a6 6 0 0 1 6 6H6a6 6 0 0 1 6-6Zm-9 6h2a1 1 0 1 1 0 2H3a1 1 0 1 1 0-2Zm16 0h2a1 1 0 1 1 0 2h-2a1 1 0 1 1 0-2ZM4 20h16a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2Z"/></symbol>
+    <symbol id="ikon-dzuhur" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2 12h2.2M19.8 12H22M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></g></symbol>
+    <symbol id="ikon-ashar" viewBox="0 0 24 24"><circle cx="12" cy="14" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 6.5V4M6.5 9 5 7.5M17.5 9 19 7.5M3 14H1.5M22.5 14H21"/></g></symbol>
+    <symbol id="ikon-maghrib" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5a7 7 0 0 1 6.93 6H21a1 1 0 1 1 0 2H3a1 1 0 1 1 0-2h2.07A7 7 0 0 1 12 5Z"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v1.6M4.5 6.5l1.1 1.1M19.5 6.5l-1.1 1.1"/></g><rect x="2.5" y="16" width="19" height="1.8" rx=".9" fill="currentColor" opacity=".55"/></symbol>
+    <symbol id="ikon-isya" viewBox="0 0 24 24"><path fill="currentColor" d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/><path fill="currentColor" d="M18.5 3.5 19.3 5.7 21.5 6.5 19.3 7.3 18.5 9.5 17.7 7.3 15.5 6.5 17.7 5.7Z" opacity=".85"/></symbol>
+  </svg>
+
+  <script src="script.js"></script>
+</body>
+</html>

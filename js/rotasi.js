@@ -1,8 +1,11 @@
 import { DEFAULT_ROTASI } from "./config.js";
 import { loadJadwalPengajian, entriAktif } from "./jadwal-pengajian.js";
+import { tampilkan } from "./navigasi.js";
 
 const KEY_ROTASI = "rotasiSettings";
 const KEY_QR = "qrDonasi";
+const KEY_URUTAN = "halamanUrutan"; // localStorage: idx round-robin layar sekunder berikutnya
+const KEY_SEJAK = "halamanSholatSejak"; // sessionStorage: timestamp masuk index.html
 
 export function loadRotasi() {
   try {
@@ -34,65 +37,34 @@ export function clearQr() {
   localStorage.removeItem(KEY_QR);
 }
 
-// Siklus murni. state: {idx, gantiPada, kartuKey} | null.
-export function rotasiMaju(state, nowMs, kartu, durasiDetik) {
-  const kartuKey = kartu.join(",");
-  if (!kartu.length) return { idx: 0, gantiPada: 0, kartuKey, aktif: null };
-  if (!state || state.kartuKey !== kartuKey) {
-    return { idx: 0, gantiPada: nowMs + durasiDetik[kartu[0]] * 1000, kartuKey, aktif: kartu[0] };
-  }
-  if (nowMs >= state.gantiPada) {
-    const idx = (state.idx + 1) % kartu.length;
-    return { idx, gantiPada: nowMs + durasiDetik[kartu[idx]] * 1000, kartuKey, aktif: kartu[idx] };
-  }
-  return { ...state, aktif: kartu[state.idx] };
-}
-
-const HARI_NAMA = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-
-function renderKartuJadwal(entri) {
-  const baris = entri.slice(0, 3).map((e) => {
-    const kapan = e.tipe === "mingguan"
-      ? `${HARI_NAMA[e.hari]} ${e.jam}`
-      : `${e.tanggal.split("-").reverse().join("/")} ${e.jam}`;
-    const pengisi = e.pengisi ? `<span class="rotasi-pengisi">${e.pengisi}</span>` : "";
-    return `<li class="rotasi-item"><span class="rotasi-nama">${e.nama}</span><span class="rotasi-kapan">${kapan}</span>${pengisi}</li>`;
-  }).join("");
-  return `<div class="rotasi-kartu rotasi-jadwal"><p class="rotasi-judul">Jadwal Pengajian</p><ul class="rotasi-list">${baris}</ul></div>`;
-}
-
-function renderKartuQr(qr) {
-  return `<div class="rotasi-kartu rotasi-qr">
-    <p class="rotasi-judul">${qr.judul || "Donasi"}</p>
-    <img class="rotasi-qr-img" src="${qr.dataUrl}" alt="QR Donasi">
-    <p class="rotasi-qr-teks">${qr.teks || ""}</p>
-  </div>`;
-}
-
-// Durasi rotasi hanya diubah lewat admin.html (reload halaman terpisah), jadi
-// aman di-cache sekali saat modul dimuat - tidak perlu baca localStorage tiap detik.
-const durasiSetting = loadRotasi();
-const durasi = { jadwal: durasiSetting.jadwalPengajianDetik, qr: durasiSetting.qrDonasiDetik };
-
-let state = null;
-let htmlTerakhir = ""; // skip nulis ulang DOM kalau kontennya sama persis dgn render sebelumnya
-
-export function renderSlotRotasi(slotEl, now) {
-  // qr & jadwal pengajian TETAP dibaca fresh tiap render (bukan cache) - itu
-  // yang bikin perubahan dari admin.html kepakai tanpa reload index.html.
-  const qr = loadQr();
-  const entriPengajian = entriAktif(now, loadJadwalPengajian());
+// Kartu/layar sekunder yang lagi punya isi buat ditampilkan bergilir.
+export function kartuTersedia(now) {
   const kartu = [];
-  if (entriPengajian.length) kartu.push("jadwal");
-  if (qr) kartu.push("qr");
-
-  state = rotasiMaju(state, now.getTime(), kartu, durasi);
-  slotEl.hidden = !state.aktif;
-  if (state.aktif) slotEl.dataset.aktif = state.aktif;
-  const htmlBaru = !state.aktif ? "" : state.aktif === "jadwal" ? renderKartuJadwal(entriPengajian) : renderKartuQr(qr);
-  if (htmlBaru !== htmlTerakhir) {
-    slotEl.innerHTML = htmlBaru;
-    htmlTerakhir = htmlBaru;
-  }
+  if (entriAktif(now, loadJadwalPengajian()).length) kartu.push("kegiatan");
+  if (loadQr()) kartu.push("qr");
+  return kartu;
 }
 
+// Dipanggil sekali di start() app.js - tandai "baru masuk view sholat", jadi
+// durasi tampil dihitung dari sini, bukan dari kunjungan sebelumnya.
+export function mulaiSesiSholat() {
+  sessionStorage.setItem(KEY_SEJAK, String(Date.now()));
+}
+
+// Dipanggil tiap detik dari tick() app.js, HANYA selama tidak lagi iqomah.
+// Setelah durasi tampil jadwal sholat lewat, gantian ke layar sekunder berikutnya
+// (round-robin qr/kegiatan). View qr & kegiatan yang bertugas balik lagi ke
+// view "sholat" sendiri lewat timeout masing-masing.
+export function tickHalamanSholat(now) {
+  const kartu = kartuTersedia(now);
+  if (!kartu.length) return; // tidak ada apa-apa buat digilir, tetap di jadwal sholat
+
+  const sejak = Number(sessionStorage.getItem(KEY_SEJAK)) || Date.now();
+  const durasiMs = loadRotasi().sholatDetik * 1000;
+  if (Date.now() - sejak < durasiMs) return;
+
+  const idx = Number(localStorage.getItem(KEY_URUTAN)) || 0;
+  const tujuan = kartu[idx % kartu.length];
+  localStorage.setItem(KEY_URUTAN, String(idx + 1));
+  tampilkan(tujuan); // "qr" atau "kegiatan" - namanya sudah cocok sama nama view
+}

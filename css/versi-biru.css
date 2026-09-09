@@ -1,0 +1,163 @@
+/* =========================================================
+   Versi Masjid Biru — skin warna KHUSUS view "sholat" (jadwal sholat), satu
+   dari 3 tema jadwal sholat (lihat js/tema/tampilan/registry.js). Halaman
+   iqomah/kegiatan/QR TIDAK ada di sini lagi - strukturnya sudah dipromosikan
+   jadi tetap di css/style.css (tidak berubah walau tema jadwal sholat ganti).
+   --biru-900/--biru-emas didefinisikan di :root css/style.css (dipakai juga
+   oleh halaman iqomah/kegiatan yang sekarang selalu pakai warna itu).
+   ========================================================= */
+html[data-versi="biru"] body {
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+/* ---------- Halaman jadwal sholat (index.html) ---------- */
+html[data-versi="biru"] .ambient-glow { display: none; }
+html[data-versi="biru"] .hero { display: none; }
+/* Layout ini sengaja tanpa header - identitas masjid sudah ada di foto latar.
+   Dipaksa hilang, terlepas dari toggle "Tampilkan header" di admin (yang
+   memang disembunyikan buat layout ini, lihat js/admin.js). Tombol admin
+   TETAP disisakan (mengambang kecil pojok kanan-bawah, transparan) - aplikasi
+   ini localStorage-based, admin.html wajib dibuka di browser yang sama dengan
+   layar ini, jadi tidak boleh sampai tidak ada jalan balik.
+   Maklumat berjalan TIDAK dipaksa hilang - toggle "Tampilkan maklumat
+   berjalan" berlaku normal di layout ini, muncul sebagai bilah kaca di bawah
+   kartu jadwal (lihat blok .footer/.marquee-bar di bawah). */
+html[data-versi="biru"] .status-bar { display: none; }
+html[data-versi="biru"] .footer {
+  position: fixed;
+  inset: auto 4% 2.2% 4%;
+  z-index: 4;
+}
+html[data-versi="biru"] .marquee-bar {
+  background: rgba(11, 31, 77, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 14px;
+  padding: 1.1vh 1.6vw;
+  gap: 1.4vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+html[data-versi="biru"] .marquee-label {
+  background: var(--biru-emas);
+  padding: 0.6vh 1vw;
+}
+html[data-versi="biru"] .marquee-item { font-weight: 700; color: #fff; }
+html[data-versi="biru"] .marquee-bullet { color: #f4c542; }
+html[data-versi="biru"] .topbar { display: none; }
+html[data-versi="biru"] #tombol-admin,
+html[data-versi="biru"] #tombol-fullscreen {
+  width: 34px;
+  height: 34px;
+  background: rgba(11, 31, 77, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #fff;
+}
+/* Foto latar full-bleed penuh layar (bukan kotak rounded di tengah). Body jadi
+   pemegang background-nya; .konten cuma pembungkus transparan. */
+html[data-versi="biru"] body.layar {
+  padding: 0;
+  background: #000 url("../img/bg-jadwal-sholat.jpeg") center/cover no-repeat;
+}
+html[data-versi="biru"] .konten { gap: 0; }
+
+/* Kotak foto jadwal sholat: img/bg-jadwal-sholat.jpeg (foto bersih, tanpa
+   mockup kartu - mockup-nya ada di img/jadwal-sholat.jpeg, dipakai admin
+   sebagai thumbnail pemilih layout, lihat tema/tampilan/biru.png). 6 slot
+   tetap (Imsak tidak ada slotnya di foto -> disembunyikan). Koordinat pixel
+   diukur dari mockup (1600x903px, sama persis komposisinya dengan foto
+   bersih), ditulis ulang jadi % - dipetakan ke viewport penuh
+   (position:fixed), asumsi layar mendekati rasio foto (~16:9). */
+html[data-versi="biru"] .grid-sholat {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: none;
+  border-radius: 0;
+}
+/* Background solid (bukan transparan) - pakai img/pure-kotak.png (kartu
+   kosong polos) biar teksturnya sama di semua kartu, bukan gradient CSS.
+   Foto latar aslinya (bg-jadwal-sholat.jpeg) bersih, tidak ada kartu tercetak. */
+html[data-versi="biru"] .kartu-waktu {
+  position: absolute;
+  background: url("../img/pure-kotak.png") center/100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  gap: 0;
+  transform: none !important;
+}
+html[data-versi="biru"] .kartu-ikon,
+html[data-versi="biru"] .kartu-pita,
+html[data-versi="biru"] .kartu-waktu .unit { display: none; }
+html[data-versi="biru"] .kartu-waktu .nama { font-size: clamp(14px, 3.0vw, 64px); line-height: 1; color: var(--biru-900); font-weight: 700; }
+html[data-versi="biru"] .kartu-waktu .jam { font-size: clamp(18px, 3.8vw, 88px); line-height: 1; color: #111827; font-weight: 800; }
+html[data-versi="biru"] .kartu-waktu.aktif .nama,
+html[data-versi="biru"] .kartu-waktu.aktif .jam { color: var(--biru-emas); }
+
+html[data-versi="biru"] .kartu-waktu[data-key="imsak"]   { display: none; }
+html[data-versi="biru"] .kartu-waktu[data-key="subuh"]   { left: 5.3%;  top: 6.0%;  width: 28.0%; height: 18.8%; }
+html[data-versi="biru"] .kartu-waktu[data-key="terbit"]  { left: 5.3%;  top: 26.9%; width: 28.0%; height: 18.5%; }
+html[data-versi="biru"] .kartu-waktu[data-key="dzuhur"]  { left: 5.3%;  top: 47.7%; width: 28.0%; height: 17.8%; }
+html[data-versi="biru"] .kartu-waktu[data-key="ashar"]   { left: 5.3%;  top: 68.2%; width: 28.0%; height: 17.8%; }
+html[data-versi="biru"] .kartu-waktu[data-key="maghrib"] { left: 34.9%; top: 68.2%; width: 28.0%; height: 17.8%; }
+html[data-versi="biru"] .kartu-waktu[data-key="isya"]    { left: 63.9%; top: 68.2%; width: 28.0%; height: 17.8%; }
+
+/* Jam analog hidup - gaya & posisi samain kayak jam foto asli di
+   img/jadwal-sholat.jpeg (wajah putih, angka 1-12, jarum jam/menit hitam,
+   jarum detik merah). Ukuran pakai vw supaya tetap lingkaran sempurna
+   (aspect-ratio:1 dari lebar, bukan campur vw+vh). */
+html[data-versi="biru"] #jam-analog {
+  display: block;
+  position: fixed;
+  left: 46.5%;
+  top: 2vh;
+  width: 18.5vw;
+  aspect-ratio: 1;
+  z-index: 2;
+}
+html[data-versi="biru"] .jam-analog-wajah {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #faf8f2;
+  border: clamp(6px, 0.9vw, 14px) solid #17181c;
+  box-shadow:
+    0 0 0 clamp(2px, 0.3vw, 4px) rgba(255, 255, 255, 0.55) inset,
+    0 10px 30px rgba(0, 0, 0, 0.45);
+}
+html[data-versi="biru"] .jam-analog-angka-wrap { position: absolute; inset: 0; }
+html[data-versi="biru"] .jam-analog-angka {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-weight: 700;
+  font-size: clamp(9px, 1.05vw, 16px);
+  color: #111;
+  transform: translate(-50%, -50%) rotate(calc(var(--n) * 30deg)) translateY(-7.3vw) rotate(calc(var(--n) * -30deg));
+}
+html[data-versi="biru"] .jam-analog-jarum {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom center;
+  border-radius: 4px;
+}
+html[data-versi="biru"] .jam-analog-jam { width: 2.6%; height: 25%; margin-left: -1.3%; background: #17181c; }
+html[data-versi="biru"] .jam-analog-menit { width: 1.8%; height: 35%; margin-left: -0.9%; background: #17181c; }
+html[data-versi="biru"] .jam-analog-detik { width: 0.7%; height: 39%; margin-left: -0.35%; background: #b3261e; }
+html[data-versi="biru"] .jam-analog-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5%;
+  height: 5%;
+  margin: -2.5%;
+  border-radius: 50%;
+  background: #b3261e;
+  border: 2px solid #17181c;
+}
+
+

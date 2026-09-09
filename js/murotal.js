@@ -11,7 +11,7 @@ export function loadMurotal() {
       ...s,
       perSholat: { ...DEFAULT_MUROTAL.perSholat, ...(s.perSholat || {}) },
       posisi: { ...DEFAULT_MUROTAL.posisi, ...(s.posisi || {}) },
-      playlist: Array.isArray(s.playlist) ? s.playlist : [],
+      playlist: Array.isArray(s.playlist) ? s.playlist : DEFAULT_MUROTAL.playlist,
     };
   } catch {
     return { ...DEFAULT_MUROTAL };
@@ -24,8 +24,14 @@ export function saveMurotal(s) {
 
 // Sholat yang jendela murotalnya sedang aktif, atau null.
 // Jendela key = [jamSholat - mulaiMenit, jamSholat - berhentiMenit).
-export function murotalWindow(now, jadwal, settings) {
+// paksa: dipakai mode Demo Layar (?demo=1) biar murotal ikut kedengaran tanpa
+// nunggu jendela waktu asli - tetap hormati toggle aktif & perSholat.
+export function murotalWindow(now, jadwal, settings, paksa) {
   if (!settings.aktif) return null;
+  if (paksa) {
+    const s = SHOLAT.find((x) => settings.perSholat[x.key]);
+    return s ? { key: s.key } : null;
+  }
   for (const { key } of SHOLAT) {
     if (!settings.perSholat[key]) continue;
     const t = parseHM(jadwal[key], now);
@@ -149,10 +155,10 @@ function hentikan(simpan, gagalTotal) {
   if (gagalTotal) jendelaGagal = winAktifKey;
 }
 
-export function tickMurotal(now, jadwal) {
+export function tickMurotal(now, jadwal, paksa) {
   if (!audioEl) return;
   const s = loadMurotal();
-  const win = murotalWindow(now, jadwal, s);
+  const win = murotalWindow(now, jadwal, s, paksa);
   winAktifKey = win ? win.key : null;
   if (!win || win.key !== jendelaGagal) jendelaGagal = null; // keluar jendela gagal -> reset ingatan
   if (win && !sedangMain && win.key !== jendelaGagal) {

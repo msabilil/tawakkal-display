@@ -41,6 +41,13 @@ eq("aktif false null", murotalWindow(hari(11,40), jadwal, { ...set, aktif: false
 // berhentiMenit 0 -> jendela sampai pas adzan. 11:50 -> aktif.
 eq("berhenti0 sampai adzan", murotalWindow(hari(11,50), jadwal, { ...set, berhentiMenit: 0 }), { key: "dzuhur" });
 
+// paksa (mode Demo Layar): aktif walau di luar jendela waktu asli...
+eq("paksa aktif di luar jendela", murotalWindow(hari(3,0), jadwal, set, true), { key: "subuh" });
+// ...tapi tetap hormati toggle aktif global...
+eq("paksa tetap null kalau aktif false", murotalWindow(hari(3,0), jadwal, { ...set, aktif: false }, true), null);
+// ...dan toggle perSholat (pilih sholat pertama yang perSholat-nya true).
+eq("paksa lompat ke sholat pertama yang aktif", murotalWindow(hari(3,0), jadwal, { ...set, perSholat: { ...set.perSholat, subuh: false } }, true), { key: "dzuhur" });
+
 out.unshift(`${pass} PASS, ${fail} FAIL\n`);
 document.getElementById("out").textContent = out.join("\n");
 console.log(out.join("\n"));

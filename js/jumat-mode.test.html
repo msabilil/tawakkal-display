@@ -1,0 +1,37 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test jumat-mode.js</title>
+<pre id="out"></pre>
+<script type="module">
+import { jumatState, loadJumatSlides, saveJumatSlides, saveJumatSettings } from "./jumat-mode.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+const jadwal = { subuh:"04:34", dzuhur:"11:52", ashar:"15:09", maghrib:"17:56", isya:"19:01" };
+const slide = { id: "1", tipe: "gambar", file: "jumat-1.jpg", durasiDetik: 8 };
+
+// Jumat 2026-09-04, dzuhur 11:52, durasi default 60 menit
+saveJumatSettings({ durasiMenit: 60 });
+
+localStorage.removeItem("jumatSlides");
+eq("kosong slide -> null walau Jumat & jam pas", jumatState(new Date(2026,8,4,11,55,0), jadwal), null);
+
+saveJumatSlides([slide]);
+eq("Jumat, 3 menit setelah dzuhur, ada slide -> aktif", jumatState(new Date(2026,8,4,11,55,0), jadwal) !== null, true);
+eq("Jumat, tepat 61 menit setelah dzuhur -> lewat window", jumatState(new Date(2026,8,4,12,53,0), jadwal), null);
+eq("Kamis (bukan Jumat), jam sama -> null", jumatState(new Date(2026,8,3,11,55,0), jadwal), null);
+eq("Jumat, sebelum dzuhur -> null", jumatState(new Date(2026,8,4,10,0,0), jadwal), null);
+
+localStorage.removeItem("jumatSlides");
+localStorage.removeItem("jumatSettings");
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>

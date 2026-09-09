@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo Layar</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+  #demo-frame { position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; }
+  #demo-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 8px 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font: 600 14px/1.2 system-ui, sans-serif;
+    z-index: 10;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  }
+  #demo-bar button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    cursor: pointer;
+    font-size: 15px;
+  }
+  #demo-bar button:hover { background: rgba(255, 255, 255, 0.22); }
+  #demo-bar button:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+  #demo-label { min-width: 170px; text-align: center; }
+  #demo-hitung { display: block; font-weight: 400; opacity: 0.7; font-size: 11px; margin-top: 1px; }
+  #demo-aksi {
+    position: fixed;
+    right: 2vw;
+    bottom: 2vh;
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+  }
+  #demo-aksi a,
+  #demo-aksi button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  }
+  #demo-aksi a:hover,
+  #demo-aksi button:hover { background: rgba(30, 41, 59, 0.9); }
+  #demo-aksi a:focus-visible,
+  #demo-aksi button:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+</style>
+</head>
+<body>
+  <iframe id="demo-frame" title="Demo layar" allow="fullscreen 'none'"></iframe>
+  <div id="demo-bar">
+    <button type="button" id="demo-prev" aria-label="Layar sebelumnya">&#8592;</button>
+    <button type="button" id="demo-play" aria-label="Jeda">&#10074;&#10074;</button>
+    <button type="button" id="demo-next" aria-label="Layar berikutnya">&#8594;</button>
+    <span id="demo-label"><span id="demo-nama"></span><span id="demo-hitung"></span></span>
+  </div>
+  <div id="demo-aksi">
+    <button type="button" id="tombol-fullscreen" aria-label="Layar penuh">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" />
+        <path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+      </svg>
+    </button>
+  </div>
+  <script type="module" src="js/demo.js"></script>
+</body>
+</html>

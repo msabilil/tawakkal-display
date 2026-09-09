@@ -9,7 +9,7 @@ export function dateKey(date) {
   return `${y}-${m}-${d}`;
 }
 
-function readCache() {
+export function readCache() {
   try {
     return JSON.parse(localStorage.getItem(CACHE_KEY));
   } catch {

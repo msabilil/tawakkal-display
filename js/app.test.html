@@ -3,7 +3,7 @@
 <title>Test app.js</title>
 <pre id="out"></pre>
 <script type="module">
-import { parseHM, nextSholat, iqomahState } from "./app.js";
+import { parseHM, nextSholat, iqomahState, harusResumeIqomah } from "./app.js";
 
 const out = [];
 let pass = 0, fail = 0;
@@ -46,6 +46,15 @@ eq("iqomah nonaktif null", iqomahState(t3, jadwal, iqOff), null);
 // menit 0 -> null
 const iqZero = JSON.parse(JSON.stringify(iq)); iqZero.dzuhur.menit=0;
 eq("iqomah menit0 null", iqomahState(t3, jadwal, iqZero), null);
+
+// harusResumeIqomah: dipakai supaya refresh di tengah adzan/iqomah tidak
+// reset hitung mundur ke awal (bug: state lama kehapus balik ke sholat lagi).
+const t0 = Date.parse("2026-09-03T11:55:00");
+const iqomahEndTime = new Date(t0 + 5 * 60000).toISOString();
+eq("resume: key sama & belum lewat", harusResumeIqomah({ key: "dzuhur", iqomahEndTime }, "dzuhur", t0), true);
+eq("resume: key beda -> false", harusResumeIqomah({ key: "ashar", iqomahEndTime }, "dzuhur", t0), false);
+eq("resume: sudah lewat -> false", harusResumeIqomah({ key: "dzuhur", iqomahEndTime }, "dzuhur", t0 + 10 * 60000), false);
+eq("resume: tidak ada state lama -> false", harusResumeIqomah(null, "dzuhur", t0), false);
 
 out.unshift(`${pass} PASS, ${fail} FAIL\n`);
 document.getElementById("out").textContent = out.join("\n");

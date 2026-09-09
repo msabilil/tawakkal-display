@@ -1,8 +1,11 @@
 export const ID_KOTA = "1219";
 export const NAMA_MASJID = "Masjid At-Tawakkal 2";
+export const TAGLINE_MASJID = "Kebersamaan dalam kebaikan";
 export const LOKASI_LABEL = "Astana Anyar, Kota Bandung";
 
-// Teks pengumuman berjalan di footer layar utama. Edit array ini untuk ganti isi.
+// Teks pengumuman berjalan di footer layar utama (default/fallback). Bisa
+// diubah lewat admin (lihat js/settings.js loadPengumuman/savePengumuman) -
+// array ini cuma dipakai kalau belum ada yang tersimpan di localStorage.
 export const PENGUMUMAN = [
   "Lurus dan rapatkan shaf untuk kesempurnaan sholat berjamaah.",
   "Mohon matikan atau senyapkan nada dering ponsel saat berada di dalam ruang utama masjid.",
@@ -41,13 +44,47 @@ export const QORI = {
   "06": "Yasser Al-Dosari",
 };
 
+// Durasi layar Adzan (hitung mundur sendiri) sebelum otomatis pindah ke layar
+// Iqomah (hitung mundur terpisah, penuh sesuai menit jeda di DEFAULT_IQOMAH -
+// lihat app.js mulaiIqomah, dua durasi ini independen/berurutan, bukan dipotong).
+export const DEFAULT_ADZAN = { menit: 5 };
+
+// Durasi total layar Jum'at (dari azan Dzuhur) sebelum otomatis balik ke
+// jadwal sholat. Cuma aktif kalau ada minimal 1 slide tersimpan (lihat
+// jumat-mode.js jumatState).
+export const DEFAULT_JUMAT = { durasiMenit: 60 };
+
+// Playlist bawaan (tanpa perlu setting) - streaming langsung dari CDN
+// EQuran.id, pola URL-nya sama dengan yang dipakai fitur "Tambah dari API"
+// di admin (lihat js/admin.js tambahApiMurotal): audio-full/<Nama-Qori>/<no-3-digit>.mp3
+const QORI_BAWAAN = "05"; // Misyari Rasyid Al-Afasi
+const SURAH_BAWAAN = [
+  { nomor: 36, nama: "Yasin" },
+  { nomor: 18, nama: "Al-Kahfi" },
+  { nomor: 67, nama: "Al-Mulk" },
+];
+function urlMurotalBawaan(nomor) {
+  const slug = QORI[QORI_BAWAAN].replace(/ /g, "-");
+  return `https://cdn.equran.id/audio-full/${slug}/${String(nomor).padStart(3, "0")}.mp3`;
+}
+
 export const DEFAULT_MUROTAL = {
-  aktif: false,               // baru main setelah pengurus aktifkan & isi playlist
+  aktif: true,
   mulaiMenit: 15,             // mulai murotal X menit sebelum jam sholat
   berhentiMenit: 3,           // berhenti Y menit sebelum jam sholat (0 = sampai pas adzan)
   perSholat: { subuh: true, dzuhur: true, ashar: true, maghrib: true, isya: true },
-  playlist: [],               // item: {id,tipe:"offline",label,mediaKey} atau {id,tipe:"api",label,surah,qori,url}
+  // item: {id,tipe:"offline",label,mediaKey} atau {id,tipe:"api",label,surah,qori,url}
+  playlist: SURAH_BAWAAN.map(({ nomor, nama }) => ({
+    id: `bawaan-${nomor}`,
+    tipe: "api",
+    surah: nomor,
+    qori: QORI_BAWAAN,
+    label: `${nama} - ${QORI[QORI_BAWAAN]}`,
+    url: urlMurotalBawaan(nomor),
+  })),
   posisi: { index: 0, detik: 0 },
 };
 
-export const DEFAULT_ROTASI = { jadwalPengajianDetik: 20, qrDonasiDetik: 15 };
+// sholatDetik: berapa lama layar jadwal sholat tampil sebelum gantian ke
+// layar QR/kegiatan berikutnya (kalau ada isinya).
+export const DEFAULT_ROTASI = { sholatDetik: 60, jadwalPengajianDetik: 20, qrDonasiDetik: 15 };

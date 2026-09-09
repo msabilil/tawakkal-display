@@ -30,19 +30,24 @@ export function iqomahState(now, jadwal, iqomahSettings) {
   return null;
 }
 
-import { NAMA_MASJID, PENGUMUMAN, WAKTU_HARIAN } from "./config.js";
+import { NAMA_MASJID, TAGLINE_MASJID, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
-import { loadIqomah } from "./settings.js";
-import { loadOverride, terapkanOverride } from "./testing.js";
+import { loadIqomah, loadAdzan, loadPengumuman } from "./settings.js";
 import { loadTampilan } from "./tampilan.js";
 import { ICONS } from "./icons.js";
 import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
-import { renderSlotRotasi } from "./rotasi.js";
+import { tickHalamanSholat, mulaiSesiSholat } from "./rotasi.js";
+import { jumatState } from "./jumat-mode.js";
+import { tampilkan } from "./navigasi.js";
 
 const IQOMAH_KEY = "iqomahAktif";
+const JUMAT_KEY = "jumatAktif";
+// ?demo=1 dipakai slide "Jadwal Sholat" di Demo Layar (js/demo-slide.js) biar
+// murotal ikut kedengaran tanpa nunggu jendela waktu asli - lihat murotal.js.
+const modeDemo = new URLSearchParams(location.search).get("demo") === "1";
 
 // State modul
-let jadwal = null;         // {imsak,subuh,terbit,dzuhur,ashar,maghrib,isya}
+let jadwal = null;         // {imsak,subuh,terbit,dzuhur,ashar,maghrib,isya} dari API/cache
 let jadwalDateKey = null;  // "YYYY-MM-DD" jadwal yang sedang dipakai
 let offline = false;
 let fetchedAt = null;
@@ -60,6 +65,7 @@ function fmtDurasi(totalDetik) {
 
 function renderStatis() {
   $("nama-masjid").textContent = NAMA_MASJID;
+  $("topbar-sub").textContent = TAGLINE_MASJID;
   const tampilan = loadTampilan();
   $("topbar").hidden = !tampilan.header;
   $("marquee-bar").hidden = !tampilan.maklumat;
@@ -67,7 +73,7 @@ function renderStatis() {
 
 function renderMarquee() {
   const item = (teks) => `<span class="marquee-item"><span class="marquee-bullet">&#10022;</span>${teks}</span>`;
-  const isi = PENGUMUMAN.map(item).join("");
+  const isi = loadPengumuman().map(item).join("");
   $("marquee-track").innerHTML = isi + isi; // digandakan biar animasi loop mulus
 }
 
@@ -78,19 +84,20 @@ function renderTanggal(now) {
   try {
     $("tanggal-hijriah").textContent = new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
       day: "numeric", month: "long", year: "numeric",
-    }).format(now) + " H";
+    }).format(now);
   } catch {
     $("tanggal-hijriah").textContent = "";
   }
 }
 
 function renderGrid(next) {
-  const grid = $("grid-sholat");
-  grid.innerHTML = "";
+  const elemenAkar = $("grid-sholat");
+  elemenAkar.innerHTML = "";
   for (const { key, label, icon } of WAKTU_HARIAN) {
     const aktif = next && next.key === key;
     const div = document.createElement("div");
     div.className = "kartu-waktu" + (aktif ? " aktif" : "");
+    div.dataset.key = key;
     div.innerHTML = `
       ${aktif ? '<span class="kartu-pita">Waktu Berikutnya</span>' : ""}
       <span class="kartu-ikon">${ICONS[icon] || ""}</span>
@@ -98,7 +105,7 @@ function renderGrid(next) {
       <span class="jam">${jadwal[key] || "--:--"}</span>
       <span class="unit">WIB</span>
     `;
-    grid.appendChild(div);
+    elemenAkar.appendChild(div);
   }
 }
 
@@ -113,36 +120,35 @@ function renderOffline() {
   }
 }
 
-function renderTesting() {
-  $("testing-indikator").hidden = !loadOverride().aktif;
+// Jam analog (dipakai tema Masjid Biru, lihat css/versi-biru.css - disembunyikan
+// buat tema lain). Angka dibuat sekali; jarum diputar tiap detik di tick().
+function buatJamAnalogAngka() {
+  const wrap = $("jam-analog-angka");
+  for (let n = 1; n <= 12; n++) {
+    const span = document.createElement("span");
+    span.className = "jam-analog-angka";
+    span.style.setProperty("--n", n);
+    span.textContent = n;
+    wrap.appendChild(span);
+  }
 }
 
-const IKON_MAXIMIZE = `<path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" />`;
-const IKON_MINIMIZE = `<path d="M15 19v-2a2 2 0 0 1 2 -2h2" /><path d="M15 5v2a2 2 0 0 0 2 2h2" /><path d="M5 15h2a2 2 0 0 1 2 2v2" /><path d="M5 9h2a2 2 0 0 0 2 -2v-2" />`;
-
-function setupFullscreen() {
-  const btn = $("tombol-fullscreen");
-  const svg = btn.querySelector("svg");
-  function sync() {
-    const full = !!document.fullscreenElement;
-    svg.innerHTML = full ? IKON_MINIMIZE : IKON_MAXIMIZE;
-    btn.setAttribute("aria-label", full ? "Keluar layar penuh" : "Layar penuh");
-  }
-  btn.addEventListener("click", () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  });
-  document.addEventListener("fullscreenchange", sync);
-  sync();
+function tickJamAnalog(now) {
+  const jam = now.getHours() % 12;
+  const menit = now.getMinutes();
+  const detik = now.getSeconds();
+  const derajatJam = jam * 30 + menit * 0.5;
+  const derajatMenit = menit * 6 + detik * 0.1;
+  const derajatDetik = detik * 6;
+  $("jarum-jam").style.transform = `rotate(${derajatJam}deg)`;
+  $("jarum-menit").style.transform = `rotate(${derajatMenit}deg)`;
+  $("jarum-detik").style.transform = `rotate(${derajatDetik}deg)`;
 }
 
 async function muatJadwal(now) {
   try {
     const r = await getJadwal(now);
-    jadwal = terapkanOverride(r.jadwal);
+    jadwal = r.jadwal;
     offline = r.fromCache;
     fetchedAt = r.fetchedAt;
     jadwalDateKey = dateKey(now);
@@ -151,22 +157,61 @@ async function muatJadwal(now) {
     offline = true;
   }
   renderOffline();
-  renderTesting();
+}
+
+// Exported murni buat testable - lihat app.test.html. Nentuin apa hitung
+// mundur iqomah yang sudah tersimpan (mis. sebelum refresh halaman) masih
+// valid dilanjut, atau harus dihitung ulang dari awal (sholat baru/expired).
+export function harusResumeIqomah(existing, iqKey, nowMs) {
+  return !!existing && existing.key === iqKey && nowMs < new Date(existing.iqomahEndTime).getTime();
+}
+
+function bacaIqomahState() {
+  try {
+    return JSON.parse(localStorage.getItem(IQOMAH_KEY));
+  } catch {
+    return null;
+  }
 }
 
 function mulaiIqomah(iq) {
   stopMurotal();
-  const endTime = new Date(Date.now() + iq.sisaDetik * 1000).toISOString();
-  localStorage.setItem(IQOMAH_KEY, JSON.stringify({ key: iq.key, label: iq.label, endTime }));
-  location.href = "iqomah.html";
+  const now = Date.now();
+  if (harusResumeIqomah(bacaIqomahState(), iq.key, now)) {
+    // Sudah ada hitung mundur berjalan buat sholat yang sama (mis. balik
+    // dari refresh) - lanjutkan pakai endTime lama, jangan reset ke awal.
+    tampilkan("iqomah");
+    return;
+  }
+  // Fase Adzan dan fase Iqomah dua durasi terpisah, berurutan (bukan dipotong
+  // dari total yang sama): adzan penuh sesuai menit di setting Adzan, BARU
+  // iqomah dihitung penuh sesuai menit jeda di setting Iqomah sholat ini.
+  const adzanDetik = loadAdzan().menit * 60;
+  const adzanEndTime = new Date(now + adzanDetik * 1000).toISOString();
+  const iqomahEndTime = new Date(now + (adzanDetik + iq.totalDetik) * 1000).toISOString();
+  localStorage.setItem(IQOMAH_KEY, JSON.stringify({ key: iq.key, label: iq.label, adzanEndTime, iqomahEndTime }));
+  tampilkan("iqomah");
+}
+
+function mulaiJumat(jum) {
+  stopMurotal();
+  localStorage.setItem(JUMAT_KEY, JSON.stringify({ endTime: jum.endTime }));
+  tampilkan("jumat");
 }
 
 function tick() {
   const now = new Date();
   $("jam").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   renderTanggal(now);
+  tickJamAnalog(now);
 
   if (!jadwal) return; // belum ada data
+
+  const jum = jumatState(now, jadwal);
+  if (jum) {
+    mulaiJumat(jum);
+    return;
+  }
 
   const iqSettings = loadIqomah();
   const iq = iqomahState(now, jadwal, iqSettings);
@@ -183,24 +228,37 @@ function tick() {
   // Ditaruh terakhir dengan sengaja: kalau salah satu ini throw (mis. data
   // hasil edit manual di localStorage rusak), grid/countdown di atas sudah
   // sempat ter-update untuk tick ini - display utama tidak ikut macet.
-  tickMurotal(now, jadwal);
-  renderSlotRotasi($("slot-rotasi"), now);
+  tickMurotal(now, jadwal, modeDemo);
+  tickHalamanSholat(now);
 }
 
-async function init() {
-  renderStatis();
-  renderMarquee();
-  setupFullscreen();
+let intervalId = null;
+
+// Dipanggil sekali dari kiosk.js sebelum view manapun jalan - bagian yang
+// pasang event listener atau bangun DOM sekali jadi (bukan per-kunjungan),
+// beda dari start() yang dipanggil ULANG tiap balik ke view sholat.
+export function initSekali() {
+  buatJamAnalogAngka();
   initMurotal({
     audioEl: $("audio-murotal"),
     indikatorEl: $("murotal-indikator"),
     labelEl: $("murotal-label"),
     overlayEl: $("unlock-audio"),
   });
-  localStorage.removeItem(IQOMAH_KEY); // kembali dari iqomah.html, bersihkan state lama
-  await muatJadwal(new Date());
-  tick();
-  setInterval(() => {
+}
+
+// Dipanggil router (navigasi.js) tiap masuk view "sholat". Return stop()
+// buat dipanggil router pas pindah ke view lain.
+export function start() {
+  renderStatis();
+  renderMarquee();
+  mulaiSesiSholat();
+  const now = new Date();
+  // Sudah punya jadwal hari ini di memori (balik dari view lain, bukan boot
+  // pertama) - jangan fetch API lagi tiap kali masuk view ini.
+  if (jadwal && jadwalDateKey === dateKey(now)) tick();
+  else muatJadwal(now).then(tick);
+  intervalId = setInterval(() => {
     const now = new Date();
     // Ganti hari: fetch jadwal baru (dipicu setelah lewat tengah malam)
     if (jadwalDateKey && dateKey(now) !== jadwalDateKey) {
@@ -208,10 +266,10 @@ async function init() {
     }
     tick();
   }, 1000);
+  return stop;
 }
 
-// Guard: jangan auto-jalan saat file ini di-import untuk unit test (app.test.html),
-// yang tidak punya elemen DOM layar utama seperti #jam.
-if (typeof document !== "undefined" && document.getElementById("jam")) {
-  init();
+function stop() {
+  if (intervalId) clearInterval(intervalId);
+  intervalId = null;
 }
