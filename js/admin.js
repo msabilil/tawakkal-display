@@ -52,7 +52,7 @@ function renderIqomah() {
       <span class="ikon-baris" aria-hidden="true">${IKON_IQOMAH}</span>
       <div class="baris-kaya-teks">
         <label class="label-sholat" for="menit-${key}">${label}</label>
-        <p class="hint-baris">Jeda menit dari azan ke iqomah.</p>
+        <p class="hint-baris">Jeda menit dari azan ke iqomah. Adzan tetap selalu tampil - centang di samping cuma nyalain hitung mundur iqomah setelahnya.</p>
       </div>
       <div class="baris-kaya-kontrol">
         <div class="stepper">
@@ -61,7 +61,7 @@ function renderIqomah() {
           <span class="stepper-satuan">menit</span>
           <button type="button" class="stepper-btn" data-target="menit-${key}" data-arah="1" aria-label="Tambah jeda ${label}">+</button>
         </div>
-        <label class="aktif-cek"><input type="checkbox" id="aktif-${key}" ${s.aktif ? "checked" : ""} aria-label="${label} aktif"></label>
+        <label class="aktif-cek"><input type="checkbox" id="aktif-${key}" ${s.aktif ? "checked" : ""} aria-label="Iqomah ${label} aktif"></label>
       </div>
     `;
     wrap.appendChild(row);

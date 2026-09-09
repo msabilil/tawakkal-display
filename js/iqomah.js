@@ -29,7 +29,7 @@ function bacaState() {
 function render(fase, label, sisaDetik) {
   document.body.classList.toggle("fase-adzan", fase === "adzan");
   document.body.classList.toggle("fase-iqomah", fase === "iqomah");
-  elJudul.textContent = fase === "adzan" ? `Waktu ${label} Telah Masuk` : `Sesaat Lagi Iqomah ${label}`;
+  elJudul.textContent = fase === "adzan" ? `Waktu ${label} Telah Masuk` : `Iqomah ${label}`;
   elAdzanLabel.textContent = `Adzan ${label}`;
   elWaktu.textContent = fmtMenitDetik(Math.max(sisaDetik, 0));
   terapkanBgLayar(fase, document.body);

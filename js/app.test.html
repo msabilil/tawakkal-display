@@ -29,23 +29,30 @@ const t2 = new Date(2026, 8, 3, 20, 0, 0);
 eq("next malam key", nextSholat(t2, jadwal).key, "subuh");
 eq("next malam besok", nextSholat(t2, jadwal).time.getDate(), 4);
 
-// iqomahState: Kamis 11:55 (3 menit setelah dzuhur, window 10 mnt) -> aktif
+// iqomahState: Kamis 11:55 (3 menit setelah dzuhur, adzan 5mnt + window iqomah 10 mnt) -> aktif
 const t3 = new Date(2026, 8, 3, 11, 55, 0);
-const s3 = iqomahState(t3, jadwal, iq);
+const s3 = iqomahState(t3, jadwal, iq, 5);
 eq("iqomah aktif key", s3 && s3.key, "dzuhur");
-eq("iqomah sisa detik", s3 && s3.sisaDetik, 7*60); // 10mnt-3mnt=7mnt
-// Kamis 12:05 (13 menit setelah dzuhur) -> lewat window -> null
-eq("iqomah lewat", iqomahState(new Date(2026,8,3,12,5,0), jadwal, iq), null);
+eq("iqomah total detik", s3 && s3.totalDetik, 10*60); // fase iqomah = 10 menit penuh
+// Kamis 12:10 (18 menit setelah dzuhur, adzan5+iqomah10=15mnt) -> lewat window -> null
+eq("iqomah lewat", iqomahState(new Date(2026,8,3,12,10,0), jadwal, iq, 5), null);
 // Kamis 10:00 -> bukan waktu sholat -> null
-eq("iqomah bukan waktu", iqomahState(t1, jadwal, iq), null);
+eq("iqomah bukan waktu", iqomahState(t1, jadwal, iq, 5), null);
 // Jumat 11:55 dzuhur -> dilewati -> null
-eq("iqomah jumat dzuhur null", iqomahState(new Date(2026,8,4,11,55,0), jadwal, iq), null);
-// sholat nonaktif -> null
+eq("iqomah jumat dzuhur null", iqomahState(new Date(2026,8,4,11,55,0), jadwal, iq, 5), null);
+// iqomah nonaktif -> adzan tetap wajib tampil (window cuma sepanjang adzan, fase iqomah 0 detik)
 const iqOff = JSON.parse(JSON.stringify(iq)); iqOff.dzuhur.aktif=false;
-eq("iqomah nonaktif null", iqomahState(t3, jadwal, iqOff), null);
-// menit 0 -> null
+const sOff = iqomahState(t3, jadwal, iqOff, 5);
+eq("iqomah nonaktif tetap adzan", sOff && sOff.key, "dzuhur");
+eq("iqomah nonaktif totalDetik 0", sOff && sOff.totalDetik, 0);
+// iqomah nonaktif & sudah lewat durasi adzan (3mnt bukan didalam 5mnt adzan, ini di dalam) -> cek di luar window adzan -> null
+eq("iqomah nonaktif lewat adzan null", iqomahState(new Date(2026,8,3,11,58,0), jadwal, iqOff, 5), null);
+// menit 0 tapi aktif=true -> sama seperti nonaktif, adzan tetap tampil
 const iqZero = JSON.parse(JSON.stringify(iq)); iqZero.dzuhur.menit=0;
-eq("iqomah menit0 null", iqomahState(t3, jadwal, iqZero), null);
+const sZero = iqomahState(t3, jadwal, iqZero, 5);
+eq("iqomah menit0 tetap adzan", sZero && sZero.key, "dzuhur");
+// adzan 0 menit & iqomah nonaktif -> benar-benar tidak ada apa-apa
+eq("iqomah & adzan nonaktif -> null", iqomahState(t3, jadwal, iqOff, 0), null);
 
 // harusResumeIqomah: dipakai supaya refresh di tengah adzan/iqomah tidak
 // reset hitung mundur ke awal (bug: state lama kehapus balik ke sholat lagi).

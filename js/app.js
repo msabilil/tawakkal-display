@@ -14,15 +14,22 @@ export function nextSholat(now, jadwal) {
   return { key: subuh.key, label: subuh.label, time: parseHM(jadwal[subuh.key], besok) };
 }
 
-export function iqomahState(now, jadwal, iqomahSettings) {
+// Adzan wajib tampil buat semua sholat (durasi dari setting Adzan global,
+// tidak bisa dimatikan). Toggle "aktif" per sholat cuma nentuin apa fase
+// Iqomah (hitung mundur) lanjut jalan SETELAH adzan selesai, atau layar
+// langsung balik ke jadwal sholat begitu adzan beres (lihat mulaiIqomah &
+// iqomah.js tick - adzanEndTime === iqomahEndTime kalau iqomah nonaktif).
+export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
   for (const { key, label } of SHOLAT) {
     if (now.getDay() === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
-    const set = iqomahSettings[key];
-    if (!set || !set.aktif || set.menit <= 0) continue;
+    const set = iqomahSettings[key] || {};
+    const iqomahMenit = set.aktif && set.menit > 0 ? set.menit : 0;
+    const totalMenit = adzanMenit + iqomahMenit;
+    if (totalMenit <= 0) continue; // adzan 0 menit & iqomah nonaktif -> tidak ada apa-apa
     const start = parseHM(jadwal[key], now);
-    const end = new Date(start.getTime() + set.menit * 60000);
+    const end = new Date(start.getTime() + totalMenit * 60000);
     if (now >= start && now < end) {
-      const totalDetik = set.menit * 60;
+      const totalDetik = iqomahMenit * 60; // durasi fase iqomah saja, dipakai mulaiIqomah()
       const sisaDetik = Math.ceil((end - now) / 1000);
       return { key, label, sisaDetik, totalDetik };
     }
@@ -214,7 +221,7 @@ function tick() {
   }
 
   const iqSettings = loadIqomah();
-  const iq = iqomahState(now, jadwal, iqSettings);
+  const iq = iqomahState(now, jadwal, iqSettings, loadAdzan().menit);
   if (iq) {
     mulaiIqomah(iq);
     return;
