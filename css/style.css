@@ -1491,20 +1491,24 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
    tema Zamrud Emas alih-alih hitam. */
 body.halaman-hening { height: 100vh; margin: 0; background: #000 !important; }
 
-/* ---------- Halaman Kegiatan Terdekat (view "acara") - poster foto latar penuh, tanpa teks ---------- */
-/* !important - alasan sama seperti di atas; background-image sendiri
-   diset via JS (terapkanBgLayar, inline style) yang otomatis menang lawan
-   shorthand tema tanpa !important, TAPI size/position/repeat-nya tetap
-   perlu !important di sini supaya tidak balik ke default (auto/repeat) -
-   itu yang bikin 1 gambar keliatan ke-tile berkali-kali di tema Zamrud Emas. */
-body.halaman-acara {
-  height: 100vh;
-  margin: 0;
-  background-color: #000 !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
+/* ---------- Halaman Kegiatan Terdekat (view "acara") - slideshow gambar full-bleed, bisa lebih dari satu ---------- */
+/* !important background-color - sama alasan seperti hening di atas, jaga
+   dasarnya tetap hitam sebelum/di antara gambar (bukan soal tile lagi,
+   sekarang pakai <img> object-fit:cover kayak jumat.js, bukan CSS
+   background-image lagi). */
+body.halaman-acara { height: 100vh; margin: 0; overflow: hidden; background: #000 !important; display: flex; align-items: center; justify-content: center; }
+.acara-media { position: fixed; inset: 0; }
+.acara-media img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  opacity: 0;
+  transition: opacity 700ms ease;
 }
+.acara-media img.tampil { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .acara-media img { transition-duration: 1ms; }
+}
+.acara-kosong { position: relative; color: #fff; opacity: 0.7; font-size: clamp(16px, 1.8vw, 24px); }
 
 /* ---------- Halaman Jum'at (view "jumat") - slideshow gambar/video full-bleed ---------- */
 body.halaman-jumat { height: 100vh; margin: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }

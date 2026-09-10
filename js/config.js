@@ -87,7 +87,7 @@ export const DEFAULT_MUROTAL = {
 
 // sholatDetik: berapa lama layar jadwal sholat tampil sebelum gantian ke
 // layar QR/kegiatan berikutnya (kalau ada isinya).
-export const DEFAULT_ROTASI = { sholatDetik: 60, jadwalPengajianDetik: 20, qrDonasiDetik: 15, acaraDetik: 15 };
+export const DEFAULT_ROTASI = { sholatDetik: 60, jadwalPengajianDetik: 20, qrDonasiDetik: 15 };
 
 // Kegiatan Terdekat: layar poster (cuma foto latar, tanpa teks) yang tampil
 // otomatis di rentang menit sebelum/sesudah SETIAP waktu sholat (bukan

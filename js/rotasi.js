@@ -1,7 +1,6 @@
 import { DEFAULT_ROTASI } from "./config.js";
 import { loadJadwalPengajian, entriAktif } from "./jadwal-pengajian.js";
-import { loadAcara, acaraAktif } from "./acara-mode.js";
-import { urlBgLayar } from "./bg-layar.js";
+import { loadAcara, acaraAktif, loadAcaraSlides } from "./acara-mode.js";
 import { readCache } from "./api.js";
 import { tampilkan } from "./navigasi.js";
 import { cloudSet } from "./cloud.js";
@@ -48,7 +47,7 @@ export function kartuTersedia(now) {
   const kartu = [];
   if (loadQr()) kartu.push("qr");
   const cache = readCache();
-  if (cache && cache.jadwal && urlBgLayar("acara") && acaraAktif(now, cache.jadwal, loadAcara())) kartu.push("acara");
+  if (cache && cache.jadwal && loadAcaraSlides().length && acaraAktif(now, cache.jadwal, loadAcara())) kartu.push("acara");
   if (entriAktif(now, loadJadwalPengajian()).length) kartu.push("kegiatan");
   return kartu;
 }

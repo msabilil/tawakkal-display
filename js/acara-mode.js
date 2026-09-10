@@ -7,6 +7,21 @@ import { cloudSet } from "./cloud.js";
 import { loadIqomah, loadHening, loadAdzan } from "./settings.js";
 
 const KEY_SETTINGS = "acaraSettings";
+const KEY_SLIDES = "acaraSlides"; // [{id, durasiDetik, urlCloud}] - diupload ke Supabase Storage, lihat admin.js
+
+export function loadAcaraSlides() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(KEY_SLIDES));
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveAcaraSlides(slides) {
+  localStorage.setItem(KEY_SLIDES, JSON.stringify(slides));
+  cloudSet(KEY_SLIDES, slides);
+}
 
 export function loadAcara() {
   try {

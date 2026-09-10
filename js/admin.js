@@ -1,7 +1,7 @@
 import { SHOLAT, WAKTU_HARIAN, QORI } from "./config.js";
 import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadPengumuman, savePengumuman } from "./settings.js";
 import { loadTarawihSettings, saveTarawihSettings, isRamadhanEfektif, tanggalHijriahLabel } from "./ramadhan.js";
-import { loadAcara, saveAcara } from "./acara-mode.js";
+import { loadAcara, saveAcara, loadAcaraSlides, saveAcaraSlides } from "./acara-mode.js";
 import { loadTampilan, saveTampilan } from "./tampilan.js";
 import { loadMurotal, saveMurotal } from "./murotal.js";
 import { loadQr, saveQr, clearQr, loadRotasi, saveRotasi } from "./rotasi.js";
@@ -298,8 +298,8 @@ function tambahBarisPengumuman() {
 
 const ROTASI_FIELDS = {
   sholat: { input: "rotasi-sholat", segmen: "segmen-sholat", nilai: "segmen-sholat-nilai" },
-  kegiatan: { input: "rotasi-kegiatan", segmen: "segmen-kegiatan", nilai: "segmen-kegiatan-nilai" },
   qr: { input: "rotasi-qr", segmen: "segmen-qr", nilai: "segmen-qr-nilai" },
+  kegiatan: { input: "rotasi-kegiatan", segmen: "segmen-kegiatan", nilai: "segmen-kegiatan-nilai" },
 };
 const ROTASI_MIN_BASIS = 14; // % - biar segmen durasi kecil tetap kebaca di pratinjau
 
@@ -382,7 +382,7 @@ function simpanAdzanForm(e) {
 }
 
 // ---------- Background per layar (adzan/iqomah/donasi) ----------
-const LAYAR_BG = ["adzan", "iqomah", "donasi", "acara"];
+const LAYAR_BG = ["adzan", "iqomah", "donasi"];
 
 function renderBgLayar(layar) {
   const url = urlBgLayar(layar);
@@ -1219,12 +1219,60 @@ async function hapusJumatSlide(s) {
   renderJumatSlides();
 }
 
+// ---------- Kegiatan Terdekat: daftar gambar (bisa lebih dari satu) ----------
+function renderAcaraSlides() {
+  const arr = loadAcaraSlides();
+  const ul = $("acara-list");
+  ul.innerHTML = "";
+  if (!arr.length) { ul.innerHTML = "<li>(belum ada gambar)</li>"; return; }
+  arr.forEach((s) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="admin-item-thumb"><img src="${s.urlCloud}" alt="" loading="lazy"></div>
+      <div class="admin-item-info">
+        <p class="admin-item-judul">Gambar</p>
+        <p class="admin-item-meta">${s.durasiDetik} detik</p>
+      </div>
+      <div class="admin-item-aksi">
+        <button type="button" class="btn-inline btn-bahaya" data-aksi="hapus">Hapus</button>
+      </div>
+    `;
+    li.querySelector('[data-aksi="hapus"]').addEventListener("click", () => {
+      if (!confirm("Hapus gambar ini?")) return;
+      saveAcaraSlides(loadAcaraSlides().filter((x) => x.id !== s.id));
+      renderAcaraSlides();
+    });
+    ul.appendChild(li);
+  });
+}
+
+async function tambahAcaraSlide() {
+  const durasi = parseInt($("acara-durasi").value, 10) || 8;
+  const file = $("acara-file").files[0];
+  if (!file) { alert("Pilih gambar dulu."); return; }
+  if (!cloudAktif()) {
+    alert("Cloud belum dikonfigurasi - lihat js/supabase-config.js.");
+    return;
+  }
+  const id = uid();
+  const ekstensiMatch = /\.([a-z0-9]+)$/i.exec(file.name);
+  const ext = ekstensiMatch ? ekstensiMatch[1].toLowerCase() : "jpg";
+  const urlCloud = await cloudUploadMedia(`acara-${id}.${ext}`, file);
+  if (!urlCloud) { alert("Gagal upload gambar ke cloud."); return; }
+
+  saveAcaraSlides([...loadAcaraSlides(), { id, durasiDetik: durasi, urlCloud }]);
+  $("acara-file").value = "";
+  tampilkanStatus("status-acara-slide");
+  renderAcaraSlides();
+}
+
 initFilePicker("murotal");
 initFilePicker("nada");
 renderIqomah();
 renderHening();
 renderTarawih();
 renderAcara();
+renderAcaraSlides();
 renderTampilan();
 renderPengumuman();
 renderRotasi();
@@ -1269,6 +1317,7 @@ Object.values(ROTASI_FIELDS).forEach((f) => {
 $("form-adzan").addEventListener("submit", simpanAdzanForm);
 $("form-jumat").addEventListener("submit", simpanJumatSettingsForm);
 $("tombol-tambah-jumat").addEventListener("click", tambahJumatSlide);
+$("tombol-tambah-acara").addEventListener("click", tambahAcaraSlide);
 $("tombol-batal-jumat").addEventListener("click", batalEditJumat);
 LAYAR_BG.forEach((layar) => {
   $(`tombol-simpan-bg-${layar}`).addEventListener("click", () => simpanBgLayarForm(layar));
