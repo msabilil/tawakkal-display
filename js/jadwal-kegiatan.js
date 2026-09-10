@@ -1,26 +1,22 @@
-import { loadRotasi } from "./rotasi.js";
+import { loadRotasi, lanjutRotasi } from "./rotasi.js";
 import { loadJadwalPengajian, entriAktif } from "./jadwal-pengajian.js";
 import { tampilkan } from "./navigasi.js";
 
-const HARI_NAMA = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-const BULAN_NAMA = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
+const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
 
-// "YYYY-MM-DD" -> "Senin, 14 Agustus 2025" (bukan cuma "14/08/2025" - lebih
-// jelas dibaca dari jauh di layar TV).
-function formatTanggalLengkap(tanggalStr) {
-  const [y, m, d] = tanggalStr.split("-").map(Number);
-  const tgl = new Date(y, m - 1, d);
-  return `${HARI_NAMA[tgl.getDay()]}, ${d} ${BULAN_NAMA[m - 1]} ${y}`;
+// Date -> "14 Agu 2025" (bukan "14/08/2025" - lebih jelas dibaca dari jauh di
+// layar TV, tapi tetap ringkas biar muat 1 baris di kotak kegiatan yang
+// sempit - nama hari sengaja tidak ditulis penuh karena redundan dgn tanggal).
+function formatTanggal(tgl) {
+  return `${tgl.getDate()} ${BULAN_PENDEK[tgl.getMonth()]} ${tgl.getFullYear()}`;
 }
 
+// entriAktif() sudah lekatkan _waktu (Date kejadian berikutnya, tanggal
+// konkret), _jam & _pengisi (efektif - hasil override per-tanggal/rotasi utk seri mingguan).
 function baris(e) {
-  const kapan = e.tipe === "mingguan"
-    ? `${HARI_NAMA[e.hari]}. Pukul ${e.jam} WIB`
-    : `${formatTanggalLengkap(e.tanggal)}. Pukul ${e.jam} WIB`;
-  const pengisi = e.pengisi ? `<span class="fokus-item-pengisi">${e.pengisi}</span>` : "";
+  const jamTeks = e._jam ? `, Pukul ${e._jam} WIB` : "";
+  const kapan = `${formatTanggal(e._waktu)}${jamTeks}`;
+  const pengisi = e._pengisi ? `<span class="fokus-item-pengisi">${e._pengisi}</span>` : "";
   return `<li class="fokus-item"><span class="fokus-item-nama">${e.nama}</span><span class="fokus-item-kapan">${kapan}</span>${pengisi}</li>`;
 }
 
@@ -35,7 +31,7 @@ export function start(opsi) {
   list.innerHTML = entri.length ? entri.map(baris).join("") : `<p class="fokus-kosong">Belum ada jadwal kegiatan.</p>`;
 
   if (!opsi.preview) {
-    const id = setTimeout(() => tampilkan("sholat"), loadRotasi().jadwalPengajianDetik * 1000);
+    const id = setTimeout(() => lanjutRotasi(new Date()), loadRotasi().jadwalPengajianDetik * 1000);
     return () => clearTimeout(id);
   }
 }

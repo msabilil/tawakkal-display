@@ -22,7 +22,7 @@ function label(list) { return list.map((s) => s.label); }
 clearQr();
 saveJadwalPengajian([]);
 saveJumatSlides([]);
-eq("semua nonaktif -> cuma 3 slide wajib", label(slideAktif(new Date())), ["Jadwal Sholat", "Adzan", "Iqomah"]);
+eq("semua nonaktif -> cuma 4 slide wajib", label(slideAktif(new Date())), ["Jadwal Sholat", "Adzan", "Iqomah", "Hening"]);
 
 // QR diisi -> slide QR ikut muncul.
 saveQr({ dataUrl: "data:image/png;base64,AAAA" });

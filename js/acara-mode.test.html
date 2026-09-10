@@ -1,0 +1,54 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test acara-mode.js</title>
+<pre id="out"></pre>
+<script type="module">
+import { acaraAktif, loadAcara, saveAcara } from "./acara-mode.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+const jadwal = { subuh:"04:34", dzuhur:"11:52", ashar:"15:09", maghrib:"17:56", isya:"19:01" };
+
+// Isolasi dari setting iqomah/hening/adzan asli (acaraAktif baca localStorage
+// sendiri buat hitung anchor "sesudah") - paksa default dengan cara kosongkan.
+localStorage.removeItem("iqomahSettings");
+localStorage.removeItem("heningSettings");
+localStorage.removeItem("adzanSettings");
+localStorage.removeItem("acaraSettings");
+const s = loadAcara();
+
+// sebelum [azan-30, azan-5) - dzuhur 11:52 -> [11:22,11:47), tidak berubah.
+eq("dalam window sebelum -> true", acaraAktif(new Date(2026,8,3,11,30,0), jadwal, s), true);
+eq("tepat mulai sebelum (11:22) -> true", acaraAktif(new Date(2026,8,3,11,22,0), jadwal, s), true);
+eq("tepat selesai sebelum (11:47) -> false (exclusive)", acaraAktif(new Date(2026,8,3,11,47,0), jadwal, s), false);
+
+// sesudah sekarang dihitung dari SELESAI HENING (bukan azan mentah) - default
+// adzan 5mnt + iqomah dzuhur 10mnt (aktif) + hening dzuhur 10mnt (aktif) =
+// iqomahEnd 12:07, heningEnd 12:17 -> window sesudah default [12:22,12:47).
+eq("celah sebelum hening kelar (12:00) -> false", acaraAktif(new Date(2026,8,3,12,0,0), jadwal, s), false);
+eq("dalam window sesudah (12:30) -> true", acaraAktif(new Date(2026,8,3,12,30,0), jadwal, s), true);
+eq("lewat window sesudah (12,50) -> false", acaraAktif(new Date(2026,8,3,12,50,0), jadwal, s), false);
+
+const sOff = { ...s, sebelum: { ...s.sebelum, aktif: false } };
+eq("sebelum dimatikan -> false walau di window", acaraAktif(new Date(2026,8,3,11,30,0), jadwal, sOff), false);
+
+const sSelalu = { ...s, mode: "selalu" };
+eq("mode selalu -> true kapan pun", acaraAktif(new Date(2026,8,3,3,0,0), jadwal, sSelalu), true);
+
+saveAcara({ mode: "waktu", sebelum: { aktif: false, mulaiMenit: 30, selesaiMenit: 5 }, sesudah: { aktif: false, mulaiMenit: 5, selesaiMenit: 30 } });
+eq("loadAcara simpan & baca balik", loadAcara().sebelum.aktif, false);
+localStorage.removeItem("acaraSettings");
+localStorage.removeItem("iqomahSettings");
+localStorage.removeItem("heningSettings");
+localStorage.removeItem("adzanSettings");
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>

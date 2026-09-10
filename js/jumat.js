@@ -23,7 +23,7 @@ const DURASI_TRANSISI_MS = 700;
 // (baru masuk, lama keluar), baru yang lama dihapus setelah transisinya selesai.
 function tampilkanSlide(slides, i) {
   const s = slides[i % slides.length];
-  const url = `img/${s.file}`;
+  const url = s.urlCloud;
   const lama = elMedia.querySelector(".tampil");
 
   const baru = document.createElement(s.tipe === "video" ? "video" : "img");

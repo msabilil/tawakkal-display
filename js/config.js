@@ -87,4 +87,37 @@ export const DEFAULT_MUROTAL = {
 
 // sholatDetik: berapa lama layar jadwal sholat tampil sebelum gantian ke
 // layar QR/kegiatan berikutnya (kalau ada isinya).
-export const DEFAULT_ROTASI = { sholatDetik: 60, jadwalPengajianDetik: 20, qrDonasiDetik: 15 };
+export const DEFAULT_ROTASI = { sholatDetik: 60, jadwalPengajianDetik: 20, qrDonasiDetik: 15, acaraDetik: 15 };
+
+// Kegiatan Terdekat: layar poster (cuma foto latar, tanpa teks) yang tampil
+// otomatis di rentang menit sebelum/sesudah SETIAP waktu sholat (bukan
+// pilih sholat tertentu). "sebelum" dihitung dari jam azan (mundur).
+// "sesudah" dihitung dari SELESAI hening (bukan dari azan mentah) - biar
+// tidak pernah ketutup adzan/iqomah/hening yang prioritasnya lebih tinggi;
+// kalau hening nonaktif buat sholat itu, otomatis jadi dari selesai iqomah.
+// mode "selalu" = lewati semua window, langsung masuk rotasi utama seperti
+// QR/Jadwal Kegiatan (tetap butuh gambar ter-upload).
+export const DEFAULT_ACARA = {
+  mode: "waktu",
+  sebelum: { aktif: true, mulaiMenit: 30, selesaiMenit: 5 },
+  sesudah: { aktif: true, mulaiMenit: 5, selesaiMenit: 30 },
+};
+
+// Layar hening (hitam polos) setelah iqomah kelar - per sholat, biar tidak
+// mengganggu sebelum jamaah bubar. "menit" dihitung dari SELESAI iqomah
+// (bukan dari azan). Jumat dzuhur otomatis dilewati sama seperti Iqomah.
+export const DEFAULT_HENING = {
+  subuh: { menit: 10, aktif: true },
+  dzuhur: { menit: 10, aktif: true },
+  ashar: { menit: 10, aktif: true },
+  maghrib: { menit: 10, aktif: true },
+  isya: { menit: 10, aktif: true },
+};
+
+// Tarawih: jedaMenit dihitung dari selesai iqomah Isya sampai tarawih mulai,
+// durasiMenit lama layar hening tampil (mewakili tarawih+witir berlangsung).
+// Default deteksi Ramadhan ikut kalender Hijriah (lihat ramadhan.js
+// isRamadhan) - tanggalMulai/tanggalSelesai ("YYYY-MM-DD", Masehi) override
+// manual kalau admin isi KEDUANYA (mis. sesuai tanggal resmi Kemenag),
+// kosong = ikut kalender otomatis. nonaktif matikan total musim ini.
+export const DEFAULT_TARAWIH = { jedaMenit: 10, durasiMenit: 45, tanggalMulai: "", tanggalSelesai: "", nonaktif: false };

@@ -1,4 +1,4 @@
-import { loadRotasi, loadQr } from "./rotasi.js";
+import { loadRotasi, loadQr, lanjutRotasi } from "./rotasi.js";
 import { terapkanBgLayar } from "./bg-layar.js";
 import { tampilkan } from "./navigasi.js";
 
@@ -15,7 +15,7 @@ export function start(opsi) {
   document.getElementById("qr-teks").textContent = (qr && qr.teks) || "";
 
   if (!opsi.preview) {
-    const id = setTimeout(() => tampilkan("sholat"), loadRotasi().qrDonasiDetik * 1000);
+    const id = setTimeout(() => lanjutRotasi(new Date()), loadRotasi().qrDonasiDetik * 1000);
     return () => clearTimeout(id);
   }
 }

@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test cloud.js</title>
+<pre id="out"></pre>
+<script type="module">
+import { cloudAktif, cloudGet, cloudGetAll, cloudUrlMedia, cloudSubscribe } from "./cloud.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+// supabase-config.js kosong di repo default -> semua ini harus no-op aman.
+eq("cloudAktif false saat config kosong", cloudAktif(), false);
+
+const results = await Promise.all([
+  cloudGet("apapun"),
+  cloudGetAll(),
+  cloudSubscribe(() => {}),
+]);
+eq("cloudGet null saat nonaktif", results[0], null);
+eq("cloudGetAll array kosong saat nonaktif", results[1], []);
+eq("cloudSubscribe balikin unsubscribe no-op", typeof results[2], "function");
+eq("cloudUrlMedia null saat nonaktif", cloudUrlMedia("bg-adzan.jpg"), null);
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>

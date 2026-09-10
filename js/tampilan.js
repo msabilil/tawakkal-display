@@ -1,3 +1,5 @@
+import { cloudSet } from "./cloud.js";
+
 const KEY = "tampilanSettings";
 
 function kosong() {
@@ -16,4 +18,5 @@ export function loadTampilan() {
 
 export function saveTampilan(settings) {
   localStorage.setItem(KEY, JSON.stringify(settings));
+  cloudSet(KEY, settings);
 }

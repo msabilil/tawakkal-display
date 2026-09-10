@@ -7,7 +7,9 @@ export const SEMUA_SLIDE = [
   { label: "Jadwal Sholat", src: "index.html?demo=1" },
   { label: "Adzan", src: "index.html?preview=1&view=iqomah&fase=adzan" },
   { label: "Iqomah", src: "index.html?preview=1&view=iqomah&fase=iqomah" },
+  { label: "Hening", src: "index.html?preview=1&view=hening" },
   { label: "QR Donasi", src: "index.html?preview=1&view=qr", kartu: "qr" },
+  { label: "Kegiatan Terdekat", src: "index.html?preview=1&view=acara", kartu: "acara" },
   { label: "Jadwal Kegiatan", src: "index.html?preview=1&view=kegiatan", kartu: "kegiatan" },
   { label: "Jum'at", src: "index.html?preview=1&view=jumat", perlu: () => loadJumatSlides().length > 0 },
 ];

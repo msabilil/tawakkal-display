@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test cloud-sync.js</title>
+<pre id="out"></pre>
+<script type="module">
+import { tulisKeLocal, mulaiCloudSync } from "./cloud-sync.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+localStorage.removeItem("tesKeySync");
+tulisKeLocal([{ key: "tesKeySync", value: { a: 1 } }]);
+eq("tulisKeLocal nulis JSON ke localStorage", localStorage.getItem("tesKeySync"), JSON.stringify({ a: 1 }));
+localStorage.removeItem("tesKeySync");
+
+// supabase-config.js kosong di repo default -> mulaiCloudSync harus selesai
+// cepat tanpa efek samping (tidak nyoba network sama sekali).
+const mulai = Date.now();
+await mulaiCloudSync();
+eq("mulaiCloudSync selesai cepat saat cloud nonaktif", Date.now() - mulai < 500, true);
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>

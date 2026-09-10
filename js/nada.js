@@ -1,4 +1,4 @@
-import { getMedia } from "./media-db.js";
+import { getMedia, cloudUrlUntukMedia } from "./media-db.js";
 
 // Tiga beep pendek sebagai nada default (tanpa file aset).
 export function beep() {
@@ -25,16 +25,19 @@ export function beep() {
 }
 
 export async function mainkanNada(audioEl) {
+  // Lokal dulu (kerja offline) - baru fallback ke URL cloud kalau blob-nya
+  // tidak ada di IndexedDB device ini (mis. diupload dari laptop admin yang
+  // beda device). Kalau dua-duanya tidak ada, fallback beep sintetis.
   const blob = await getMedia("nadaIqomah");
-  if (blob && audioEl) {
-    const url = URL.createObjectURL(blob);
-    audioEl.src = url;
-    audioEl.addEventListener("ended", () => URL.revokeObjectURL(url), { once: true });
+  const src = blob ? URL.createObjectURL(blob) : cloudUrlUntukMedia("nadaIqomah");
+  if (src && audioEl) {
+    audioEl.src = src;
+    if (blob) audioEl.addEventListener("ended", () => URL.revokeObjectURL(src), { once: true });
     try {
       await audioEl.play();
       return;
     } catch {
-      // gagal (autoplay diblok) -> fallback beep
+      // gagal (autoplay diblok / URL cloud tidak bisa dimuat) -> fallback beep
     }
   }
   beep();

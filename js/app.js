@@ -37,9 +37,30 @@ export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
   return null;
 }
 
+// Layar hening (hitam polos) tampil SETELAH iqomah kelar - fungsi murni sama
+// seperti iqomahState di atas, jadi otomatis tahan refresh (dihitung ulang
+// dari jadwal+setting, bukan dari state runtime). "menit" hening dihitung
+// dari SELESAI iqomah, bukan dari azan.
+export function heningState(now, jadwal, iqomahSettings, heningSettings, adzanMenit) {
+  for (const { key, label } of SHOLAT) {
+    if (now.getDay() === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
+    const hSet = heningSettings[key] || {};
+    if (!hSet.aktif || !(hSet.menit > 0)) continue;
+    const iqSet = iqomahSettings[key] || {};
+    const iqomahMenit = iqSet.aktif && iqSet.menit > 0 ? iqSet.menit : 0;
+    const start = parseHM(jadwal[key], now);
+    const iqomahEnd = new Date(start.getTime() + (adzanMenit + iqomahMenit) * 60000);
+    const heningEnd = new Date(iqomahEnd.getTime() + hSet.menit * 60000);
+    if (now >= iqomahEnd && now < heningEnd) return { key, label, endTime: heningEnd.toISOString() };
+  }
+  return null;
+}
+
 import { NAMA_MASJID, TAGLINE_MASJID, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
-import { loadIqomah, loadAdzan, loadPengumuman } from "./settings.js";
+import { loadIqomah, loadAdzan, loadHening, loadPengumuman } from "./settings.js";
+import { tarawihState } from "./ramadhan.js";
+import { mulaiHening } from "./hening.js";
 import { loadTampilan } from "./tampilan.js";
 import { ICONS } from "./icons.js";
 import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
@@ -206,6 +227,11 @@ function mulaiJumat(jum) {
   tampilkan("jumat");
 }
 
+function mulaiTarawih(tw) {
+  stopMurotal();
+  mulaiHening(tw.endTime);
+}
+
 function tick() {
   const now = new Date();
   $("jam").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
@@ -221,9 +247,22 @@ function tick() {
   }
 
   const iqSettings = loadIqomah();
-  const iq = iqomahState(now, jadwal, iqSettings, loadAdzan().menit);
+  const adzanMenit = loadAdzan().menit;
+  const iq = iqomahState(now, jadwal, iqSettings, adzanMenit);
   if (iq) {
     mulaiIqomah(iq);
+    return;
+  }
+
+  const tw = tarawihState(now, jadwal, iqSettings, adzanMenit);
+  if (tw) {
+    mulaiTarawih(tw);
+    return;
+  }
+
+  const hening = heningState(now, jadwal, iqSettings, loadHening(), adzanMenit);
+  if (hening) {
+    mulaiHening(hening.endTime);
     return;
   }
 

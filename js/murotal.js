@@ -1,5 +1,6 @@
 import { SHOLAT, DEFAULT_MUROTAL } from "./config.js";
 import { parseHM } from "./waktu.js";
+import { cloudSet } from "./cloud.js";
 
 const KEY = "murotalSettings";
 
@@ -20,6 +21,7 @@ export function loadMurotal() {
 
 export function saveMurotal(s) {
   localStorage.setItem(KEY, JSON.stringify(s));
+  cloudSet(KEY, s);
 }
 
 // Sholat yang jendela murotalnya sedang aktif, atau null.
@@ -42,7 +44,7 @@ export function murotalWindow(now, jadwal, settings, paksa) {
   return null;
 }
 
-import { getMedia } from "./media-db.js";
+import { getMedia, cloudUrlUntukMedia } from "./media-db.js";
 
 let audioEl = null, indikatorEl = null, labelEl = null, overlayEl = null;
 let sedangMain = false;
@@ -93,10 +95,18 @@ function simpanPosisi() {
 async function muatTrack(item) {
   if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
   if (item.tipe === "offline") {
+    // Lokal dulu (kerja offline, tanpa network) - baru fallback ke URL cloud
+    // kalau blob-nya tidak ada di IndexedDB device ini (mis. diupload dari
+    // laptop admin yang beda device, kiosk ini belum pernah punya salinannya).
     const blob = await getMedia(item.mediaKey);
-    if (!blob) return false;
-    objectUrl = URL.createObjectURL(blob);
-    audioEl.src = objectUrl;
+    if (blob) {
+      objectUrl = URL.createObjectURL(blob);
+      audioEl.src = objectUrl;
+    } else {
+      const urlCloud = cloudUrlUntukMedia(item.mediaKey);
+      if (!urlCloud) return false;
+      audioEl.src = urlCloud;
+    }
   } else {
     audioEl.src = item.url;
   }

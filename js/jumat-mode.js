@@ -1,9 +1,10 @@
 // Data & state mode Jum'at (layar khusus pas jam Dzuhur hari Jumat, gantiin
-// skip-diam-diam yang lama). File slide (gambar/video) ditulis ke img/ lewat
-// folder-proyek.js dari admin.js, di sini cuma urus metadata (localStorage)
-// & logika kapan mode ini aktif.
+// skip-diam-diam yang lama). File slide (gambar/video) diupload ke Supabase
+// Storage dari admin.js, di sini cuma urus metadata (localStorage/cloud) &
+// logika kapan mode ini aktif.
 import { DEFAULT_JUMAT } from "./config.js";
 import { parseHM } from "./waktu.js";
+import { cloudSet } from "./cloud.js";
 
 const KEY_SETTINGS = "jumatSettings";
 const KEY_SLIDES = "jumatSlides"; // [{id, tipe:"gambar"|"video", file:"jumat-<id>.<ext>", durasiDetik}]
@@ -19,6 +20,7 @@ export function loadJumatSettings() {
 
 export function saveJumatSettings(settings) {
   localStorage.setItem(KEY_SETTINGS, JSON.stringify(settings));
+  cloudSet(KEY_SETTINGS, settings);
 }
 
 export function loadJumatSlides() {
@@ -32,6 +34,7 @@ export function loadJumatSlides() {
 
 export function saveJumatSlides(slides) {
   localStorage.setItem(KEY_SLIDES, JSON.stringify(slides));
+  cloudSet(KEY_SLIDES, slides);
 }
 
 // Aktif kalau: hari Jumat, sekarang di window [azan Dzuhur, azan Dzuhur +

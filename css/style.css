@@ -514,8 +514,6 @@ body.admin { padding: 0; }
 .admin-brand-judul { font-size: 15px; font-weight: 700; line-height: 1.3; }
 .admin-brand-sub { font-size: 12px; color: var(--text-mute); }
 
-.admin-folder { padding: 10px 12px; margin: 14px 0 4px; border: 1px solid var(--border); border-radius: 10px; font-size: 12.5px; }
-.admin-folder-status { margin: 0 0 8px; opacity: 0.8; }
 .admin-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; }
 .admin-nav-item {
   display: flex;
@@ -596,6 +594,7 @@ body.admin { padding: 0; }
 .admin-subpanel-judul { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
 .admin-kotak h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
 .admin-ket { color: var(--text-dim); margin-bottom: 8px; line-height: 1.5; max-width: 75ch; }
+.admin-ket-lebar { max-width: none; }
 .admin-notice { display: flex; align-items: flex-start; gap: 9px; margin: 14px 2px 0; font-size: 13px; line-height: 1.5; color: var(--text-dim); }
 .admin-notice svg { width: 16px; height: 16px; stroke: var(--teal-600); flex-shrink: 0; margin-top: 1px; }
 .hint {
@@ -911,6 +910,103 @@ body.admin { padding: 0; }
   .baris-kaya-kontrol { margin-left: 54px; max-width: none; }
 }
 
+/* ---------- Repeater jadwal kegiatan: 1 baris = 1 jadwal, bisa tambah banyak sekaligus ---------- */
+.hint-blok { margin: 4px 0 14px; }
+.jadwal-baris-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.jadwal-baris-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+  padding: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.jadwal-baris-item .jbm-nama,
+.jadwal-baris-item .jbm-pengisi { grid-column: 1 / -1; }
+.jadwal-baris-item label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+.jadwal-baris-item .jbm-input {
+  width: 100%;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--text);
+  font-family: inherit;
+}
+.jadwal-baris-item .jbm-input:focus-visible { outline: 2px solid var(--emerald-500); outline-offset: 1px; }
+.jadwal-baris-hapus {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text-mute);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.jadwal-baris-hapus:hover { border-color: #dc2626; color: #dc2626; }
+.jadwal-baris-hapus:focus-visible { outline: 2px solid var(--emerald-600); outline-offset: 2px; }
+@media (max-width: 480px) {
+  .jadwal-baris-item { grid-template-columns: 1fr; }
+}
+
+/* ---------- Mingguan: seri berulang (tanggal mulai + akhir + rotasi + pratinjau) ---------- */
+.mg-tabel-wrap { overflow-x: auto; margin: 4px 0 8px; border: 1px solid var(--border); border-radius: 10px; }
+.mg-tabel { width: 100%; border-collapse: collapse; font-size: 14px; }
+.mg-tabel th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 10px 12px;
+  background: #f1f5f9;
+  border-bottom: 1px solid var(--border);
+}
+.mg-tabel td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.mg-tabel tr:last-child td { border-bottom: none; }
+.mg-tabel-tanggal { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mg-tabel input[type="text"],
+.mg-tabel input[type="time"] {
+  width: 100%;
+  min-width: 140px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--text);
+  font-family: inherit;
+}
+.mg-tabel input[type="time"] { min-width: 110px; }
+.mg-tabel input[type="text"]:focus-visible,
+.mg-tabel input[type="time"]:focus-visible { outline: 2px solid var(--emerald-500); outline-offset: 1px; }
+.mg-tabel input.mg-belum-ditentukan { color: var(--text-mute); font-style: italic; }
+.mg-tabel tr.mg-row-dikecualikan { opacity: 0.55; }
+.mg-tabel tr.mg-row-dikecualikan .mg-tabel-tanggal { text-decoration: line-through; }
+.mg-tabel tr.mg-row-dikecualikan input[type="text"] { text-decoration: line-through; }
+
 .stepper {
   display: flex;
   align-items: center;
@@ -962,9 +1058,16 @@ body.admin { padding: 0; }
 
 .admin-subjudul { font-size: 16px; margin: 20px 0 8px; opacity: 0.8; }
 .admin-list { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.admin-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(0,0,0,0.05); border-radius: 8px; font-size: 14px; }
-.admin-list li:not(:has(button)) { color: var(--text-mute); background: transparent; padding: 14px 2px; font-style: italic; justify-content: center; }
+.admin-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; }
+.admin-list li:not(:has(button)) { color: var(--text-mute); border: none; padding: 14px 2px; font-style: italic; justify-content: center; }
 .admin-list li.aktif-edit { background: rgba(16, 185, 129, 0.1); outline: 1.5px solid var(--emerald-500); }
+
+/* Baris jadwal kegiatan bisa punya panel "Detail" (dropdown tabel semua
+   tanggal seri mingguan) di bawah baris utama - li jadi kolom, baris utama
+   dibungkus .admin-item-row supaya tetap flex kiri-kanan seperti biasa. */
+#pengajian-list > li { flex-direction: column; align-items: stretch; }
+.admin-item-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; }
+.mg-detail-panel .mg-tabel-wrap { max-height: 320px; overflow-y: auto; }
 
 /* Baris daftar "kaya" - thumbnail opsional + judul/meta dua baris + tombol aksi
    (Edit/Hapus). Dipakai jadwal kegiatan & slide Jum'at. */
@@ -1015,11 +1118,44 @@ body.admin { padding: 0; }
 .sholat-grid { display: grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap: 8px 16px; margin-top: 10px; max-width: 360px; }
 .sholat-grid .testing-toggle { padding: 6px 0; }
 
-/* "Timing murotal" - Mulai & Berhenti digabung jadi satu konsep, sejajar. */
-.timing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-top: 10px; max-width: 420px; }
-.timing-item { display: flex; flex-direction: column; gap: 6px; }
-.timing-label { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+/* "Timing murotal" - Mulai & Berhenti sejajar, jarak lega, tapi kotak stepper
+   cuma selebar isinya sendiri (sampai tombol +) - sebelumnya .timing-item
+   flex-column default align-items:stretch bikin kotak stepper ikut melar
+   selebar kolom grid. minmax(0,max-content) + align-items:flex-start
+   menahan lebar kolom & kotak stepper pas di kontennya, label tetap 1 baris. */
+.timing-grid { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, max-content); gap: 24px; margin-top: 10px; }
+.timing-item { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.timing-label { font-size: 13px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
 .hint-baris-kecil { margin-top: 10px; font-size: 12px; opacity: 0.85; }
+
+/* Pratinjau jam nyata di bawah stepper Mulai/Berhenti - biar admin tidak
+   perlu hitung sendiri offset menit ke jam sholat sungguhan. Satu baris kartu
+   per waktu sholat: nama | jam adzan (redup) | rentang putar (pil emerald). */
+.timing-preview { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-width: 420px; }
+.timing-preview:empty { display: none; }
+.timing-preview-baris {
+  display: grid;
+  grid-template-columns: minmax(58px, auto) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+}
+.timing-preview-nama { font-size: 13px; font-weight: 600; color: var(--text); }
+.timing-preview-adzan { font-size: 12px; color: var(--text-mute); }
+.timing-preview-rentang {
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--emerald-700);
+  background: rgba(16, 185, 129, 0.12);
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.timing-preview-pesan { padding: 8px 12px; border-radius: 8px; background: #f8fafc; border: 1px dashed var(--border); color: var(--text-dim); font-size: 12.5px; line-height: 1.5; }
 
 /* Dua kartu "Track Murotal" (Dari internet / Dari file) - struktur seimbang,
    tombol Tambah selalu rata bawah walau tinggi isi beda. */
@@ -1188,6 +1324,7 @@ body.halaman-fokus {
 body.halaman-qr { background-image: url("../img/bg-iqomah.jpeg") !important; }
 body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") !important; }
 
+
 .halaman-qr .fokus-isi {
   position: absolute;
   left: 22%; top: 44%; width: 56%; height: 44%;
@@ -1215,7 +1352,7 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
   font-weight: 800;
   text-shadow: 0 2px 10px rgba(0, 0, 0, .35);
 }
-.fokus-qr-img { width: clamp(110px, 20vh, 220px); height: auto; background: #fff; padding: 8px; border-radius: 18px; box-shadow: none; }
+.fokus-qr-img { width: clamp(160px, 32vh, 340px); height: auto; border-radius: 18px; box-shadow: none; }
 .fokus-qr-teks { font-size: clamp(13px, 1.6vw, 20px); margin: 0; color: #334155; }
 .fokus-kosong { opacity: 0.7; font-size: clamp(16px, 1.8vw, 24px); color: #fff; }
 
@@ -1234,9 +1371,9 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
   justify-content: center;
   text-align: center;
 }
-.fokus-item-nama { font-size: clamp(16px, 1.9vw, 26px); line-height: 1.15; color: var(--biru-900); }
-.fokus-item-kapan { font-size: clamp(13px, 1.35vw, 19px); color: #334155; margin-top: 3px; }
-.fokus-item-pengisi { display: block; font-size: clamp(12px, 1.2vw, 16px); font-style: italic; opacity: 0.75; margin-top: 1px; }
+.fokus-item-nama { display: block; font-size: clamp(16px, 1.9vw, 26px); font-weight: 700; line-height: 1.15; color: var(--biru-900); }
+.fokus-item-kapan { font-size: clamp(14px, 1.5vw, 21px); color: #334155; margin-top: 3px; }
+.fokus-item-pengisi { display: block; font-size: clamp(14px, 1.4vw, 19px); font-weight: 700; opacity: 0.75; margin-top: 1px; }
 /* Tinggi slot 17.8% (bukan ~9%) - itu tinggi kotak putih beneran di foto,
    diukur dari screenshot render nyata. */
 .fokus-item:nth-child(1) { left: 19.4%; top: 21.7%; width: 27.7%; height: 17.8%; }
@@ -1247,6 +1384,96 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
 .fokus-item:nth-child(6) { left: 47.9%; top: 61.1%; width: 27.8%; height: 17.8%; }
 .fokus-item:nth-child(7) { left: 19.4%; top: 80.5%; width: 27.8%; height: 17.8%; }
 .fokus-item:nth-child(8) { left: 48.0%; top: 80.5%; width: 27.7%; height: 17.8%; }
+
+.opsi-radio { display: flex; align-items: center; gap: 10px; margin: 6px 0; cursor: pointer; font-size: 15px; }
+/* Radio custom - satu lingkaran (bukan track on/off spt toggle), tinggi
+   disamakan dgn toggle switch (24px) & warna checked pakai emerald yang sama. */
+.opsi-radio input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #fff;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+.opsi-radio input[type="radio"]::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--emerald-500);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.opsi-radio input[type="radio"]:checked { border-color: var(--emerald-500); }
+.opsi-radio input[type="radio"]:checked::before { transform: translate(-50%, -50%) scale(1); }
+.opsi-radio input[type="radio"]:focus-visible { outline: 2px solid var(--emerald-600); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .opsi-radio input[type="radio"]::before { transition: none; }
+}
+
+/* ---------- Login Admin (gerbang Supabase Auth, cuma muncul kalau cloud aktif) ---------- */
+#admin-login-gate {
+  position: fixed; inset: 0; z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface);
+}
+.admin-login-kotak {
+  width: min(380px, 90vw);
+  padding: 40px 36px;
+  background: var(--surface);
+  border: 2px solid var(--grad-4);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px -12px rgba(11, 31, 77, 0.18);
+  text-align: center;
+}
+.admin-login-brand {
+  width: 52px; height: 52px; margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+  background: var(--brand-grad);
+  color: #fff;
+}
+.admin-login-brand svg { width: 28px; height: 28px; }
+.admin-login-kotak h1 { font-size: 22px; }
+.admin-login-kotak .admin-ket { max-width: none; margin: 0 auto 24px; }
+.admin-login-form { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.admin-login-label { font-size: 14px; font-weight: 600; color: var(--text-dim); margin-top: 12px; }
+.admin-login-label:first-of-type { margin-top: 0; }
+.admin-login-form input {
+  font-size: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #f1f5f9;
+  color: var(--text);
+  font-family: inherit;
+}
+.admin-login-form input:focus-visible { outline: 2px solid var(--grad-4); outline-offset: 1px; }
+.admin-login-error {
+  margin-top: 4px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--warn-teks);
+  font-size: 14px;
+  font-weight: 600;
+}
+.admin-login-submit { margin-top: 8px; width: 100%; }
+
+/* ---------- Halaman Hening (view "hening") - layar hitam polos pasca-iqomah/tarawih ---------- */
+body.halaman-hening { height: 100vh; margin: 0; background: #000; }
+
+/* ---------- Halaman Kegiatan Terdekat (view "acara") - poster foto latar penuh, tanpa teks ---------- */
+body.halaman-acara { height: 100vh; margin: 0; background-color: #000; background-size: cover; background-position: center; }
 
 /* ---------- Halaman Jum'at (view "jumat") - slideshow gambar/video full-bleed ---------- */
 body.halaman-jumat { height: 100vh; margin: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }

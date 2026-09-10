@@ -1,10 +1,14 @@
 import { DEFAULT_ROTASI } from "./config.js";
 import { loadJadwalPengajian, entriAktif } from "./jadwal-pengajian.js";
+import { loadAcara, acaraAktif } from "./acara-mode.js";
+import { urlBgLayar } from "./bg-layar.js";
+import { readCache } from "./api.js";
 import { tampilkan } from "./navigasi.js";
+import { cloudSet } from "./cloud.js";
 
 const KEY_ROTASI = "rotasiSettings";
 const KEY_QR = "qrDonasi";
-const KEY_URUTAN = "halamanUrutan"; // localStorage: idx round-robin layar sekunder berikutnya
+const KEY_URUTAN = "halamanUrutan"; // localStorage: posisi kartu sekunder aktif dalam putaran sekarang
 const KEY_SEJAK = "halamanSholatSejak"; // sessionStorage: timestamp masuk index.html
 
 export function loadRotasi() {
@@ -18,6 +22,7 @@ export function loadRotasi() {
 
 export function saveRotasi(s) {
   localStorage.setItem(KEY_ROTASI, JSON.stringify(s));
+  cloudSet(KEY_ROTASI, s);
 }
 
 export function loadQr() {
@@ -31,6 +36,7 @@ export function loadQr() {
 
 export function saveQr(obj) {
   localStorage.setItem(KEY_QR, JSON.stringify(obj));
+  cloudSet(KEY_QR, obj);
 }
 
 export function clearQr() {
@@ -40,8 +46,10 @@ export function clearQr() {
 // Kartu/layar sekunder yang lagi punya isi buat ditampilkan bergilir.
 export function kartuTersedia(now) {
   const kartu = [];
-  if (entriAktif(now, loadJadwalPengajian()).length) kartu.push("kegiatan");
   if (loadQr()) kartu.push("qr");
+  const cache = readCache();
+  if (cache && cache.jadwal && urlBgLayar("acara") && acaraAktif(now, cache.jadwal, loadAcara())) kartu.push("acara");
+  if (entriAktif(now, loadJadwalPengajian()).length) kartu.push("kegiatan");
   return kartu;
 }
 
@@ -52,9 +60,10 @@ export function mulaiSesiSholat() {
 }
 
 // Dipanggil tiap detik dari tick() app.js, HANYA selama tidak lagi iqomah.
-// Setelah durasi tampil jadwal sholat lewat, gantian ke layar sekunder berikutnya
-// (round-robin qr/kegiatan). View qr & kegiatan yang bertugas balik lagi ke
-// view "sholat" sendiri lewat timeout masing-masing.
+// Setelah durasi tampil jadwal sholat lewat, mulai 1 putaran kartu sekunder
+// (qr lalu kegiatan, urut sesuai kartuTersedia()). View qr & kegiatan yang
+// bertugas lanjut ke kartu berikutnya sendiri lewat lanjutRotasi() di
+// timeout masing-masing - baru balik ke "sholat" setelah putaran habis.
 export function tickHalamanSholat(now) {
   const kartu = kartuTersedia(now);
   if (!kartu.length) return; // tidak ada apa-apa buat digilir, tetap di jadwal sholat
@@ -63,8 +72,21 @@ export function tickHalamanSholat(now) {
   const durasiMs = loadRotasi().sholatDetik * 1000;
   if (Date.now() - sejak < durasiMs) return;
 
-  const idx = Number(localStorage.getItem(KEY_URUTAN)) || 0;
-  const tujuan = kartu[idx % kartu.length];
-  localStorage.setItem(KEY_URUTAN, String(idx + 1));
-  tampilkan(tujuan); // "qr" atau "kegiatan" - namanya sudah cocok sama nama view
+  localStorage.setItem(KEY_URUTAN, "0");
+  tampilkan(kartu[0]); // "qr" atau "kegiatan" - namanya sudah cocok sama nama view
+}
+
+// Dipanggil dari timeout view qr/kegiatan pas durasi tampilnya sendiri habis.
+// Lanjut ke kartu berikutnya dalam putaran yang sama, atau balik ke "sholat"
+// kalau sudah kartu terakhir.
+export function lanjutRotasi(now) {
+  const kartu = kartuTersedia(now);
+  const pos = (Number(localStorage.getItem(KEY_URUTAN)) || 0) + 1;
+  if (pos < kartu.length) {
+    localStorage.setItem(KEY_URUTAN, String(pos));
+    tampilkan(kartu[pos]);
+  } else {
+    localStorage.removeItem(KEY_URUTAN);
+    tampilkan("sholat");
+  }
 }

@@ -1,11 +1,22 @@
-// Wrapper minimal IndexedDB untuk menyimpan value apa pun yang structured-cloneable:
-// Blob audio (murotal offline & nada iqomah) maupun FileSystemDirectoryHandle
-// (folder project, lihat folder-proyek.js). Semua fungsi menelan error dan
-// mengembalikan nilai netral supaya fiturnya bisa dilewati diam-diam kalau
-// IndexedDB tidak tersedia (mis. mode private).
+// Wrapper minimal IndexedDB untuk menyimpan Blob audio (murotal offline &
+// nada iqomah) sebagai cache lokal, additive di samping upload ke Supabase
+// Storage. Semua fungsi menelan error dan mengembalikan nilai netral supaya
+// fiturnya bisa dilewati diam-diam kalau IndexedDB tidak tersedia (mis. mode
+// private).
+
+import { cloudAktif, cloudUploadMedia, cloudUrlMedia } from "./cloud.js";
 
 const DB_NAME = "masjidMediaDB";
 const STORE = "media";
+
+// Path Storage buat 1 mediaKey - dipakai baik saat upload maupun saat
+// murotal.js mau cek apakah ada versi cloud sebelum fallback ke Blob
+// IndexedDB lokal (offline media tidak ikut ke tabel `settings` - ukurannya
+// bisa besar, jadi lewat Storage seperti bg-layar.js).
+export function cloudUrlUntukMedia(mediaKey) {
+  if (!cloudAktif()) return null;
+  return cloudUrlMedia(`offline/${mediaKey.replace(/[^a-zA-Z0-9_-]/g, "_")}`);
+}
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -34,6 +45,9 @@ export async function putMedia(key, blob) {
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
     });
+    if (cloudAktif()) {
+      cloudUploadMedia(`offline/${key.replace(/[^a-zA-Z0-9_-]/g, "_")}`, blob).catch(() => {});
+    }
     return true;
   } catch {
     return false;

@@ -7,6 +7,29 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="admin">
+  <div id="admin-login-gate" hidden>
+    <div class="admin-login-kotak">
+      <div class="admin-login-brand" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.5 5.5a3.6 3.6 0 1 0 3.4 3.4 2.7 2.7 0 0 1 -3.4 -3.4z"/>
+          <path d="M6 26v-7.5a10 10 0 0 1 20 0V26z"/>
+          <path d="M13 26v-4.5a3 3 0 0 1 6 0V26"/>
+          <path d="M4.5 26h23"/>
+        </svg>
+      </div>
+      <h1>Login Admin</h1>
+      <p class="admin-ket">Kelola jadwal sholat, tampilan, dan konten layar masjid.</p>
+      <form id="form-login" class="admin-login-form">
+        <label class="admin-login-label" for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="nama@email.com" autocomplete="username" required>
+        <label class="admin-login-label" for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" required>
+        <p id="login-error" class="admin-login-error" role="alert" hidden></p>
+        <button type="submit" class="btn-primary admin-login-submit">Masuk</button>
+      </form>
+    </div>
+  </div>
+
   <div class="admin-shell">
     <aside class="admin-sidebar">
       <div class="admin-brand">
@@ -22,11 +45,6 @@
           <p class="admin-brand-judul">Pengaturan</p>
           <p class="admin-brand-sub">Layar Jadwal Sholat</p>
         </div>
-      </div>
-
-      <div class="admin-folder">
-        <p class="admin-folder-status" id="admin-folder-status">Folder img/: memuat&hellip;</p>
-        <button type="button" id="tombol-pilih-folder" class="tombol-sekunder">Pilih Folder img/</button>
       </div>
 
       <nav class="admin-nav" aria-label="Bagian pengaturan">
@@ -54,9 +72,17 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
           Jadwal Kegiatan
         </button>
+        <button type="button" class="admin-nav-item" data-section="acara">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/><circle cx="8.5" cy="9" r="1.3"/></svg>
+          Kegiatan Terdekat
+        </button>
         <button type="button" class="admin-nav-item" data-section="jumat">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 5.6 6 0.5-4.6 3.9 1.5 5.8-5.1-3.2-5.1 3.2 1.5-5.8-4.6-3.9 6-0.5z"/></svg>
           Jum'at
+        </button>
+        <button type="button" class="admin-nav-item" data-section="tarawih">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a7 7 0 1 0 9 9 7 7 0 0 1 -9 -9z"/></svg>
+          Tarawih
         </button>
         <button type="button" class="admin-nav-item" data-section="audio">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 8a5 5 0 0 1 0 8"/><path d="M17.7 5a9 9 0 0 1 0 14"/><path d="M6 8h-1a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h1l3.5 4v-16l-3.5 4z"/></svg>
@@ -72,6 +98,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l-6 6 6 6"/><path d="M3 12h18"/></svg>
         Kembali ke Layar
       </a>
+      <button type="button" id="tombol-keluar-admin" class="admin-nav-item" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1 -2 -2V5a2 2 0 0 1 2 -2h4"/><path d="M16 17l5 -5 -5 -5"/><path d="M21 12H9"/></svg>
+        Keluar
+      </button>
     </aside>
 
     <main class="admin-main">
@@ -308,6 +338,15 @@
         </div>
 
         <div class="admin-subsection admin-kolom-sempit">
+          <h2 class="admin-subpanel-judul">Layar Hening</h2>
+          <p class="admin-ket">Layar hitam polos yang otomatis tampil SETELAH iqomah kelar (bukan menggantikan iqomah), biar tidak mengganggu jamaah. Dihitung dari selesai iqomah, per sholat.</p>
+          <form id="form-hening">
+            <div id="baris-hening"></div>
+            <p id="status-hening" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+          </form>
+        </div>
+
+        <div class="admin-subsection admin-kolom-sempit">
           <h2 class="admin-subpanel-judul">Latar Belakang</h2>
           <p class="admin-ket">Foto latar khusus layar Iqomah (fase hitung mundur). Kosongkan untuk pakai tampilan layout asli.</p>
           <form id="form-bg-iqomah">
@@ -333,6 +372,7 @@
           <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
           <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
           <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=iqomah&amp;fase=iqomah">Preview</button>
+          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=hening">Preview Hening</button>
         </div>
       </section>
 
@@ -433,61 +473,108 @@
                     <option value="tanggal">Tanggal khusus</option>
                   </select>
                 </div>
-                <div class="baris-kaya" id="baris-hari">
-                  <span class="ikon-baris" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
-                  </span>
-                  <div class="baris-kaya-teks">
-                    <label class="label-sholat" for="pengajian-hari">Hari</label>
-                    <p class="hint-baris">Hari kegiatan berulang tiap minggu.</p>
-                  </div>
-                  <select id="pengajian-hari">
-                    <option value="0">Minggu</option><option value="1">Senin</option>
-                    <option value="2">Selasa</option><option value="3">Rabu</option>
-                    <option value="4">Kamis</option><option value="5">Jumat</option>
-                    <option value="6">Sabtu</option>
-                  </select>
+
+                <!-- Tanggal khusus: repeater, bisa isi beberapa jadwal sekaligus -->
+                <div id="blok-tanggal">
+                  <p class="hint-baris hint-blok">Isi satu atau lebih jadwal sekaligus - judul &amp; pengisi boleh beda-beda tiap baris, boleh juga pengisi yang sama.</p>
+                  <div id="daftar-baris-jadwal" class="jadwal-baris-list"></div>
+                  <button type="button" id="tombol-tambah-baris" class="btn-inline">+ Tambah jadwal</button>
                 </div>
-                <div class="baris-kaya" id="baris-tanggal" hidden>
-                  <span class="ikon-baris" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
-                  </span>
-                  <div class="baris-kaya-teks">
-                    <label class="label-sholat" for="pengajian-tanggal">Tanggal</label>
-                    <p class="hint-baris">Kegiatan sekali tampil, otomatis hilang setelah lewat.</p>
+
+                <!-- Mingguan: seri berulang dari tanggal mulai, dgn akhir seri, rotasi pengisi & pratinjau per-tanggal -->
+                <div id="blok-mingguan">
+                  <div class="baris-kaya">
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h13"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks">
+                      <label class="label-sholat" for="mg-nama">Nama kegiatan</label>
+                      <p class="hint-baris">Nama yang tampil di layar TV, mis. Kajian Subuh.</p>
+                    </div>
+                    <input type="text" id="mg-nama" placeholder="Kajian Subuh">
                   </div>
-                  <input type="date" id="pengajian-tanggal">
-                </div>
-                <div class="baris-kaya">
-                  <span class="ikon-baris" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 9.5v3.5l2 1.5"/><path d="M9 3l-2 2"/><path d="M15 3l2 2"/></svg>
-                  </span>
-                  <div class="baris-kaya-teks">
-                    <label class="label-sholat" for="pengajian-jam">Jam</label>
-                    <p class="hint-baris">Jam mulai kegiatan.</p>
+                  <div class="baris-kaya">
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 9.5v3.5l2 1.5"/><path d="M9 3l-2 2"/><path d="M15 3l2 2"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks">
+                      <label class="label-sholat" for="mg-jam">Jam (opsional)</label>
+                      <p class="hint-baris">Jam mulai kegiatan.</p>
+                    </div>
+                    <input type="time" id="mg-jam">
                   </div>
-                  <input type="time" id="pengajian-jam">
-                </div>
-                <div class="baris-kaya">
-                  <span class="ikon-baris" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h13"/></svg>
-                  </span>
-                  <div class="baris-kaya-teks">
-                    <label class="label-sholat" for="pengajian-nama">Nama kegiatan</label>
-                    <p class="hint-baris">Nama yang tampil di layar TV, mis. Kajian Subuh.</p>
+                  <div class="baris-kaya">
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks">
+                      <label class="label-sholat" for="mg-tanggal-mulai">Tanggal mulai</label>
+                      <p class="hint-baris" id="mg-hari-konfirmasi">Hari pengulangan: -</p>
+                    </div>
+                    <input type="date" id="mg-tanggal-mulai">
                   </div>
-                  <input type="text" id="pengajian-nama" placeholder="Kajian Subuh">
-                </div>
-                <div class="baris-kaya">
-                  <span class="ikon-baris" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
-                  </span>
-                  <div class="baris-kaya-teks">
-                    <label class="label-sholat" for="pengajian-pengisi">Pengisi (opsional)</label>
-                    <p class="hint-baris">Nama penceramah/pengisi acara.</p>
+
+                  <div class="baris-kaya">
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks">
+                      <label class="label-sholat" for="mg-akhir-jenis">Berakhir</label>
+                      <p class="hint-baris">Kapan seri mingguan ini berhenti berulang.</p>
+                    </div>
+                    <select id="mg-akhir-jenis">
+                      <option value="tanpa-batas">Tanpa batas waktu</option>
+                      <option value="tanggal">Sampai tanggal tertentu</option>
+                      <option value="jumlah">Setelah N kali pertemuan</option>
+                    </select>
                   </div>
-                  <input type="text" id="pengajian-pengisi" placeholder="Ust. Fulan">
+                  <div class="baris-kaya" id="mg-akhir-tanggal-wrap" hidden>
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks"><label class="label-sholat" for="mg-akhir-tanggal">Sampai tanggal</label></div>
+                    <input type="date" id="mg-akhir-tanggal">
+                  </div>
+                  <div class="baris-kaya" id="mg-akhir-jumlah-wrap" hidden>
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h14M5 15h14M9 3L7 21M17 3l-2 18"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks"><label class="label-sholat" for="mg-akhir-jumlah">Jumlah pertemuan</label></div>
+                    <input type="number" id="mg-akhir-jumlah" min="1" value="10">
+                  </div>
+
+                  <div class="baris-kaya">
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks">
+                      <label class="label-sholat" for="mg-rotasi-aktif">Isi otomatis dari daftar bergilir</label>
+                      <p class="hint-baris">Tetap 1 kegiatan berulang - cuma pengisinya gantian tiap minggu sesuai urutan yang kamu masukkan (otomatis terisi sendiri di tabel pratinjau bawah). Kalau mau beberapa kegiatan Minggu yang beda-beda, klik Tambah terpisah tiap kegiatan.</p>
+                    </div>
+                    <label class="aktif-cek"><input type="checkbox" id="mg-rotasi-aktif"></label>
+                  </div>
+                  <div class="baris-kaya" id="mg-rotasi-wrap" hidden>
+                    <span class="ikon-baris" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    </span>
+                    <div class="baris-kaya-teks">
+                      <label class="label-sholat" for="mg-rotasi-daftar">Urutan pengisi</label>
+                      <p class="hint-baris">Pisahkan dengan koma, mis. "Ust. A, Ust. B, Ust. C".</p>
+                    </div>
+                    <input type="text" id="mg-rotasi-daftar" placeholder="Ust. A, Ust. B, Ust. C">
+                  </div>
+
+                  <h3 class="admin-subjudul">Pratinjau jadwal</h3>
+                  <p class="hint-baris" id="mg-tabel-kosong">Isi tanggal mulai buat lihat pratinjau jadwal per tanggal.</p>
+                  <div class="mg-tabel-wrap" id="mg-tabel-wrap" hidden>
+                    <table class="mg-tabel">
+                      <thead><tr><th>Tanggal</th><th>Jam</th><th>Pengisi</th><th></th></tr></thead>
+                      <tbody id="mg-tabel-body"></tbody>
+                    </table>
+                  </div>
+                  <datalist id="mg-datalist-pengisi"></datalist>
                 </div>
+
                 <div class="admin-aksi">
                   <button type="submit" id="tombol-tambah-pengajian" class="btn-primary">Tambah</button>
                   <button type="button" id="tombol-batal-pengajian" class="btn-inline" hidden>Batal Edit</button>
@@ -501,6 +588,112 @@
         <div class="admin-aksi admin-aksi-section">
           <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
           <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=kegiatan">Preview</button>
+        </div>
+      </section>
+
+      <!-- ================= Kegiatan Terdekat ================= -->
+      <section class="admin-kotak" data-panel="acara" hidden>
+        <h1>Kegiatan Terdekat</h1>
+        <p class="admin-ket">Poster foto latar penuh (tanpa teks) yang tampil di antrean layar sekunder setelah QR Donasi. Cuma tampil kalau gambar sudah diunggah - waktunya diatur lewat Mode Tampil di bawah.</p>
+
+        <div class="admin-subsection admin-kolom-sempit">
+          <h2 class="admin-subpanel-judul">Gambar</h2>
+          <p class="admin-ket">Foto latar layar Kegiatan Terdekat.</p>
+          <form id="form-bg-acara">
+          <img id="acara-bg-preview" class="qr-preview" alt="Pratinjau Kegiatan Terdekat" hidden>
+          <div class="baris-kaya">
+            <span class="ikon-baris" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5L5 21"/></svg>
+            </span>
+            <div class="baris-kaya-teks">
+              <label class="label-sholat" for="acara-bg-file">Gambar</label>
+            </div>
+            <input type="file" id="acara-bg-file" accept="image/*" aria-label="Foto Kegiatan Terdekat">
+            <button type="button" id="tombol-simpan-bg-acara" class="btn-inline">Simpan</button>
+          </div>
+          <div class="admin-aksi">
+            <button type="button" id="tombol-hapus-bg-acara" class="tombol-sekunder btn-bahaya">Hapus Gambar</button>
+          </div>
+          </form>
+          <p id="status-bg-acara" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+        </div>
+
+        <div class="admin-subsection admin-kolom-sempit">
+          <h2 class="admin-subpanel-judul">Mode Tampil</h2>
+          <form id="form-acara-mode">
+            <label class="opsi-radio"><input type="radio" name="acara-mode" value="waktu"> Sesuai jadwal waktu (sebelum/sesudah sholat, atur di bawah)</label>
+            <label class="opsi-radio"><input type="radio" name="acara-mode" value="selalu"> Selalu tampil - ikut rotasi utama seperti QR/Jadwal Kegiatan, tanpa batas waktu</label>
+          </form>
+        </div>
+
+        <div class="admin-subsection admin-kolom-sempit" id="acara-window-sebelum">
+          <h2 class="admin-subpanel-judul">Sebelum Waktu Sholat</h2>
+          <form id="form-acara-sebelum">
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks">
+                <label class="label-sholat">Tampil sebelum azan</label>
+                <p class="hint-baris">Mulai tampil sekian menit sebelum azan, berhenti sekian menit sebelum azan.</p>
+              </div>
+              <label class="aktif-cek"><input type="checkbox" id="acara-sebelum-aktif" aria-label="Aktifkan tampil sebelum azan"></label>
+            </div>
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks"><label class="label-sholat" for="acara-sebelum-mulai">Mulai</label></div>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="acara-sebelum-mulai" data-arah="-1" aria-label="Kurangi mulai sebelum azan">&minus;</button>
+                <input type="number" min="0" max="180" step="1" id="acara-sebelum-mulai" inputmode="numeric">
+                <span class="stepper-satuan">menit sebelum azan</span>
+                <button type="button" class="stepper-btn" data-target="acara-sebelum-mulai" data-arah="1" aria-label="Tambah mulai sebelum azan">+</button>
+              </div>
+            </div>
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks"><label class="label-sholat" for="acara-sebelum-selesai">Selesai</label></div>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="acara-sebelum-selesai" data-arah="-1" aria-label="Kurangi selesai sebelum azan">&minus;</button>
+                <input type="number" min="0" max="180" step="1" id="acara-sebelum-selesai" inputmode="numeric">
+                <span class="stepper-satuan">menit sebelum azan</span>
+                <button type="button" class="stepper-btn" data-target="acara-sebelum-selesai" data-arah="1" aria-label="Tambah selesai sebelum azan">+</button>
+              </div>
+            </div>
+            <p id="status-acara-sebelum" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+          </form>
+        </div>
+
+        <div class="admin-subsection admin-kolom-sempit" id="acara-window-sesudah">
+          <h2 class="admin-subpanel-judul">Sesudah Waktu Sholat</h2>
+          <form id="form-acara-sesudah">
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks">
+                <label class="label-sholat">Tampil sesudah sholat</label>
+                <p class="hint-baris">Dihitung dari SELESAI layar hening (bukan dari azan) - kalau hening nonaktif buat sholat itu, dihitung dari selesai iqomah. Jadi tidak akan ketutup adzan/iqomah/hening.</p>
+              </div>
+              <label class="aktif-cek"><input type="checkbox" id="acara-sesudah-aktif" aria-label="Aktifkan tampil sesudah sholat"></label>
+            </div>
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks"><label class="label-sholat" for="acara-sesudah-mulai">Mulai</label></div>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="acara-sesudah-mulai" data-arah="-1" aria-label="Kurangi mulai sesudah hening">&minus;</button>
+                <input type="number" min="0" max="180" step="1" id="acara-sesudah-mulai" inputmode="numeric">
+                <span class="stepper-satuan">menit sesudah hening selesai</span>
+                <button type="button" class="stepper-btn" data-target="acara-sesudah-mulai" data-arah="1" aria-label="Tambah mulai sesudah hening">+</button>
+              </div>
+            </div>
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks"><label class="label-sholat" for="acara-sesudah-selesai">Selesai</label></div>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="acara-sesudah-selesai" data-arah="-1" aria-label="Kurangi selesai sesudah hening">&minus;</button>
+                <input type="number" min="0" max="180" step="1" id="acara-sesudah-selesai" inputmode="numeric">
+                <span class="stepper-satuan">menit sesudah hening selesai</span>
+                <button type="button" class="stepper-btn" data-target="acara-sesudah-selesai" data-arah="1" aria-label="Tambah selesai sesudah hening">+</button>
+              </div>
+            </div>
+            <p id="status-acara-sesudah" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+          </form>
+        </div>
+
+        <div class="admin-aksi admin-aksi-section">
+          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
+          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
+          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=acara">Preview</button>
         </div>
       </section>
 
@@ -575,6 +768,82 @@
         </div>
       </section>
 
+      <!-- ================= Tarawih ================= -->
+      <section class="admin-kotak" data-panel="tarawih" hidden>
+        <h1>Tarawih</h1>
+        <p class="admin-ket">Layar hening (hitam polos) otomatis tampil selama sholat Tarawih berlangsung, khusus bulan Ramadhan. Mulai dihitung dari selesai iqomah Isya.</p>
+
+        <div class="admin-subsection admin-kolom-sempit">
+          <h2 class="admin-subpanel-judul">Deteksi Ramadhan</h2>
+          <p class="admin-notice" id="tarawih-status">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+            <span id="tarawih-status-teks">Memuat&hellip;</span>
+          </p>
+          <form id="form-tarawih-tanggal">
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks">
+                <label class="label-sholat">Matikan Tarawih musim ini</label>
+                <p class="hint-baris">Kalau dinyalakan, layar hening Tarawih tidak pernah muncul apapun tanggalnya - mengabaikan tanggal di bawah.</p>
+              </div>
+              <label class="aktif-cek"><input type="checkbox" id="tarawih-nonaktif" aria-label="Matikan Tarawih musim ini"></label>
+            </div>
+            <h3 class="admin-subjudul">Tanggal Ramadhan (Masehi)</h3>
+            <p class="admin-ket admin-ket-lebar">Isi KEDUANYA kalau mau timpa kalender Hijriah otomatis pakai tanggal resmi (mis. dari pengumuman Kemenag). Kosongkan salah satu/keduanya buat balik ke deteksi otomatis.</p>
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks"><label class="label-sholat" for="tarawih-tanggal-mulai">Mulai</label></div>
+              <input type="date" id="tarawih-tanggal-mulai">
+            </div>
+            <div class="baris-kaya">
+              <div class="baris-kaya-teks"><label class="label-sholat" for="tarawih-tanggal-selesai">Selesai</label></div>
+              <input type="date" id="tarawih-tanggal-selesai">
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-subsection admin-kolom-sempit">
+          <h2 class="admin-subpanel-judul">Waktu Tarawih</h2>
+          <form id="form-tarawih">
+            <div class="baris-kaya">
+              <span class="ikon-baris" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </span>
+              <div class="baris-kaya-teks">
+                <label class="label-sholat" for="tarawih-jeda">Jeda setelah iqomah Isya</label>
+                <p class="hint-baris">Menit dari selesai iqomah Isya sampai layar hening tarawih mulai.</p>
+              </div>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="tarawih-jeda" data-arah="-1" aria-label="Kurangi jeda tarawih">&minus;</button>
+                <input type="number" min="0" max="60" step="1" id="tarawih-jeda" inputmode="numeric">
+                <span class="stepper-satuan">menit</span>
+                <button type="button" class="stepper-btn" data-target="tarawih-jeda" data-arah="1" aria-label="Tambah jeda tarawih">+</button>
+              </div>
+            </div>
+            <div class="baris-kaya">
+              <span class="ikon-baris" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 9.5v3.5l2 1.5"/></svg>
+              </span>
+              <div class="baris-kaya-teks">
+                <label class="label-sholat" for="tarawih-durasi">Durasi layar hening</label>
+                <p class="hint-baris">Lama layar hitam tampil, mewakili tarawih + witir berlangsung.</p>
+              </div>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-target="tarawih-durasi" data-arah="-1" aria-label="Kurangi durasi tarawih">&minus;</button>
+                <input type="number" min="1" max="180" step="1" id="tarawih-durasi" inputmode="numeric">
+                <span class="stepper-satuan">menit</span>
+                <button type="button" class="stepper-btn" data-target="tarawih-durasi" data-arah="1" aria-label="Tambah durasi tarawih">+</button>
+              </div>
+            </div>
+            <p id="status-tarawih" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+          </form>
+        </div>
+
+        <div class="admin-aksi admin-aksi-section">
+          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
+          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
+          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=hening">Preview</button>
+        </div>
+      </section>
+
       <!-- ================= Audio ================= -->
       <section class="admin-kotak" data-panel="audio" hidden>
         <h1>Audio</h1>
@@ -609,10 +878,10 @@
                   </span>
                   <div class="baris-kaya-teks">
                     <label class="label-sholat">Timing murotal</label>
-                    <p class="hint-baris">Kapan murotal mulai &amp; berhenti, dihitung dari jam adzan.</p>
+                    <p class="hint-baris">Berlaku sama untuk semua waktu sholat aktif di atas, dihitung mundur dari jam adzan masing-masing.</p>
                     <div class="timing-grid">
                       <div class="timing-item">
-                        <span class="timing-label" id="label-murotal-mulai">Mulai</span>
+                        <span class="timing-label" id="label-murotal-mulai">Mulai (menit sebelum adzan)</span>
                         <div class="stepper">
                           <button type="button" class="stepper-btn" data-target="murotal-mulai" data-arah="-1" aria-label="Kurangi menit mulai murotal">&minus;</button>
                           <input type="number" min="1" max="60" step="1" id="murotal-mulai" inputmode="numeric" aria-labelledby="label-murotal-mulai">
@@ -621,7 +890,7 @@
                         </div>
                       </div>
                       <div class="timing-item">
-                        <span class="timing-label" id="label-murotal-berhenti">Berhenti</span>
+                        <span class="timing-label" id="label-murotal-berhenti">Berhenti (menit sebelum adzan, 0 = pas adzan)</span>
                         <div class="stepper">
                           <button type="button" class="stepper-btn" data-target="murotal-berhenti" data-arah="-1" aria-label="Kurangi menit berhenti murotal">&minus;</button>
                           <input type="number" min="0" max="59" step="1" id="murotal-berhenti" inputmode="numeric" aria-labelledby="label-murotal-berhenti">
@@ -630,7 +899,7 @@
                         </div>
                       </div>
                     </div>
-                    <p class="hint-baris hint-baris-kecil">0 pada Berhenti = diputar sampai pas adzan.</p>
+                    <ul id="murotal-preview-jam" class="timing-preview" role="status" aria-live="polite"></ul>
                   </div>
                 </div>
                 <p id="status-murotal" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>

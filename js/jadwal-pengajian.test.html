@@ -3,7 +3,7 @@
 <title>Test jadwal-pengajian.js</title>
 <pre id="out"></pre>
 <script type="module">
-import { entriAktif, kejadianBerikutnya } from "./jadwal-pengajian.js";
+import { entriAktif, daftarOccurrenceSeri, kejadianBerikutnyaSeri, occurrenceMendatangSeri, jamOccurrence, hariDariTanggal, toISODateLokal } from "./jadwal-pengajian.js";
 
 const out = [];
 let pass = 0, fail = 0;
@@ -13,30 +13,79 @@ function eq(name, got, want) {
   else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
 }
 
-// Acuan: Kamis 2026-09-03 pukul 08:00. getDay(): Kamis = 4.
+// Acuan: Rabu 2026-09-02 (tanggalMulai) selalu Rabu. now = Kamis 2026-09-03 08:00.
 const now = new Date(2026, 8, 3, 8, 0, 0);
 
-const mingguanJumat = { id: "a", tipe: "mingguan", hari: 5, jam: "05:00", nama: "Kajian Subuh", pengisi: "Ust. A" };
+eq("hariDariTanggal Rabu", hariDariTanggal("2026-09-02"), 3);
+eq("toISODateLokal", toISODateLokal(new Date(2026, 8, 2)), "2026-09-02");
+
+// --- seri tanpa rotasi/override: pengisi selalu "belum ditentukan" (kosong) ---
+const seriPolos = { nama: "Kajian Subuh", jam: "05:00", tanggalMulai: "2026-09-02", akhir: { jenis: "tanpa-batas" }, rotasiPengisi: [], override: {} };
+const daftarPolos = daftarOccurrenceSeri(seriPolos, 3);
+eq("seri polos jumlah baris", daftarPolos.length, 3);
+eq("seri polos tanggal berjarak 7 hari", daftarPolos.map((o) => o.tanggalStr), ["2026-09-02", "2026-09-09", "2026-09-16"]);
+eq("seri polos pengisi kosong semua", daftarPolos.map((o) => o.pengisi), ["", "", ""]);
+eq("seri polos jam ikut default seri semua", daftarPolos.map((o) => o.jam), ["05:00", "05:00", "05:00"]);
+
+// --- rotasi round-robin ---
+const seriRotasi = { nama: "Kajian", jam: "05:00", tanggalMulai: "2026-09-02", akhir: { jenis: "jumlah", n: 5 }, rotasiPengisi: ["Ust. A", "Ust. B"], override: {} };
+const daftarRotasi = daftarOccurrenceSeri(seriRotasi, 12);
+eq("akhir jumlah membatasi baris", daftarRotasi.length, 5);
+eq("rotasi round-robin 2 nama", daftarRotasi.map((o) => o.pengisi), ["Ust. A", "Ust. B", "Ust. A", "Ust. B", "Ust. A"]);
+
+// --- override: pengisi manual menang atas rotasi, dikecualikan menandai libur ---
+const seriOverride = {
+  nama: "Kajian", jam: "05:00", tanggalMulai: "2026-09-02", akhir: { jenis: "jumlah", n: 4 },
+  rotasiPengisi: ["Ust. A", "Ust. B"],
+  override: { "2026-09-09": { pengisi: "Ust. C", jam: "06:30" }, "2026-09-16": { dikecualikan: true } },
+};
+const daftarOverride = daftarOccurrenceSeri(seriOverride, 12);
+eq("override pengisi menang atas rotasi", daftarOverride[1].pengisi, "Ust. C");
+eq("override jam menang atas jam default seri", daftarOverride[1].jam, "06:30");
+eq("baris tanpa override jam pakai default seri", daftarOverride[0].jam, "05:00");
+eq("override dikecualikan tercatat tapi tetap ada barisnya", daftarOverride[2].dikecualikan, true);
+eq("rotasi lanjut normal setelah override (index tetap jalan)", daftarOverride[3].pengisi, "Ust. B");
+eq("jamOccurrence langsung", jamOccurrence(seriOverride, "2026-09-09"), "06:30");
+
+// --- akhir jenis tanggal: hitung jumlah kejadian dari rentang tanggal ---
+const seriSampaiTanggal = { nama: "Kajian", jam: "", tanggalMulai: "2026-09-02", akhir: { jenis: "tanggal", sampai: "2026-09-20" }, rotasiPengisi: [], override: {} };
+eq("akhir sampai-tanggal: 3 kejadian (2,9,16 Sep, 23 Sep lewat batas)", daftarOccurrenceSeri(seriSampaiTanggal, 12).length, 3);
+
+// --- kejadianBerikutnyaSeri: skip tanggal dikecualikan, hormati jam ---
+const kb = kejadianBerikutnyaSeri(seriOverride, now); // now = Kamis 3 Sep 08:00, seri mulai Rabu 2 Sep (sudah lewat)
+eq("lewati kejadian yg sudah lewat (2 Sep)", toISODateLokal(kb.tanggal), "2026-09-09");
+eq("pengisi override ikut di kejadianBerikutnya", kb.pengisi, "Ust. C");
+eq("jam override ikut di kejadianBerikutnya (06:30 bukan 05:00)", kb.tanggal.getHours() + ":" + kb.tanggal.getMinutes(), "6:30");
+
+const seriHariIni = { nama: "Kajian Ashar", jam: "15:30", tanggalMulai: "2026-08-27", akhir: { jenis: "tanpa-batas" }, rotasiPengisi: [], override: {} }; // 27 Agu 2026 = Kamis, now jg Kamis 08:00
+eq("kejadian hari ini kalau jam blm lewat", toISODateLokal(kejadianBerikutnyaSeri(seriHariIni, now).tanggal), "2026-09-03");
+
+const seriHabis = { nama: "Kajian", jam: "05:00", tanggalMulai: "2026-09-02", akhir: { jenis: "jumlah", n: 1 }, rotasiPengisi: [], override: {} }; // cuma 1x, 2 Sep sudah lewat
+eq("seri sudah habis -> null", kejadianBerikutnyaSeri(seriHabis, now), null);
+
+// --- occurrenceMendatangSeri: seri terbatas tampilkan SEMUA sisa pertemuan (bukan cuma 1) ---
+const sisaTerbatas = occurrenceMendatangSeri(seriOverride, now); // akhir jumlah:4 - idx0(2 Sep) lewat, idx2(16 Sep) dikecualikan
+eq("seri terbatas: sisa 2 dari 4 pertemuan (2 Sep lewat, 16 Sep dikecualikan)", sisaTerbatas.length, 2);
+eq("seri terbatas: urutan tanggal sisa benar", sisaTerbatas.map((o) => toISODateLokal(o.tanggal)), ["2026-09-09", "2026-09-23"]);
+eq("seri terbatas: pengisi tiap sisa benar", sisaTerbatas.map((o) => o.pengisi), ["Ust. C", "Ust. B"]);
+
+const sisaTanpaBatas = occurrenceMendatangSeri(seriHariIni, now);
+eq("seri tanpa-batas: cuma tampilkan 1 (yg terdekat)", sisaTanpaBatas.length, 1);
+
+// --- entriAktif: campur tanggal-khusus + seri mingguan, urut, seri habis disembunyikan ---
 const tanggalLampau = { id: "b", tipe: "tanggal", tanggal: "2026-09-01", jam: "19:30", nama: "Tabligh", pengisi: "Ust. B" };
 const tanggalNanti = { id: "c", tipe: "tanggal", tanggal: "2026-09-10", jam: "19:30", nama: "Tabligh Akbar", pengisi: "Ust. C" };
-const mingguanKamisSore = { id: "d", tipe: "mingguan", hari: 4, jam: "15:30", nama: "Kajian Ashar", pengisi: "Ust. D" };
-
-// kejadianBerikutnya mingguan Jumat 05:00 dari Kamis 08:00 -> besok (Jumat 2026-09-04 05:00)
-const kb = kejadianBerikutnya(mingguanJumat, now);
-eq("mingguan berikutnya tanggal", kb.getDate(), 4);
-eq("mingguan berikutnya jam", kb.getHours(), 5);
-
-// mingguan Kamis 15:30, sekarang Kamis 08:00 -> hari ini (belum lewat)
-const kb2 = kejadianBerikutnya(mingguanKamisSore, now);
-eq("mingguan hari ini blm lewat", kb2.getDate(), 3);
-
-// tanggal lampau di-hide, tanggal nanti + mingguan tampil
-const aktif = entriAktif(now, [mingguanJumat, tanggalLampau, tanggalNanti, mingguanKamisSore]);
-eq("tanggal lampau disembunyikan", aktif.find(e => e.id === "b"), undefined);
-eq("jumlah aktif", aktif.length, 3);
-
-// urutan: kejadian terdekat dulu. Kamis 15:30 (id d) < Jumat 05:00 (id a) < 10 Sep (id c)
-eq("urutan terdekat dulu", aktif.map(e => e.id), ["d", "a", "c"]);
+const mingguanD = { id: "d", tipe: "mingguan", ...seriHariIni };
+const mingguanHabis = { id: "e", tipe: "mingguan", ...seriHabis };
+const mingguanTerbatas = { id: "f", tipe: "mingguan", ...seriOverride };
+const aktif = entriAktif(now, [tanggalLampau, tanggalNanti, mingguanD, mingguanHabis, mingguanTerbatas]);
+eq("tanggal lampau disembunyikan", aktif.find((e) => e.id === "b"), undefined);
+eq("seri yg sudah habis disembunyikan", aktif.find((e) => e.id === "e"), undefined);
+eq("seri terbatas nyumbang 2 entri terpisah (bukan 1 kesatuan)", aktif.filter((e) => e.id === "f").length, 2);
+eq("urutan terdekat dulu, seri terbatas ikut kesisip di antara entri lain", aktif.map((e) => e.id), ["d", "f", "c", "f"]);
+eq("entri hasil entriAktif punya _waktu & _pengisi", typeof aktif[0]._waktu, "object");
+eq("entri mingguan bawa _jam efektif", aktif.find((e) => e.id === "d")._jam, "15:30");
+eq("entri tanggal-khusus bawa _jam dari field jam", aktif.find((e) => e.id === "c")._jam, "19:30");
 
 out.unshift(`${pass} PASS, ${fail} FAIL\n`);
 document.getElementById("out").textContent = out.join("\n");

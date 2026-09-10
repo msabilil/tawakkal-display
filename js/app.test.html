@@ -3,7 +3,7 @@
 <title>Test app.js</title>
 <pre id="out"></pre>
 <script type="module">
-import { parseHM, nextSholat, iqomahState, harusResumeIqomah } from "./app.js";
+import { parseHM, nextSholat, iqomahState, heningState, harusResumeIqomah } from "./app.js";
 
 const out = [];
 let pass = 0, fail = 0;
@@ -53,6 +53,16 @@ const sZero = iqomahState(t3, jadwal, iqZero, 5);
 eq("iqomah menit0 tetap adzan", sZero && sZero.key, "dzuhur");
 // adzan 0 menit & iqomah nonaktif -> benar-benar tidak ada apa-apa
 eq("iqomah & adzan nonaktif -> null", iqomahState(t3, jadwal, iqOff, 0), null);
+
+// heningState: dzuhur adzan5+iqomah10 -> iqomahEnd 12:07, hening 10 menit -> window [12:07, 12:17)
+const hening = { subuh:{menit:10,aktif:true}, dzuhur:{menit:10,aktif:true}, ashar:{menit:10,aktif:true}, maghrib:{menit:10,aktif:true}, isya:{menit:10,aktif:true} };
+eq("hening belum masuk (masih iqomah)", heningState(t3, jadwal, iq, hening, 5), null);
+const h1 = heningState(new Date(2026,8,3,12,10,0), jadwal, iq, hening, 5);
+eq("hening aktif key", h1 && h1.key, "dzuhur");
+eq("hening lewat window", heningState(new Date(2026,8,3,12,20,0), jadwal, iq, hening, 5), null);
+const heningOff = JSON.parse(JSON.stringify(hening)); heningOff.dzuhur.aktif = false;
+eq("hening nonaktif -> null", heningState(new Date(2026,8,3,12,10,0), jadwal, iq, heningOff, 5), null);
+eq("hening jumat dzuhur null", heningState(new Date(2026,8,4,12,10,0), jadwal, iq, hening, 5), null);
 
 // harusResumeIqomah: dipakai supaya refresh di tengah adzan/iqomah tidak
 // reset hitung mundur ke awal (bug: state lama kehapus balik ke sholat lagi).

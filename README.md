@@ -44,19 +44,27 @@ File murotal offline dan nada iqomah kustom diunggah lewat halaman admin dan
 disimpan di IndexedDB browser perangkat kiosk (tetap ada walau tanpa internet).
 Murotal juga bisa memakai audio dari API EQuran.id (butuh koneksi saat diputar).
 
+## Sinkronisasi Cloud (Supabase)
+
+Admin bisa login & ubah setting dari device manapun (laptop/HP) lewat
+internet - perubahannya otomatis sampai ke kiosk. Tanpa setup ini, aplikasi
+tetap jalan normal (localStorage-only, admin & kiosk harus 1 device), semua
+upload gambar/audio jadi butuh cloud aktif (lihat bagian di bawah).
+
+Setup sekali (langkah lengkap: `docs/superpowers/specs/2026-09-10-supabase-cloud-sync-design.md`):
+
+1. Buat project di [supabase.com](https://supabase.com), jalankan `supabase/schema.sql` lewat SQL Editor.
+2. Storage → bucket baru bernama **`media`** (persis, huruf kecil), Public ON.
+3. Authentication → Add user (akun admin) → matikan "Confirm email" di Providers.
+4. Database → Replication → aktifkan tabel `settings` (atau SQL: `alter publication supabase_realtime add table settings;`).
+5. Project Settings → API → salin Project URL & anon key ke `js/supabase-config.js`.
+
 ## Latar belakang per layar & slide Jum'at
 
-Layar Adzan, Iqomah, QR Donasi, dan Jum'at bisa dikasih foto latar (atau
-gambar/video bergilir khusus Jum'at) lewat admin. Ini nulis file ASLI ke
-folder `img/` (bukan IndexedDB) pakai File System Access API - jadi:
-
-- Cuma jalan di **Chrome/Edge**, dan admin.html **wajib** dibuka lewat
-  `http://localhost:8000` (server lokal), bukan dobel-klik file `file://`.
-- Sekali per browser: klik "Pilih Folder img/" di sidebar admin, arahkan
-  **langsung ke folder `img/` project ini** (bukan folder root), lalu izinkan akses.
-- View iqomah, qr, dan jumat di `index.html` cukup baca file lewat path
-  relatif `img/...` - tidak butuh izin folder sama sekali, jadi jalan normal
-  walau dibuka dari `file://`.
+Layar Adzan, Iqomah, QR Donasi, Kegiatan Terdekat, dan Jum'at bisa dikasih
+foto latar (atau gambar/video bergilir khusus Jum'at) lewat admin. Upload-nya
+lewat Supabase Storage (lihat bagian Sinkronisasi Cloud) - butuh cloud sudah
+dikonfigurasi (`js/supabase-config.js` terisi) sebelum bisa upload apa pun.
 
 ## Pengaturan tambahan (admin)
 
@@ -82,4 +90,4 @@ folder `img/` (bukan IndexedDB) pakai File System Access API - jadi:
 
 ## Menjalankan test logika
 
-Fungsi murni (hitung sholat berikutnya, state iqomah) diuji lewat `js/app.test.html` - buka file itu di Chrome, hasil PASS/FAIL tampil di layar dan console. Test serupa juga ada untuk fitur lain: `js/media-db.test.html`, `js/jadwal-pengajian.test.html`, `js/rotasi.test.html`, `js/murotal.test.html`, `js/jumat-mode.test.html`, `js/demo-slide.test.html` - dibuka dengan cara yang sama (lewat server lokal, sama seperti `app.test.html`).
+Fungsi murni (hitung sholat berikutnya, state iqomah) diuji lewat `js/app.test.html` - buka file itu di Chrome, hasil PASS/FAIL tampil di layar dan console. Test serupa juga ada untuk fitur lain: `js/media-db.test.html`, `js/jadwal-pengajian.test.html`, `js/rotasi.test.html`, `js/murotal.test.html`, `js/jumat-mode.test.html`, `js/demo-slide.test.html`, `js/acara-mode.test.html` - dibuka dengan cara yang sama (lewat server lokal, sama seperti `app.test.html`).

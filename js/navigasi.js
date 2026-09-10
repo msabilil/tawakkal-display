@@ -10,6 +10,8 @@ const KELAS_BODY = {
   jumat: "halaman-jumat",
   qr: "halaman-fokus halaman-qr",
   kegiatan: "halaman-fokus halaman-kegiatan",
+  hening: "halaman-hening",
+  acara: "halaman-acara",
 };
 
 const daftarView = {}; // nama -> start(opsi) => stop|void

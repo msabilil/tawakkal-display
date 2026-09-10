@@ -1,18 +1,24 @@
 import { SHOLAT, WAKTU_HARIAN, QORI } from "./config.js";
-import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadPengumuman, savePengumuman } from "./settings.js";
+import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadPengumuman, savePengumuman } from "./settings.js";
+import { loadTarawihSettings, saveTarawihSettings, isRamadhanEfektif, tanggalHijriahLabel } from "./ramadhan.js";
+import { loadAcara, saveAcara } from "./acara-mode.js";
 import { loadTampilan, saveTampilan } from "./tampilan.js";
 import { loadMurotal, saveMurotal } from "./murotal.js";
 import { loadQr, saveQr, clearQr, loadRotasi, saveRotasi } from "./rotasi.js";
-import { loadJadwalPengajian, saveJadwalPengajian } from "./jadwal-pengajian.js";
+import { loadJadwalPengajian, saveJadwalPengajian, daftarOccurrenceSeri, hariDariTanggal } from "./jadwal-pengajian.js";
 import { loadJumatSettings, saveJumatSettings, loadJumatSlides, saveJumatSlides } from "./jumat-mode.js";
 import { putMedia, delMedia, getMedia } from "./media-db.js";
 import { mainkanNada } from "./nada.js";
 import { TEMA_TAMPILAN } from "./tema/tampilan/registry.js";
 import { simpanBgLayar, hapusBgLayar, urlBgLayar } from "./bg-layar.js";
-import { fsaTersedia, pilihFolderImg, folderImgDipilih, ambilFolderImg } from "./folder-proyek.js";
+import { readCache, dateKey } from "./api.js";
+import { parseHM } from "./waktu.js";
+import { cloudAktif, cloudSet, cloudUploadMedia } from "./cloud.js";
+import { sesiAktif, login, logout } from "./cloud-auth.js";
 
 const $ = (id) => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const fmtJam = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
 // Pemilih berkas custom (ganti "Choose File" bawaan) - input file asli tetap
 // jadi elemen fungsional (disembunyikan visual lewat CSS .file-picker-input),
@@ -80,6 +86,161 @@ function simpanIqomah(e) {
   }
   saveIqomah(settings);
   tampilkanStatus("status-simpan");
+}
+
+const IKON_HENING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/></svg>`;
+
+function renderHening() {
+  const settings = loadHening();
+  const wrap = $("baris-hening");
+  wrap.innerHTML = "";
+  for (const { key, label } of SHOLAT) {
+    const s = settings[key];
+    const row = document.createElement("div");
+    row.className = "baris-kaya";
+    row.innerHTML = `
+      <span class="ikon-baris" aria-hidden="true">${IKON_HENING}</span>
+      <div class="baris-kaya-teks">
+        <label class="label-sholat" for="menit-hening-${key}">${label}</label>
+        <p class="hint-baris">Menit layar hening setelah iqomah ${label} kelar.</p>
+      </div>
+      <div class="baris-kaya-kontrol">
+        <div class="stepper">
+          <button type="button" class="stepper-btn" data-target="menit-hening-${key}" data-arah="-1" aria-label="Kurangi hening ${label}">&minus;</button>
+          <input type="number" min="0" max="60" step="1" id="menit-hening-${key}" value="${s.menit}" inputmode="numeric">
+          <span class="stepper-satuan">menit</span>
+          <button type="button" class="stepper-btn" data-target="menit-hening-${key}" data-arah="1" aria-label="Tambah hening ${label}">+</button>
+        </div>
+        <label class="aktif-cek"><input type="checkbox" id="aktif-hening-${key}" ${s.aktif ? "checked" : ""} aria-label="Hening ${label} aktif"></label>
+      </div>
+    `;
+    wrap.appendChild(row);
+  }
+}
+
+function simpanHening(e) {
+  e.preventDefault();
+  const settings = {};
+  for (const { key } of SHOLAT) {
+    const menit = parseInt($(`menit-hening-${key}`).value, 10);
+    settings[key] = {
+      menit: Number.isFinite(menit) && menit >= 0 ? menit : 0,
+      aktif: $(`aktif-hening-${key}`).checked,
+    };
+  }
+  saveHening(settings);
+  tampilkanStatus("status-hening");
+}
+
+// Baca dari form langsung (bukan storage) - dipakai buat live-preview status
+// pas admin ubah nonaktif/tanggal, SEBELUM diklik Simpan.
+function tarawihSettingsDariForm() {
+  return {
+    ...loadTarawihSettings(),
+    tanggalMulai: $("tarawih-tanggal-mulai").value,
+    tanggalSelesai: $("tarawih-tanggal-selesai").value,
+    nonaktif: $("tarawih-nonaktif").checked,
+  };
+}
+
+function renderTarawihStatus() {
+  const s = tarawihSettingsDariForm();
+  const now = new Date();
+  const aktif = isRamadhanEfektif(now, s);
+  if (s.nonaktif) {
+    $("tarawih-status-teks").textContent = `${tanggalHijriahLabel(now)} - Tarawih dimatikan musim ini.`;
+    return;
+  }
+  const modeTeks = s.tanggalMulai && s.tanggalSelesai ? " (pakai tanggal manual)" : " (mengikuti kalender Hijriah)";
+  $("tarawih-status-teks").textContent = `${tanggalHijriahLabel(now)} - Ramadhan ${aktif ? "AKTIF" : "tidak aktif"} hari ini${modeTeks}.`;
+}
+
+function renderTarawih() {
+  const s = loadTarawihSettings();
+  $("tarawih-jeda").value = s.jedaMenit;
+  $("tarawih-durasi").value = s.durasiMenit;
+  $("tarawih-tanggal-mulai").value = s.tanggalMulai;
+  $("tarawih-tanggal-selesai").value = s.tanggalSelesai;
+  $("tarawih-nonaktif").checked = s.nonaktif;
+  renderTarawihStatus();
+}
+
+function simpanTarawihTanggal(e) {
+  e.preventDefault();
+  const settings = loadTarawihSettings();
+  settings.tanggalMulai = $("tarawih-tanggal-mulai").value;
+  settings.tanggalSelesai = $("tarawih-tanggal-selesai").value;
+  settings.nonaktif = $("tarawih-nonaktif").checked;
+  saveTarawihSettings(settings);
+  renderTarawihStatus();
+  tampilkanStatus("status-tarawih");
+}
+
+function simpanTarawih(e) {
+  e.preventDefault();
+  const jeda = parseInt($("tarawih-jeda").value, 10);
+  const durasi = parseInt($("tarawih-durasi").value, 10);
+  const settings = loadTarawihSettings();
+  settings.jedaMenit = Number.isFinite(jeda) && jeda >= 0 ? jeda : 0;
+  settings.durasiMenit = Number.isFinite(durasi) && durasi >= 1 ? durasi : 1;
+  saveTarawihSettings(settings);
+  tampilkanStatus("status-tarawih");
+}
+
+function syncAcaraModeToggle(mode) {
+  const waktuAktif = mode !== "selalu";
+  $("acara-window-sebelum").hidden = !waktuAktif;
+  $("acara-window-sesudah").hidden = !waktuAktif;
+}
+
+function renderAcara() {
+  const { mode, sebelum, sesudah } = loadAcara();
+  document.querySelectorAll('input[name="acara-mode"]').forEach((r) => { r.checked = r.value === mode; });
+  syncAcaraModeToggle(mode);
+  $("acara-sebelum-aktif").checked = sebelum.aktif;
+  $("acara-sebelum-mulai").value = sebelum.mulaiMenit;
+  $("acara-sebelum-selesai").value = sebelum.selesaiMenit;
+  $("acara-sesudah-aktif").checked = sesudah.aktif;
+  $("acara-sesudah-mulai").value = sesudah.mulaiMenit;
+  $("acara-sesudah-selesai").value = sesudah.selesaiMenit;
+}
+
+function simpanAcaraMode(e) {
+  e.preventDefault();
+  const dipilih = document.querySelector('input[name="acara-mode"]:checked');
+  const mode = dipilih ? dipilih.value : "waktu";
+  const settings = loadAcara();
+  settings.mode = mode;
+  saveAcara(settings);
+  syncAcaraModeToggle(mode);
+}
+
+function simpanAcaraSebelum(e) {
+  e.preventDefault();
+  const mulai = parseInt($("acara-sebelum-mulai").value, 10);
+  const selesai = parseInt($("acara-sebelum-selesai").value, 10);
+  const settings = loadAcara();
+  settings.sebelum = {
+    aktif: $("acara-sebelum-aktif").checked,
+    mulaiMenit: Number.isFinite(mulai) && mulai >= 0 ? mulai : 0,
+    selesaiMenit: Number.isFinite(selesai) && selesai >= 0 ? selesai : 0,
+  };
+  saveAcara(settings);
+  tampilkanStatus("status-acara-sebelum");
+}
+
+function simpanAcaraSesudah(e) {
+  e.preventDefault();
+  const mulai = parseInt($("acara-sesudah-mulai").value, 10);
+  const selesai = parseInt($("acara-sesudah-selesai").value, 10);
+  const settings = loadAcara();
+  settings.sesudah = {
+    aktif: $("acara-sesudah-aktif").checked,
+    mulaiMenit: Number.isFinite(mulai) && mulai >= 0 ? mulai : 0,
+    selesaiMenit: Number.isFinite(selesai) && selesai >= 0 ? selesai : 0,
+  };
+  saveAcara(settings);
+  tampilkanStatus("status-acara-sesudah");
 }
 
 function renderTampilan() {
@@ -221,7 +382,7 @@ function simpanAdzanForm(e) {
 }
 
 // ---------- Background per layar (adzan/iqomah/donasi) ----------
-const LAYAR_BG = ["adzan", "iqomah", "donasi"];
+const LAYAR_BG = ["adzan", "iqomah", "donasi", "acara"];
 
 function renderBgLayar(layar) {
   const url = urlBgLayar(layar);
@@ -237,7 +398,7 @@ async function simpanBgLayarForm(layar, { requireFile = true } = {}) {
     return;
   }
   const ok = await simpanBgLayar(layar, file);
-  if (!ok) { alert("Gagal menyimpan. Pastikan folder img/ sudah dipilih (tombol di sidebar) dan izinnya diberikan."); return; }
+  if (!ok) { alert("Gagal menyimpan. Pastikan cloud sudah dikonfigurasi (lihat js/supabase-config.js)."); return; }
   $(`${layar}-bg-file`).value = "";
   renderBgLayar(layar);
   tampilkanStatus(`status-bg-${layar}`);
@@ -248,28 +409,6 @@ async function hapusBgLayarForm(layar) {
   await hapusBgLayar(layar);
   renderBgLayar(layar);
   tampilkanStatus(`status-bg-${layar}`);
-}
-
-// ---------- Folder project (File System Access API) ----------
-async function renderFolderStatus() {
-  const el = $("admin-folder-status");
-  if (!fsaTersedia()) {
-    el.textContent = "Folder img/: browser tidak didukung (pakai Chrome/Edge lewat http://localhost).";
-    $("tombol-pilih-folder").disabled = true;
-    return;
-  }
-  el.textContent = (await folderImgDipilih())
-    ? "Folder img/: terhubung."
-    : "Folder img/: belum dipilih - wajib diisi sebelum unggah latar/slide.";
-}
-
-async function pilihFolder() {
-  try {
-    await pilihFolderImg();
-  } catch {
-    return; // dibatalkan / ditolak user, diam saja
-  }
-  renderFolderStatus();
 }
 
 // ---------- Murotal ----------
@@ -285,9 +424,66 @@ function renderMurotal() {
     row.className = "aktif-cek testing-toggle";
     row.title = `Putar murotal menjelang azan ${label}`;
     row.innerHTML = `<input type="checkbox" id="murotal-sholat-${key}" ${s.perSholat[key] ? "checked" : ""}> ${label}`;
+    row.querySelector("input").addEventListener("change", renderMurotalPreview);
     wrap.appendChild(row);
   }
   renderPlaylist();
+  renderMurotalPreview();
+}
+
+// Cegah "Berhenti" lewat/samain "Mulai" langsung di stepper (dulu cuma
+// ketauan lewat alert pas Simpan) - dorong field satunya biar urutan waktu
+// selalu masuk akal (start harus lebih jauh dari adzan daripada end).
+function enforceMurotalOrder(sourceId) {
+  const mulaiInput = $("murotal-mulai");
+  const berhentiInput = $("murotal-berhenti");
+  let mulai = parseInt(mulaiInput.value, 10);
+  let berhenti = parseInt(berhentiInput.value, 10);
+  if (berhenti < mulai) return;
+  if (sourceId === "murotal-berhenti") {
+    mulai = Math.min(berhenti + 1, parseInt(mulaiInput.max, 10));
+    berhenti = Math.min(berhenti, mulai - 1);
+    mulaiInput.value = mulai;
+    berhentiInput.value = berhenti;
+  } else {
+    berhenti = Math.max(mulai - 1, parseInt(berhentiInput.min, 10));
+    mulaiInput.value = mulai;
+    berhentiInput.value = berhenti;
+  }
+}
+
+// Pratinjau jam nyata "Subuh 04:12 -> 03:57-04:12" biar admin tidak perlu
+// hitung sendiri offset menit ke jam sholat. Pakai cache jadwal hari ini
+// yang sudah ditulis halaman utama (js/api.js) - tidak fetch API sendiri.
+function renderMurotalPreview() {
+  const el = $("murotal-preview-jam");
+  if (!el) return;
+  const mulai = parseInt($("murotal-mulai").value, 10);
+  const berhenti = parseInt($("murotal-berhenti").value, 10);
+  const pesan = (teks) => { el.innerHTML = `<li class="timing-preview-pesan">${teks}</li>`; };
+  const cache = readCache();
+  if (!cache || !cache.jadwal || cache.dateKey !== dateKey(new Date())) {
+    pesan("Buka halaman utama sekali dulu supaya jadwal sholat hari ini tersedia untuk pratinjau jam.");
+    return;
+  }
+  const aktif = SHOLAT.filter(({ key }) => $(`murotal-sholat-${key}`)?.checked);
+  if (!aktif.length) {
+    pesan("Belum ada waktu sholat yang dipilih di atas.");
+    return;
+  }
+  el.innerHTML = aktif
+    .filter(({ key }) => cache.jadwal[key])
+    .map(({ key, label }) => {
+      const adzan = parseHM(cache.jadwal[key], new Date());
+      const start = fmtJam(new Date(adzan.getTime() - mulai * 60000));
+      const end = fmtJam(new Date(adzan.getTime() - berhenti * 60000));
+      return `<li class="timing-preview-baris">
+        <span class="timing-preview-nama">${label}</span>
+        <span class="timing-preview-adzan">adzan ${cache.jadwal[key]}</span>
+        <span class="timing-preview-rentang">${start}–${end}</span>
+      </li>`;
+    })
+    .join("");
 }
 
 const IKON_TRACK_OFFLINE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
@@ -491,7 +687,10 @@ function renderTema() {
   $("form-tema-tampilan").addEventListener("submit", (e) => {
     e.preventDefault();
     const dipilih = document.querySelector(`input[name="tema-tampilan"]:checked`);
-    if (dipilih) localStorage.setItem(KEY_TEMA_TAMPILAN, dipilih.value);
+    if (dipilih) {
+      localStorage.setItem(KEY_TEMA_TAMPILAN, dipilih.value);
+      cloudSet(KEY_TEMA_TAMPILAN, dipilih.value);
+    }
     tampilkanStatus("status-tema-tampilan");
   });
 }
@@ -541,15 +740,252 @@ function hapusQr() {
 }
 
 // ---------- Jadwal Pengajian ----------
+// Dua sub-form, tergantung tipe kegiatan:
+// - "tanggal" (sekali tampil): repeater, 1 baris = 1 jadwal, mode tambah bisa
+//   isi banyak baris sekaligus (judul/pengisi beda-beda per baris).
+// - "mingguan" (seri berulang): tanggal mulai menentukan hari pengulangan
+//   (dideteksi otomatis, bukan input terpisah, biar tanggal & hari gak pernah
+//   kontradiksi), admin pilih kapan seri berakhir + opsional daftar pengisi
+//   bergilir (round-robin), lalu tabel pratinjau per-tanggal yang bisa
+//   diedit/dikecualikan satu-satu tanpa membatalkan seluruh seri.
 const HARI_NAMA = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-
-function toggleTipePengajian() {
-  const tipe = $("pengajian-tipe").value;
-  $("baris-hari").hidden = tipe !== "mingguan";
-  $("baris-tanggal").hidden = tipe !== "tanggal";
-}
+const BULAN_NAMA = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
 
 let editPengajianId = null;
+
+// ===== Tanggal khusus: repeater =====
+function buatBarisJadwal(nilai = {}) {
+  const div = document.createElement("div");
+  div.className = "jadwal-baris-item";
+  div.innerHTML = `
+    <button type="button" class="jadwal-baris-hapus" aria-label="Hapus baris ini">&times;</button>
+    <div class="jbm-tanggal"><label>Tanggal</label><input type="date" class="jbm-input" data-field="tanggal"></div>
+    <div class="jbm-jam"><label>Jam (opsional)</label><input type="time" class="jbm-input" data-field="jam"></div>
+    <div class="jbm-nama"><label>Nama kegiatan</label><input type="text" class="jbm-input" data-field="nama" placeholder="Kajian Subuh"></div>
+    <div class="jbm-pengisi"><label>Pengisi (opsional)</label><input type="text" class="jbm-input" data-field="pengisi" placeholder="Ust. Fulan"></div>
+  `;
+  div.querySelector('[data-field="tanggal"]').value = nilai.tanggal || "";
+  div.querySelector('[data-field="jam"]').value = nilai.jam || "";
+  div.querySelector('[data-field="nama"]').value = nilai.nama || "";
+  div.querySelector('[data-field="pengisi"]').value = nilai.pengisi || "";
+  div.querySelector(".jadwal-baris-hapus").addEventListener("click", () => {
+    div.remove();
+    perbaruiTombolHapusBaris();
+  });
+  return div;
+}
+
+function perbaruiTombolHapusBaris() {
+  const baris = [...document.querySelectorAll("#daftar-baris-jadwal .jadwal-baris-item")];
+  baris.forEach((b) => { b.querySelector(".jadwal-baris-hapus").hidden = baris.length <= 1; });
+}
+
+function tambahBarisJadwal(nilai) {
+  const baris = buatBarisJadwal(nilai);
+  $("daftar-baris-jadwal").appendChild(baris);
+  perbaruiTombolHapusBaris();
+  return baris;
+}
+
+function resetBarisJadwal() {
+  $("daftar-baris-jadwal").innerHTML = "";
+  tambahBarisJadwal({});
+}
+
+function bacaBarisJadwal(baris) {
+  const field = (nama) => baris.querySelector(`[data-field="${nama}"]`);
+  return {
+    tanggal: field("tanggal").value,
+    jam: field("jam").value.trim(),
+    nama: field("nama").value.trim(),
+    pengisi: field("pengisi").value.trim(),
+  };
+}
+
+// ===== Mingguan: seri berulang =====
+// override tersimpan per-tanggal (bukan per-baris-form) - dipertahankan
+// lintas render ulang tabel supaya edit pengisi/kecualikan admin gak hilang
+// waktu field lain (misal akhir seri) diubah.
+let mgOverride = {};
+
+function mgAmbilForm() {
+  const akhirJenis = $("mg-akhir-jenis").value;
+  const akhir = akhirJenis === "tanggal"
+    ? { jenis: "tanggal", sampai: $("mg-akhir-tanggal").value }
+    : akhirJenis === "jumlah"
+    ? { jenis: "jumlah", n: Math.max(1, parseInt($("mg-akhir-jumlah").value, 10) || 1) }
+    : { jenis: "tanpa-batas" };
+  const rotasiPengisi = $("mg-rotasi-aktif").checked
+    ? $("mg-rotasi-daftar").value.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+  return {
+    nama: $("mg-nama").value.trim(),
+    jam: $("mg-jam").value,
+    tanggalMulai: $("mg-tanggal-mulai").value,
+    akhir,
+    rotasiPengisi,
+    override: mgOverride,
+  };
+}
+
+function mgRenderTabel() {
+  const tanggalMulai = $("mg-tanggal-mulai").value;
+  $("mg-hari-konfirmasi").textContent = tanggalMulai
+    ? `Hari pengulangan: ${HARI_NAMA[hariDariTanggal(tanggalMulai)]}`
+    : "Hari pengulangan: -";
+
+  const tbody = $("mg-tabel-body");
+  tbody.innerHTML = "";
+  const daftar = tanggalMulai ? daftarOccurrenceSeri(mgAmbilForm(), 12) : [];
+  $("mg-tabel-wrap").hidden = daftar.length === 0;
+  $("mg-tabel-kosong").hidden = daftar.length !== 0;
+
+  daftar.forEach((occ) => {
+    const tr = document.createElement("tr");
+    tr.className = occ.dikecualikan ? "mg-row-dikecualikan" : "";
+
+    const tdTgl = document.createElement("td");
+    tdTgl.className = "mg-tabel-tanggal";
+    tdTgl.textContent = `${HARI_NAMA[occ.tanggal.getDay()]}, ${occ.tanggal.getDate()} ${BULAN_NAMA[occ.tanggal.getMonth()]} ${occ.tanggal.getFullYear()}`;
+
+    const tdJam = document.createElement("td");
+    const inpJam = document.createElement("input");
+    inpJam.type = "time";
+    inpJam.value = occ.jam;
+    inpJam.addEventListener("input", () => {
+      mgOverride[occ.tanggalStr] = { ...mgOverride[occ.tanggalStr], jam: inpJam.value };
+    });
+    tdJam.appendChild(inpJam);
+
+    const tdPengisi = document.createElement("td");
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = occ.pengisi;
+    inp.placeholder = "Belum ditentukan";
+    inp.setAttribute("list", "mg-datalist-pengisi");
+    inp.className = occ.pengisi ? "" : "mg-belum-ditentukan";
+    inp.addEventListener("input", () => {
+      mgOverride[occ.tanggalStr] = { ...mgOverride[occ.tanggalStr], pengisi: inp.value.trim() };
+      inp.classList.toggle("mg-belum-ditentukan", !inp.value.trim());
+    });
+    tdPengisi.appendChild(inp);
+
+    const tdAksi = document.createElement("td");
+    const btnEx = document.createElement("button");
+    btnEx.type = "button";
+    btnEx.className = "btn-inline";
+    btnEx.textContent = occ.dikecualikan ? "Sertakan" : "Kecualikan";
+    btnEx.addEventListener("click", () => {
+      mgOverride[occ.tanggalStr] = { ...mgOverride[occ.tanggalStr], dikecualikan: !occ.dikecualikan };
+      mgRenderTabel();
+    });
+    tdAksi.appendChild(btnEx);
+
+    tr.append(tdTgl, tdJam, tdPengisi, tdAksi);
+    tbody.appendChild(tr);
+  });
+}
+
+function mgResetForm() {
+  mgOverride = {};
+  $("mg-nama").value = "";
+  $("mg-jam").value = "";
+  $("mg-tanggal-mulai").value = "";
+  $("mg-akhir-jenis").value = "tanpa-batas";
+  $("mg-akhir-tanggal").value = "";
+  $("mg-akhir-jumlah").value = "10";
+  $("mg-akhir-tanggal-wrap").hidden = true;
+  $("mg-akhir-jumlah-wrap").hidden = true;
+  $("mg-rotasi-aktif").checked = false;
+  $("mg-rotasi-wrap").hidden = true;
+  $("mg-rotasi-daftar").value = "";
+  mgRenderTabel();
+}
+
+function mgIsiForm(series) {
+  mgOverride = JSON.parse(JSON.stringify(series.override || {}));
+  $("mg-nama").value = series.nama || "";
+  $("mg-jam").value = series.jam || "";
+  $("mg-tanggal-mulai").value = series.tanggalMulai || "";
+  const akhir = series.akhir || { jenis: "tanpa-batas" };
+  $("mg-akhir-jenis").value = akhir.jenis;
+  $("mg-akhir-tanggal-wrap").hidden = akhir.jenis !== "tanggal";
+  $("mg-akhir-jumlah-wrap").hidden = akhir.jenis !== "jumlah";
+  $("mg-akhir-tanggal").value = akhir.jenis === "tanggal" ? akhir.sampai || "" : "";
+  $("mg-akhir-jumlah").value = akhir.jenis === "jumlah" ? akhir.n : 10;
+  const rotasiAktif = !!(series.rotasiPengisi && series.rotasiPengisi.length);
+  $("mg-rotasi-aktif").checked = rotasiAktif;
+  $("mg-rotasi-wrap").hidden = !rotasiAktif;
+  $("mg-rotasi-daftar").value = (series.rotasiPengisi || []).join(", ");
+  mgRenderTabel();
+}
+
+// Nama pengisi yg pernah dipakai (tanggal khusus + rotasi/override mingguan) - buat autocomplete.
+function daftarNamaPengisi() {
+  const set = new Set();
+  loadJadwalPengajian().forEach((e) => {
+    if (e.tipe === "tanggal" && e.pengisi) set.add(e.pengisi);
+    if (e.tipe === "mingguan") {
+      (e.rotasiPengisi || []).forEach((p) => p && set.add(p));
+      Object.values(e.override || {}).forEach((ov) => ov.pengisi && set.add(ov.pengisi));
+    }
+  });
+  return [...set].sort();
+}
+
+function renderDatalistPengisi() {
+  const dl = $("mg-datalist-pengisi");
+  dl.innerHTML = "";
+  daftarNamaPengisi().forEach((nama) => {
+    const opt = document.createElement("option");
+    opt.value = nama;
+    dl.appendChild(opt);
+  });
+}
+
+function deskripsiAkhirSeri(akhir) {
+  if (akhir.jenis === "tanggal") return `s.d. ${akhir.sampai}`;
+  if (akhir.jenis === "jumlah") return `${akhir.n}x pertemuan`;
+  return "tanpa batas";
+}
+
+// ===== Bersama =====
+function toggleTipePengajian() {
+  const tipe = $("pengajian-tipe").value;
+  $("blok-tanggal").hidden = tipe !== "tanggal";
+  $("blok-mingguan").hidden = tipe !== "mingguan";
+  $("tombol-tambah-baris").hidden = !!editPengajianId;
+  if (editPengajianId) return; // field sudah diisi manual oleh mulaiEditPengajian - jangan direset
+  if (tipe === "tanggal") resetBarisJadwal(); else mgResetForm();
+}
+
+// Tabel read-only semua tanggal seri (bukan buat diedit - itu tugas form
+// Edit; ini cuma buat admin ngintip cepat tanpa buka form) - dropdown di
+// bawah baris list, dipicu tombol "Detail".
+function renderTabelDetailSeri(series) {
+  const daftar = daftarOccurrenceSeri(series, 60);
+  if (!daftar.length) {
+    return '<p class="hint-baris">Belum ada tanggal (seri belum mulai atau sudah berakhir).</p>';
+  }
+  const baris = daftar.map((occ) => `
+    <tr class="${occ.dikecualikan ? "mg-row-dikecualikan" : ""}">
+      <td class="mg-tabel-tanggal">${HARI_NAMA[occ.tanggal.getDay()]}, ${occ.tanggal.getDate()} ${BULAN_NAMA[occ.tanggal.getMonth()]} ${occ.tanggal.getFullYear()}</td>
+      <td>${occ.jam || "-"}</td>
+      <td>${occ.pengisi || "Belum ditentukan"}</td>
+    </tr>
+  `).join("");
+  return `
+    <div class="mg-tabel-wrap">
+      <table class="mg-tabel">
+        <thead><tr><th>Tanggal</th><th>Jam</th><th>Pengisi</th></tr></thead>
+        <tbody>${baris}</tbody>
+      </table>
+    </div>
+  `;
+}
 
 function renderPengajian() {
   const arr = loadJadwalPengajian();
@@ -557,18 +993,32 @@ function renderPengajian() {
   ul.innerHTML = "";
   if (!arr.length) { ul.innerHTML = "<li>(belum ada jadwal)</li>"; return; }
   arr.forEach((e) => {
-    const kapan = e.tipe === "mingguan" ? `${HARI_NAMA[e.hari]} ${e.jam}` : `${e.tanggal} ${e.jam}`;
+    const jamTeks = e.jam ? ` ${e.jam}` : "";
+    // e.tanggalMulai bisa kosong utk entri lama (format sblm ada seri berulang) - jangan crash, tandai aja.
+    const kapan = e.tipe === "mingguan"
+      ? (e.tanggalMulai
+          ? `Mulai ${e.tanggalMulai} (${HARI_NAMA[hariDariTanggal(e.tanggalMulai)]})${jamTeks} - ${deskripsiAkhirSeri(e.akhir || { jenis: "tanpa-batas" })}`
+          : "(format lama - edit ulang atau hapus)")
+      : `${e.tanggal}${jamTeks}`;
+    const pengisiTeks = e.tipe === "mingguan"
+      ? (e.rotasiPengisi && e.rotasiPengisi.length ? e.rotasiPengisi.join(" -> ") : "")
+      : (e.pengisi || "");
+    const bisaDetail = e.tipe === "mingguan" && !!e.tanggalMulai;
     const li = document.createElement("li");
     li.classList.toggle("aktif-edit", e.id === editPengajianId);
     li.innerHTML = `
-      <div class="admin-item-info">
-        <p class="admin-item-judul">${e.nama}</p>
-        <p class="admin-item-meta">${kapan}${e.pengisi ? " &bull; " + e.pengisi : ""}</p>
+      <div class="admin-item-row">
+        <div class="admin-item-info">
+          <p class="admin-item-judul">${e.nama}</p>
+          <p class="admin-item-meta">${kapan}${pengisiTeks ? " &bull; " + pengisiTeks : ""}</p>
+        </div>
+        <div class="admin-item-aksi">
+          ${bisaDetail ? '<button type="button" class="btn-inline" data-aksi="detail">Detail</button>' : ""}
+          <button type="button" class="btn-inline" data-aksi="edit">Edit</button>
+          <button type="button" class="btn-inline btn-bahaya" data-aksi="hapus">Hapus</button>
+        </div>
       </div>
-      <div class="admin-item-aksi">
-        <button type="button" class="btn-inline" data-aksi="edit">Edit</button>
-        <button type="button" class="btn-inline btn-bahaya" data-aksi="hapus">Hapus</button>
-      </div>
+      ${bisaDetail ? '<div class="mg-detail-panel" hidden></div>' : ""}
     `;
     li.querySelector('[data-aksi="edit"]').addEventListener("click", () => mulaiEditPengajian(e));
     li.querySelector('[data-aksi="hapus"]').addEventListener("click", () => {
@@ -577,6 +1027,19 @@ function renderPengajian() {
       if (editPengajianId === e.id) batalEditPengajian();
       renderPengajian();
     });
+    if (bisaDetail) {
+      const btnDetail = li.querySelector('[data-aksi="detail"]');
+      const panel = li.querySelector(".mg-detail-panel");
+      btnDetail.addEventListener("click", () => {
+        const buka = panel.hidden;
+        if (buka && !panel.dataset.terisi) {
+          panel.innerHTML = renderTabelDetailSeri(e);
+          panel.dataset.terisi = "1";
+        }
+        panel.hidden = !buka;
+        btnDetail.textContent = buka ? "Tutup" : "Detail";
+      });
+    }
     ul.appendChild(li);
   });
 }
@@ -585,11 +1048,12 @@ function mulaiEditPengajian(e) {
   editPengajianId = e.id;
   $("pengajian-tipe").value = e.tipe;
   toggleTipePengajian();
-  if (e.tipe === "mingguan") $("pengajian-hari").value = String(e.hari);
-  else $("pengajian-tanggal").value = e.tanggal;
-  $("pengajian-jam").value = e.jam;
-  $("pengajian-nama").value = e.nama;
-  $("pengajian-pengisi").value = e.pengisi || "";
+  if (e.tipe === "tanggal") {
+    $("daftar-baris-jadwal").innerHTML = "";
+    tambahBarisJadwal(e);
+  } else {
+    mgIsiForm(e);
+  }
   $("tombol-tambah-pengajian").textContent = "Update";
   $("tombol-batal-pengajian").hidden = false;
   $("form-pengajian").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -608,22 +1072,34 @@ function batalEditPengajian() {
 function tambahPengajian(e) {
   e.preventDefault();
   const tipe = $("pengajian-tipe").value;
-  const jam = $("pengajian-jam").value;
-  const nama = $("pengajian-nama").value.trim();
-  const pengisi = $("pengajian-pengisi").value.trim();
-  if (!jam || !nama) { alert("Jam dan nama kegiatan wajib diisi."); return; }
-  const entry = { id: editPengajianId || uid(), tipe, jam, nama, pengisi };
-  if (tipe === "mingguan") {
-    entry.hari = parseInt($("pengajian-hari").value, 10);
+
+  if (tipe === "tanggal") {
+    const baris = [...document.querySelectorAll("#daftar-baris-jadwal .jadwal-baris-item")].map(bacaBarisJadwal);
+    const buatEntry = (id, b) => ({ id, tipe, jam: b.jam, nama: b.nama, pengisi: b.pengisi, tanggal: b.tanggal });
+    if (editPengajianId) {
+      const b = baris[0];
+      if (!b.nama) { alert("Nama kegiatan wajib diisi."); return; }
+      if (!b.tanggal) { alert("Tanggal wajib diisi."); return; }
+      saveJadwalPengajian(loadJadwalPengajian().map((x) => (x.id === editPengajianId ? buatEntry(editPengajianId, b) : x)));
+    } else {
+      const isi = baris.filter((b) => b.nama);
+      if (!isi.length) { alert("Nama kegiatan wajib diisi minimal satu baris."); return; }
+      if (isi.some((b) => !b.tanggal)) { alert("Tanggal wajib diisi tiap baris."); return; }
+      saveJadwalPengajian([...loadJadwalPengajian(), ...isi.map((b) => buatEntry(uid(), b))]);
+    }
   } else {
-    const tanggal = $("pengajian-tanggal").value;
-    if (!tanggal) { alert("Tanggal wajib diisi."); return; }
-    entry.tanggal = tanggal;
+    const series = mgAmbilForm();
+    if (!series.nama) { alert("Nama kegiatan wajib diisi."); return; }
+    if (!series.tanggalMulai) { alert("Tanggal mulai wajib diisi."); return; }
+    if (series.akhir.jenis === "tanggal" && !series.akhir.sampai) { alert("Tanggal akhir seri wajib diisi."); return; }
+    const entry = { id: editPengajianId || uid(), tipe: "mingguan", ...series };
+    saveJadwalPengajian(
+      editPengajianId
+        ? loadJadwalPengajian().map((x) => (x.id === editPengajianId ? entry : x))
+        : [...loadJadwalPengajian(), entry]
+    );
   }
-  const arr = loadJadwalPengajian();
-  saveJadwalPengajian(
-    editPengajianId ? arr.map((x) => (x.id === editPengajianId ? entry : x)) : [...arr, entry]
-  );
+  renderDatalistPengisi();
   batalEditPengajian();
   tampilkanStatus("status-pengajian");
 }
@@ -651,7 +1127,7 @@ function renderJumatSlides() {
   arr.forEach((s) => {
     const li = document.createElement("li");
     li.classList.toggle("aktif-edit", s.id === editJumatId);
-    const thumb = s.tipe === "gambar" ? `<img src="img/${s.file}" alt="" loading="lazy">` : "&#127916;";
+    const thumb = s.tipe === "gambar" ? `<img src="${s.urlCloud}" alt="" loading="lazy">` : "&#127916;";
     li.innerHTML = `
       <div class="admin-item-thumb">${thumb}</div>
       <div class="admin-item-info">
@@ -665,7 +1141,7 @@ function renderJumatSlides() {
     `;
     li.querySelector('[data-aksi="edit"]').addEventListener("click", () => mulaiEditJumat(s));
     li.querySelector('[data-aksi="hapus"]').addEventListener("click", () => {
-      if (!confirm(`Hapus slide "${s.file}"? File akan dihapus permanen dari folder img/.`)) return;
+      if (!confirm(`Hapus slide "${s.file}"?`)) return;
       if (editJumatId === s.id) batalEditJumat();
       hapusJumatSlide(s);
     });
@@ -703,33 +1179,31 @@ async function tambahJumatSlide() {
   }
   const file = $("jumat-file").files[0];
   if (!file) { alert("Pilih file dulu."); return; }
-  const dirImg = await ambilFolderImg();
-  if (!dirImg) { alert("Pilih folder img/ dulu (tombol di sidebar) dan izinkan akses."); return; }
   const tipe = file.type.startsWith("video") ? "video" : "gambar";
   const id = uid();
   const ekstensiMatch = /\.([a-z0-9]+)$/i.exec(file.name);
   const ext = ekstensiMatch ? ekstensiMatch[1].toLowerCase() : (tipe === "video" ? "mp4" : "jpg");
   const nama = `jumat-${id}.${ext}`;
-  try {
-    const handle = await dirImg.getFileHandle(nama, { create: true });
-    const writable = await handle.createWritable();
-    await writable.write(file);
-    await writable.close();
-  } catch {
-    alert("Gagal menyimpan file ke folder img/.");
+
+  if (!cloudAktif()) {
+    alert("Cloud belum dikonfigurasi - lihat js/supabase-config.js.");
     return;
   }
-  saveJumatSlides([...loadJumatSlides(), { id, tipe, file: nama, durasiDetik: durasi }]);
+  const urlCloud = await cloudUploadMedia(nama, file);
+  if (!urlCloud) {
+    alert("Gagal upload file ke cloud.");
+    return;
+  }
+
+  saveJumatSlides([...loadJumatSlides(), { id, tipe, file: nama, durasiDetik: durasi, urlCloud }]);
   $("jumat-file").value = "";
   tampilkanStatus("status-jumat-slide");
   renderJumatSlides();
 }
 
 async function hapusJumatSlide(s) {
-  const dirImg = await ambilFolderImg();
-  if (dirImg) {
-    try { await dirImg.removeEntry(s.file); } catch { /* diam, tetap bersihkan daftar */ }
-  }
+  // Hapus objek Storage cloud sendiri di luar scope (cleanup opsional) -
+  // cukup bersihkan referensinya dari daftar.
   saveJumatSlides(loadJumatSlides().filter((x) => x.id !== s.id));
   renderJumatSlides();
 }
@@ -737,16 +1211,30 @@ async function hapusJumatSlide(s) {
 initFilePicker("murotal");
 initFilePicker("nada");
 renderIqomah();
+renderHening();
+renderTarawih();
+renderAcara();
 renderTampilan();
 renderPengumuman();
 renderRotasi();
 renderTema();
 renderAdzan();
 renderJumat();
-renderFolderStatus();
 LAYAR_BG.forEach(renderBgLayar);
 
 $("form-iqomah").addEventListener("submit", simpanIqomah);
+$("form-hening").addEventListener("submit", simpanHening);
+$("form-tarawih").addEventListener("submit", simpanTarawih);
+$("form-tarawih-tanggal").addEventListener("submit", simpanTarawihTanggal);
+$("tarawih-nonaktif").addEventListener("change", renderTarawihStatus);
+$("tarawih-tanggal-mulai").addEventListener("input", renderTarawihStatus);
+$("tarawih-tanggal-selesai").addEventListener("input", renderTarawihStatus);
+$("form-acara-mode").addEventListener("submit", simpanAcaraMode);
+document.querySelectorAll('input[name="acara-mode"]').forEach((r) => {
+  r.addEventListener("change", () => syncAcaraModeToggle(r.value));
+});
+$("form-acara-sebelum").addEventListener("submit", simpanAcaraSebelum);
+$("form-acara-sesudah").addEventListener("submit", simpanAcaraSesudah);
 $("form-tampilan").addEventListener("submit", simpanTampilan);
 $("tombol-tambah-pengumuman").addEventListener("click", tambahBarisPengumuman);
 $("form-rotasi").addEventListener("submit", simpanRotasi);
@@ -768,7 +1256,6 @@ Object.values(ROTASI_FIELDS).forEach((f) => {
   $(f.input).addEventListener("input", recalcRotasiTimeline);
 });
 $("form-adzan").addEventListener("submit", simpanAdzanForm);
-$("tombol-pilih-folder").addEventListener("click", pilihFolder);
 $("form-jumat").addEventListener("submit", simpanJumatSettingsForm);
 $("tombol-tambah-jumat").addEventListener("click", tambahJumatSlide);
 $("tombol-batal-jumat").addEventListener("click", batalEditJumat);
@@ -781,9 +1268,17 @@ LAYAR_BG.forEach((layar) => {
   });
 });
 
+["murotal-mulai", "murotal-berhenti"].forEach((id) => {
+  $(id).addEventListener("input", () => {
+    enforceMurotalOrder(id);
+    renderMurotalPreview();
+  });
+});
+
 renderMurotal();
 renderQr();
 renderPengajian();
+renderDatalistPengisi();
 muatDaftarSurah();
 toggleTipePengajian();
 
@@ -796,12 +1291,29 @@ $("tombol-tes-nada").addEventListener("click", tesNada);
 $("form-qr").addEventListener("submit", simpanQr);
 $("tombol-hapus-qr").addEventListener("click", hapusQr);
 $("pengajian-tipe").addEventListener("change", toggleTipePengajian);
+$("tombol-tambah-baris").addEventListener("click", () => tambahBarisJadwal({}));
 $("form-pengajian").addEventListener("submit", tambahPengajian);
 $("tombol-batal-pengajian").addEventListener("click", batalEditPengajian);
 
+["mg-tanggal-mulai", "mg-jam", "mg-akhir-tanggal", "mg-akhir-jumlah", "mg-rotasi-daftar"].forEach((id) => {
+  $(id).addEventListener("input", mgRenderTabel);
+});
+$("mg-akhir-jenis").addEventListener("change", () => {
+  const jenis = $("mg-akhir-jenis").value;
+  $("mg-akhir-tanggal-wrap").hidden = jenis !== "tanggal";
+  $("mg-akhir-jumlah-wrap").hidden = jenis !== "jumlah";
+  mgRenderTabel();
+});
+$("mg-rotasi-aktif").addEventListener("change", () => {
+  $("mg-rotasi-wrap").hidden = !$("mg-rotasi-aktif").checked;
+  mgRenderTabel();
+});
+
 // ---------- Navigasi sidebar ----------
 function setupNavigasi() {
-  const items = document.querySelectorAll(".admin-nav-item");
+  // [data-section] sengaja disyaratkan - ".admin-nav-item" juga dipakai buat
+  // tombol lain yang bukan navigasi panel (mis. tombol Keluar/logout admin).
+  const items = document.querySelectorAll(".admin-nav-item[data-section]");
   const panel = (nama) => document.querySelector(`.admin-main [data-panel="${nama}"]`);
   items.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -814,6 +1326,43 @@ function setupNavigasi() {
   });
 }
 setupNavigasi();
+
+// ---------- Login Admin (Supabase Auth) ----------
+// Kalau cloud belum dikonfigurasi (supabase-config.js kosong), gerbang ini
+// dilewati seluruhnya - admin.html jalan tanpa login sama sekali, persis
+// seperti sebelum fitur cloud ada.
+async function terapkanGateLogin() {
+  if (!cloudAktif()) return;
+
+  const sudahLogin = await sesiAktif();
+  if (sudahLogin) return;
+
+  $("admin-login-gate").hidden = false;
+  $("form-login").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("login-error").hidden = true;
+    const hasil = await login($("login-email").value, $("login-password").value);
+    if (hasil.ok) {
+      location.reload();
+    } else {
+      $("login-error").textContent = hasil.pesan;
+      $("login-error").hidden = false;
+    }
+  });
+}
+terapkanGateLogin();
+
+async function terapkanTombolKeluar() {
+  if (!cloudAktif()) return;
+  if (!(await sesiAktif())) return;
+  const tombol = $("tombol-keluar-admin");
+  tombol.hidden = false;
+  tombol.addEventListener("click", async () => {
+    await logout();
+    location.reload();
+  });
+}
+terapkanTombolKeluar();
 
 // ---------- Aksi akhir tiap section sidebar: Simpan / Kembali / Preview ----------
 // Simpan = submit semua form pengaturan di section itu (form "Tambah" item
