@@ -57,6 +57,7 @@ html[data-versi="biru"] body.layar #tombol-fullscreen {
   border: 1px solid rgba(212, 175, 55, 0.4);
   color: #fff;
 }
+
 /* Foto latar full-bleed penuh layar (bukan kotak rounded di tengah). Body jadi
    pemegang background-nya; .konten cuma pembungkus transparan. */
 html[data-versi="biru"] body.layar {
