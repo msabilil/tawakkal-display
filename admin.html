@@ -64,6 +64,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 9.5v3.5l2 1.5"/><path d="M9 3l-2 2"/><path d="M15 3l2 2"/></svg>
           Iqomah
         </button>
+        <button type="button" class="admin-nav-item" data-section="sholat-mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+          Sholat Mode
+        </button>
         <button type="button" class="admin-nav-item" data-section="donasi">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M15 15h2v2h-2z"/><path d="M19 15h1v1"/><path d="M15 19h1v1"/><path d="M19 19h1v1"/></svg>
           QR Donasi
@@ -338,15 +342,6 @@
         </div>
 
         <div class="admin-subsection admin-kolom-sempit">
-          <h2 class="admin-subpanel-judul">Layar Hening</h2>
-          <p class="admin-ket">Layar hitam polos yang otomatis tampil SETELAH iqomah kelar (bukan menggantikan iqomah), biar tidak mengganggu jamaah. Dihitung dari selesai iqomah, per sholat.</p>
-          <form id="form-hening">
-            <div id="baris-hening"></div>
-            <p id="status-hening" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
-          </form>
-        </div>
-
-        <div class="admin-subsection admin-kolom-sempit">
           <h2 class="admin-subpanel-judul">Latar Belakang</h2>
           <p class="admin-ket">Foto latar khusus layar Iqomah (fase hitung mundur). Kosongkan untuk pakai tampilan layout asli.</p>
           <form id="form-bg-iqomah">
@@ -372,6 +367,25 @@
           <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
           <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
           <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=iqomah&amp;fase=iqomah">Preview</button>
+        </div>
+      </section>
+
+      <!-- ================= Sholat Mode ================= -->
+      <section class="admin-kotak" data-panel="sholat-mode" hidden>
+        <h1>Sholat Mode</h1>
+
+        <div class="admin-subsection admin-kolom-sempit">
+          <h2 class="admin-subpanel-judul">Layar Hening</h2>
+          <p class="admin-ket">Layar hitam polos yang otomatis tampil SETELAH iqomah kelar (bukan menggantikan iqomah), biar tidak mengganggu jamaah. Dihitung dari selesai iqomah, per sholat.</p>
+          <form id="form-hening">
+            <div id="baris-hening"></div>
+            <p id="status-hening" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+          </form>
+        </div>
+
+        <div class="admin-aksi admin-aksi-section">
+          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
+          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
           <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=hening">Preview Hening</button>
         </div>
       </section>

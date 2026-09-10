@@ -11,9 +11,20 @@ import { start as startKegiatan } from "./jadwal-kegiatan.js";
 import { start as startHening } from "./hening.js";
 import { start as startAcara } from "./acara.js";
 
+// Tema (data-versi) dikunci sekali di inline script <head> - sebelum cloud
+// sync sempat jalan, jadi device baru/beda selalu mulai dari default "lama"
+// dulu. Re-apply di sini tiap kali sync update localStorage (pull awal,
+// realtime, polling) supaya tema ikut cloud tanpa perlu reload manual.
+function terapkanTemaTampilan() {
+  const raw = localStorage.getItem("versiTampilan");
+  let v = "lama";
+  if (raw) { try { v = JSON.parse(raw); } catch { v = raw; } }
+  document.documentElement.setAttribute("data-versi", v);
+}
+
 setupFullscreen();
 initSekaliSholat(); // pasang listener murotal + jam analog sekali (bukan tiap balik ke view sholat)
-await mulaiCloudSync(); // no-op kalau supabase-config.js masih kosong
+await mulaiCloudSync(terapkanTemaTampilan); // no-op kalau supabase-config.js masih kosong
 
 daftarkan("sholat", startSholat);
 daftarkan("iqomah", startIqomah);

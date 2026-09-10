@@ -6,7 +6,11 @@
 <title>Jadwal Sholat</title>
 <script>
   (function () {
-    var v = localStorage.getItem("versiTampilan") || "lama";
+    // JSON.stringify di simpanTemaTampilan() admin.js - try/catch jaga
+    // kompatibel kalau masih ada nilai lama format raw (sebelum fix ini).
+    var raw = localStorage.getItem("versiTampilan");
+    var v = "lama";
+    if (raw) { try { v = JSON.parse(raw); } catch { v = raw; } }
     document.documentElement.setAttribute("data-versi", v);
   })();
 </script>

@@ -657,9 +657,23 @@ function syncTampilanToggle(temaId) {
   $("tampilan-toggle-kosong").hidden = !kosong;
 }
 
+// KEY_TEMA_TAMPILAN dulunya raw string (bukan JSON) - sekarang di-JSON.stringify
+// biar konsisten sama setting lain (tulisKeLocal cloud-sync.js selalu
+// JSON.stringify pas tarik dari cloud). try/catch jaga kompatibel kalau
+// masih ada nilai lama format raw tersisa di device/cloud.
+function bacaTemaTampilan() {
+  const raw = localStorage.getItem(KEY_TEMA_TAMPILAN);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return raw; }
+}
+function simpanTemaTampilan(id) {
+  localStorage.setItem(KEY_TEMA_TAMPILAN, JSON.stringify(id));
+  cloudSet(KEY_TEMA_TAMPILAN, id);
+}
+
 function renderTema() {
   const fieldset = document.querySelector(`[data-tema-kartu="tampilan"]`);
-  const tersimpan = localStorage.getItem(KEY_TEMA_TAMPILAN);
+  const tersimpan = bacaTemaTampilan();
   const dipilih = tersimpan && TEMA_TAMPILAN[tersimpan] ? tersimpan : Object.keys(TEMA_TAMPILAN)[0];
   syncTampilanToggle(dipilih);
   for (const [id, { label }] of Object.entries(TEMA_TAMPILAN)) {
@@ -687,10 +701,7 @@ function renderTema() {
   $("form-tema-tampilan").addEventListener("submit", (e) => {
     e.preventDefault();
     const dipilih = document.querySelector(`input[name="tema-tampilan"]:checked`);
-    if (dipilih) {
-      localStorage.setItem(KEY_TEMA_TAMPILAN, dipilih.value);
-      cloudSet(KEY_TEMA_TAMPILAN, dipilih.value);
-    }
+    if (dipilih) simpanTemaTampilan(dipilih.value);
     tampilkanStatus("status-tema-tampilan");
   });
 }

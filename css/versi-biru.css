@@ -45,8 +45,12 @@ html[data-versi="biru"] .marquee-label {
 html[data-versi="biru"] .marquee-item { font-weight: 700; color: #fff; }
 html[data-versi="biru"] .marquee-bullet { color: #f4c542; }
 html[data-versi="biru"] .topbar { display: none; }
-html[data-versi="biru"] #tombol-admin,
-html[data-versi="biru"] #tombol-fullscreen {
+/* Cuma di halaman jadwal sholat (body.layar) - halaman lain SUDAH pakai
+   gaya yang sama persis lewat style.css body:not(.layar) #tombol-...
+   (tema Biru ini memang jadi gaya default tombol di halaman selain
+   jadwal sholat, apa pun tema jadwal sholat yang aktif). */
+html[data-versi="biru"] body.layar #tombol-admin,
+html[data-versi="biru"] body.layar #tombol-fullscreen {
   width: 34px;
   height: 34px;
   background: rgba(11, 31, 77, 0.4);

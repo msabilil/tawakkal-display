@@ -148,6 +148,20 @@ body.layar {
   outline: none;
 }
 
+/* Di halaman SELAIN jadwal sholat (iqomah, jumat, qr, kegiatan, hening,
+   acara) tombol selalu pakai gaya "Masjid Biru" (sama kayak override
+   html[data-versi="biru"] di versi-biru.css), TERLEPAS dari tema jadwal
+   sholat yang aktif - biar tidak kelewat mencolok warnanya di layar-layar
+   itu. Tema ikut aktif cuma di body.layar (lihat versi-baru.css/versi-biru.css). */
+body:not(.layar) #tombol-admin,
+body:not(.layar) #tombol-fullscreen {
+  width: 34px;
+  height: 34px;
+  background: rgba(11, 31, 77, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #fff;
+}
+
 /* Tombol layar penuh + pengaturan - satu-satunya grup di index.html,
    mengambang pojok kanan-bawah di atas section aktif manapun (lihat
    js/kiosk.js). */
@@ -1470,10 +1484,27 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
 .admin-login-submit { margin-top: 8px; width: 100%; }
 
 /* ---------- Halaman Hening (view "hening") - layar hitam polos pasca-iqomah/tarawih ---------- */
-body.halaman-hening { height: 100vh; margin: 0; background: #000; }
+/* !important - sama alasannya kayak body.iqomah-page/halaman-qr: shorthand
+   `background` tema (html[data-versi="baru"] body dkk) spesifisitasnya
+   ketemu lebih tinggi (2 elemen html+body vs 1 elemen+1 class di sini),
+   jadi menang duluan tanpa !important - bikin hening keliatan putih di
+   tema Zamrud Emas alih-alih hitam. */
+body.halaman-hening { height: 100vh; margin: 0; background: #000 !important; }
 
 /* ---------- Halaman Kegiatan Terdekat (view "acara") - poster foto latar penuh, tanpa teks ---------- */
-body.halaman-acara { height: 100vh; margin: 0; background-color: #000; background-size: cover; background-position: center; }
+/* !important - alasan sama seperti di atas; background-image sendiri
+   diset via JS (terapkanBgLayar, inline style) yang otomatis menang lawan
+   shorthand tema tanpa !important, TAPI size/position/repeat-nya tetap
+   perlu !important di sini supaya tidak balik ke default (auto/repeat) -
+   itu yang bikin 1 gambar keliatan ke-tile berkali-kali di tema Zamrud Emas. */
+body.halaman-acara {
+  height: 100vh;
+  margin: 0;
+  background-color: #000 !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
 
 /* ---------- Halaman Jum'at (view "jumat") - slideshow gambar/video full-bleed ---------- */
 body.halaman-jumat { height: 100vh; margin: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
