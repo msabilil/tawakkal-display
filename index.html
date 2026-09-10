@@ -22,22 +22,7 @@
 <link rel="stylesheet" href="css/versi-biru.css">
 </head>
 <body>
-  <div class="tombol-grup-mengambang">
-    <button id="tombol-fullscreen" type="button" aria-label="Layar penuh">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" />
-        <path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
-      </svg>
-    </button>
-    <a id="tombol-admin" href="admin.html" aria-label="Pengaturan iqomah">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/>
-        <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/>
-        <line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/>
-      </svg>
-    </a>
-  </div>
-
+  <div id="layar-16x9">
   <div data-view="sholat">
     <svg style="display:none" aria-hidden="true">
       <!-- Warna dipakai lewat CSS custom property: selector biasa tidak menembus
@@ -252,6 +237,24 @@
   <div data-view="acara" hidden>
     <div class="acara-media" id="acara-media"></div>
     <p class="acara-kosong" id="acara-kosong" hidden>Belum ada gambar Kegiatan Terdekat. Tambahkan lewat admin.</p>
+  </div>
+
+  </div>
+
+  <div class="tombol-grup-mengambang">
+    <button id="tombol-fullscreen" type="button" aria-label="Layar penuh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" />
+        <path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+      </svg>
+    </button>
+    <a id="tombol-admin" href="admin.html" aria-label="Pengaturan iqomah">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/>
+        <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/>
+        <line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/>
+      </svg>
+    </a>
   </div>
 
   <script type="module" src="js/kiosk.js"></script>

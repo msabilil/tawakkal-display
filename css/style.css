@@ -35,10 +35,39 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 html, body { min-height: 100%; }
+/* body = backdrop layar TV (letterbox hitam kalau rasio TV bukan 16:9
+   persis) - #layar-16x9 di bawah yang jadi "body visual" sebenarnya buat
+   index.html, dikunci ke rasio 16:9 & di-tengah-in. admin.html (body.admin)
+   override balik ke layout normal, lihat body.admin di bawah. */
 body {
   color: var(--text);
+  background: #000;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Kotak 16:9 ukuran PIXEL TETAP (resolusi rancangan 1422.22x800 - rentang
+   "ideal" yang sudah dikonfirmasi bagus, lihat js/navigasi.js). Isinya
+   (cqw/cqh, clamp px, dst) jadi konstan apa pun ukuran layar TV asli,
+   karena container-nya sendiri tidak pernah berubah ukuran. Yang berubah
+   cuma transform:scale() di navigasi.js (skalakanLayar) - itu men-zoom
+   kotak ini secara utuh (font, jarak, kotak ikut proporsional 1:1, TIDAK
+   dihitung ulang per elemen) supaya tampilan identik di resolusi berapa
+   pun, cuma beda tajam/besar-kecil. container-type:size juga otomatis
+   jadi containing block buat position:fixed di dalamnya (tombol
+   mengambang, slideshow full-bleed) - jadi semuanya ikut ter-skala. */
+#layar-16x9 {
+  position: relative;
+  width: 1422.22px;
+  height: 800px;
+  flex-shrink: 0;
+  container-type: size;
+  container-name: layar;
+  overflow: hidden;
   background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
-  background-attachment: fixed;
 }
 
 .glass-panel {
@@ -72,18 +101,17 @@ body {
 /* Tiap "halaman" display sekarang section di index.html, bukan dokumen
    terpisah (biar fullscreen browser tidak ke-reset pas gantian - lihat
    js/navigasi.js). display:contents bikin wrapper section transparan ke
-   layout, jadi isinya tetap jadi flex child body.<nama-halaman> langsung
-   kayak sebelum digabung. */
+   layout, jadi isinya tetap jadi flex child #layar-16x9.<nama-halaman>
+   langsung kayak sebelum digabung. */
 [data-view]:not([hidden]) { display: contents; }
 
 /* ---------- Layar utama ---------- */
-body.layar {
+#layar-16x9.layar {
   overflow: hidden;
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 2.2vh 2.5vw;
-  gap: 4vh;
+  padding: 2.2cqh 2.5cqw;
+  gap: 4cqh;
 }
 
 .topbar {
@@ -92,11 +120,11 @@ body.layar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.4vh 1.8vw;
+  padding: 1.4cqh 1.8cqw;
   border-radius: 20px;
   flex-shrink: 0;
 }
-.topbar-identitas { display: flex; align-items: center; gap: 1vw; }
+.topbar-identitas { display: flex; align-items: center; gap: 1cqw; }
 .topbar-dome {
   width: 52px;
   height: 52px;
@@ -113,12 +141,12 @@ body.layar {
 .topbar-dome svg { width: 28px; height: 28px; }
 .topbar-dome img { width: 36px; height: 36px; object-fit: contain; }
 .topbar-nama {
-  font-size: clamp(18px, 2.2vw, 30px);
+  font-size: clamp(18px, 2.2cqw, 30px);
   font-weight: 800;
   letter-spacing: -0.01em;
 }
 .topbar-sub {
-  font-size: clamp(12px, 1.05vw, 15px);
+  font-size: clamp(12px, 1.05cqw, 15px);
   font-weight: 400;
   color: var(--text-dim);
   margin-top: 1px;
@@ -155,7 +183,9 @@ body.layar {
    itu. Tema ikut aktif cuma di body.layar (halaman jadwal sholat sendiri) -
    soalnya background Tosca/Zamrud Emas di situ putih/terang, tombol biru
    pekat ini malah kelewat mencolok di sana, lihat override tiap tema di
-   versi-baru.css/versi-biru.css. */
+   versi-baru.css/versi-biru.css. Selector pakai body (bukan #layar-16x9)
+   karena .tombol-grup-mengambang sengaja diletakkan di luar #layar-16x9 -
+   lihat catatan di js/navigasi.js. */
 body:not(.layar) #tombol-admin,
 body:not(.layar) #tombol-fullscreen {
   width: 34px;
@@ -170,8 +200,8 @@ body:not(.layar) #tombol-fullscreen {
    js/kiosk.js). */
 .tombol-grup-mengambang {
   position: fixed;
-  bottom: 2vh;
-  right: 2vw;
+  bottom: 2cqh;
+  right: 2cqw;
   z-index: 5;
   display: flex;
   gap: 10px;
@@ -188,19 +218,19 @@ body:not(.layar) #tombol-fullscreen {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 5vh;
+  gap: 5cqh;
   min-height: 0;
 }
 
 .hero {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2vw;
+  gap: 2cqw;
   align-items: stretch;
   flex-shrink: 0;
 }
 .hero-kiri {
-  padding: 1.6vh 0.5vw;
+  padding: 1.6cqh 0.5cqw;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -216,7 +246,7 @@ body:not(.layar) #tombol-fullscreen {
   border-radius: 999px;
   background: var(--brand-grad);
   color: #fff;
-  font-size: clamp(14px, 1.6vw, 20px);
+  font-size: clamp(14px, 1.6cqw, 20px);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -242,18 +272,18 @@ body:not(.layar) #tombol-fullscreen {
 }
 
 #jam {
-  font-size: clamp(64px, 10vw, 148px);
+  font-size: clamp(64px, 10cqw, 148px);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 3vh;
+  margin-bottom: 3cqh;
 }
 
 .hero-kanan {
   position: relative;
   border-radius: 24px;
-  padding: 2.8vh 1.6vw;
+  padding: 2.8cqh 1.6cqw;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -274,22 +304,22 @@ body:not(.layar) #tombol-fullscreen {
 .hero-kanan-isi { position: relative; z-index: 1; }
 .hero-kanan-baris { display: flex; align-items: center; gap: 12px; }
 .hero-kanan-baris-bawah { justify-content: space-between; align-items: flex-start; }
-.hero-garis { height: 1px; background: var(--border); margin: 1.6vh 0; }
+.hero-garis { height: 1px; background: var(--border); margin: 1.6cqh 0; }
 
 .label-kecil {
-  font-size: clamp(10px, 0.95vw, 13px);
+  font-size: clamp(10px, 0.95cqw, 13px);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
   color: var(--emerald-600);
 }
 .tanggal-hijriah {
-  font-size: clamp(22px, 2.6vw, 34px);
+  font-size: clamp(22px, 2.6cqw, 34px);
   font-weight: 800;
   margin-top: 2px;
 }
 .tanggal-masehi {
-  font-size: clamp(16px, 1.8vw, 23px);
+  font-size: clamp(16px, 1.8cqw, 23px);
   font-weight: 700;
   color: var(--text-dim);
   margin-top: 2px;
@@ -309,7 +339,7 @@ body:not(.layar) #tombol-fullscreen {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.9vw;
+  gap: 0.9cqw;
   min-height: 0;
 }
 
@@ -324,8 +354,8 @@ body:not(.layar) #tombol-fullscreen {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.8vh;
-  padding: 1.6vh 0.5vw;
+  gap: 0.8cqh;
+  padding: 1.6cqh 0.5cqw;
   overflow: hidden;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
@@ -343,8 +373,8 @@ body:not(.layar) #tombol-fullscreen {
   padding: 6px 0;
 }
 .kartu-ikon {
-  width: clamp(30px, 3vw, 44px);
-  height: clamp(30px, 3vw, 44px);
+  width: clamp(30px, 3cqw, 44px);
+  height: clamp(30px, 3cqw, 44px);
   border-radius: 12px;
   background: #f0fdfa;
   border: 1px solid #ccfbf1;
@@ -355,17 +385,17 @@ body:not(.layar) #tombol-fullscreen {
 }
 .kartu-ikon svg { width: 55%; height: 55%; }
 .kartu-waktu .nama {
-  font-size: clamp(15px, 1.8vw, 24px);
+  font-size: clamp(15px, 1.8cqw, 24px);
   color: var(--text-dim);
   font-weight: 700;
 }
 .kartu-waktu .jam {
-  font-size: clamp(18px, 2.8vw, 38px);
+  font-size: clamp(18px, 2.8cqw, 38px);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 .kartu-waktu .unit {
-  font-size: clamp(11px, 1.1vw, 15px);
+  font-size: clamp(11px, 1.1cqw, 15px);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -377,7 +407,7 @@ body:not(.layar) #tombol-fullscreen {
   border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 16px 36px -8px rgba(112, 185, 65, 0.35), 0 0 25px rgba(0, 150, 185, 0.22);
   transform: translateY(-4px);
-  padding-top: 3.2vh;
+  padding-top: 3.2cqh;
 }
 .kartu-waktu.aktif .kartu-ikon {
   background: rgba(255, 255, 255, 0.18);
@@ -393,9 +423,8 @@ body:not(.layar) #tombol-fullscreen {
    (dulu cuma tema Masjid Biru, sekarang struktur tetap buat halaman ini - lihat
    catatan di bagian "Halaman fokus bersama" di bawah). Ganti foto = ukur ulang
    koordinatnya. */
-body.iqomah-page {
+#layar-16x9.iqomah-page {
   position: relative;
-  height: 100vh;
   padding: 0;
   font-family: "Poppins", system-ui, sans-serif;
   /* !important - spesifisitas selector ini (1 class) ketemu sama tingginya
@@ -413,25 +442,25 @@ body.iqomah-page {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.4vh;
+  gap: 1.4cqh;
   text-align: center;
 }
 .iqomah-adzan-label {
-  font-size: clamp(14px, 1.8vw, 26px);
+  font-size: clamp(14px, 1.8cqw, 26px);
   color: var(--biru-900);
   font-weight: 700;
   display: none;
 }
-body.iqomah-page.fase-adzan .iqomah-adzan-label { display: block; }
+#layar-16x9.iqomah-page.fase-adzan .iqomah-adzan-label { display: block; }
 #iqomah-waktu {
-  font-size: clamp(56px, 26vh, 220px);
+  font-size: clamp(56px, 26cqh, 220px);
   line-height: 1;
   color: var(--biru-900);
   font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Footer ---------- */
-.footer { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 1vh; flex-shrink: 0; }
+.footer { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 1cqh; flex-shrink: 0; }
 .marquee-bar {
   display: flex;
   align-items: center;
@@ -444,7 +473,7 @@ body.iqomah-page.fase-adzan .iqomah-adzan-label { display: block; }
   flex-shrink: 0;
   background: var(--brand-grad);
   color: #fff;
-  font-size: clamp(11px, 1.1vw, 16px);
+  font-size: clamp(11px, 1.1cqw, 16px);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -462,10 +491,10 @@ body.iqomah-page.fase-adzan .iqomah-adzan-label { display: block; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: clamp(13px, 1.7vw, 24px);
+  font-size: clamp(13px, 1.7cqw, 24px);
   font-weight: 600;
   color: var(--text-dim);
-  padding-right: 3.5vw;
+  padding-right: 3.5cqw;
 }
 .marquee-bullet { color: var(--emerald-500); font-weight: 800; }
 @keyframes marquee {
@@ -491,12 +520,23 @@ body.iqomah-page.fase-adzan .iqomah-adzan-label { display: block; }
 .pill-status-warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-teks); }
 
 /* ---------- Admin ---------- */
-body.admin { padding: 0; }
+/* admin.html tidak pakai kotak 16:9 - balikin ke layout halaman normal
+   (bg terang + scrollable), override backdrop hitam/flex-center/overflow
+   hidden yang sekarang jadi default di body (lihat body{} di atas). */
+body.admin {
+  padding: 0;
+  display: block;
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
+  background-attachment: fixed;
+}
 
 .admin-shell {
   display: flex;
   align-items: flex-start;
-  min-height: 100vh;
+  min-height: 100cqh;
 }
 
 .admin-sidebar {
@@ -508,7 +548,7 @@ body.admin { padding: 0; }
   padding: 28px 18px;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100cqh;
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -578,7 +618,7 @@ body.admin { padding: 0; }
 .admin-main {
   flex: 1;
   min-width: 0;
-  padding: 5vh 4vw;
+  padding: 5cqh 4cqw;
 }
 
 .admin-kotak {
@@ -1328,9 +1368,8 @@ body.admin { padding: 0; }
    cuma tema Masjid Biru; sekarang jadi satu-satunya struktur buat ketiga
    halaman ini - tema jadwal sholat (Tosca/Zamrud/Biru) tidak menyentuhnya
    lagi, cuma warna kartu di data-view="sholat" yang berubah per tema. */
-body.halaman-fokus {
+#layar-16x9.halaman-fokus {
   position: relative;
-  height: 100vh;
   padding: 0;
   font-family: "Poppins", system-ui, sans-serif;
   text-align: center;
@@ -1338,9 +1377,9 @@ body.halaman-fokus {
   background-position: center !important;
   background-repeat: no-repeat !important;
 }
-/* !important - lihat catatan di body.iqomah-page. */
-body.halaman-qr { background-image: url("../img/bg-iqomah.jpeg") !important; }
-body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") !important; }
+/* !important - lihat catatan di #layar-16x9.iqomah-page. */
+#layar-16x9.halaman-qr { background-image: url("../img/bg-iqomah.jpeg") !important; }
+#layar-16x9.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") !important; }
 
 
 .halaman-qr .fokus-isi {
@@ -1350,7 +1389,7 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.4vh;
+  gap: 1.4cqh;
   text-align: center;
 }
 /* Judul besar di atas kotak (mis. "Sesaat Lagi Iqomah", "Donasi") - posisi &
@@ -1364,15 +1403,15 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-size: clamp(22px, 4.8vw, 80px);
+  font-size: clamp(22px, 4.8cqw, 80px);
   line-height: 1.1;
   color: #fff;
   font-weight: 800;
   text-shadow: 0 2px 10px rgba(0, 0, 0, .35);
 }
-.fokus-qr-img { width: clamp(160px, 32vh, 340px); height: auto; border-radius: 18px; box-shadow: none; }
-.fokus-qr-teks { font-size: clamp(13px, 1.6vw, 20px); margin: 0; color: #334155; }
-.fokus-kosong { opacity: 0.7; font-size: clamp(16px, 1.8vw, 24px); color: #fff; }
+.fokus-qr-img { width: clamp(160px, 32cqh, 340px); height: auto; border-radius: 18px; box-shadow: none; }
+.fokus-qr-teks { font-size: clamp(13px, 1.6cqw, 20px); margin: 0; color: #334155; }
+.fokus-kosong { opacity: 0.7; font-size: clamp(16px, 1.8cqw, 24px); color: #fff; }
 
 /* Kotak foto jadwal kegiatan: img/bg-jadwal-kegiatan.jpeg, grid 2 kolom x 4 baris tetap. */
 .halaman-kegiatan .fokus-judul { display: none; }
@@ -1389,9 +1428,9 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
   justify-content: center;
   text-align: center;
 }
-.fokus-item-nama { display: block; font-size: clamp(16px, 1.9vw, 26px); font-weight: 700; line-height: 1.15; color: var(--biru-900); }
-.fokus-item-kapan { font-size: clamp(14px, 1.5vw, 21px); color: #334155; margin-top: 3px; }
-.fokus-item-pengisi { display: block; font-size: clamp(14px, 1.4vw, 19px); font-weight: 700; opacity: 0.75; margin-top: 1px; }
+.fokus-item-nama { display: block; font-size: clamp(16px, 1.9cqw, 26px); font-weight: 700; line-height: 1.15; color: var(--biru-900); }
+.fokus-item-kapan { font-size: clamp(14px, 1.5cqw, 21px); color: #334155; margin-top: 3px; }
+.fokus-item-pengisi { display: block; font-size: clamp(14px, 1.4cqw, 19px); font-weight: 700; opacity: 0.75; margin-top: 1px; }
 /* Tinggi slot 17.8% (bukan ~9%) - itu tinggi kotak putih beneran di foto,
    diukur dari screenshot render nyata. */
 .fokus-item:nth-child(1) { left: 19.4%; top: 21.7%; width: 27.7%; height: 17.8%; }
@@ -1444,7 +1483,7 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
   background: var(--surface);
 }
 .admin-login-kotak {
-  width: min(380px, 90vw);
+  width: min(380px, 90cqw);
   padding: 40px 36px;
   background: var(--surface);
   border: 2px solid var(--grad-4);
@@ -1489,19 +1528,19 @@ body.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") 
 .admin-login-submit { margin-top: 8px; width: 100%; }
 
 /* ---------- Halaman Hening (view "hening") - layar hitam polos pasca-iqomah/tarawih ---------- */
-/* !important - sama alasannya kayak body.iqomah-page/halaman-qr: shorthand
+/* !important - sama alasannya kayak #layar-16x9.iqomah-page/halaman-qr: shorthand
    `background` tema (html[data-versi="baru"] body dkk) spesifisitasnya
    ketemu lebih tinggi (2 elemen html+body vs 1 elemen+1 class di sini),
    jadi menang duluan tanpa !important - bikin hening keliatan putih di
    tema Zamrud Emas alih-alih hitam. */
-body.halaman-hening { height: 100vh; margin: 0; background: #000 !important; }
+#layar-16x9.halaman-hening { margin: 0; background: #000 !important; }
 
 /* ---------- Halaman Kegiatan Terdekat (view "acara") - slideshow gambar full-bleed, bisa lebih dari satu ---------- */
 /* !important background-color - sama alasan seperti hening di atas, jaga
    dasarnya tetap hitam sebelum/di antara gambar (bukan soal tile lagi,
    sekarang pakai <img> object-fit:cover kayak jumat.js, bukan CSS
    background-image lagi). */
-body.halaman-acara { height: 100vh; margin: 0; overflow: hidden; background: #000 !important; display: flex; align-items: center; justify-content: center; }
+#layar-16x9.halaman-acara { margin: 0; overflow: hidden; background: #000 !important; display: flex; align-items: center; justify-content: center; }
 .acara-media { position: fixed; inset: 0; }
 .acara-media img {
   position: absolute; inset: 0;
@@ -1513,10 +1552,10 @@ body.halaman-acara { height: 100vh; margin: 0; overflow: hidden; background: #00
 @media (prefers-reduced-motion: reduce) {
   .acara-media img { transition-duration: 1ms; }
 }
-.acara-kosong { position: relative; color: #fff; opacity: 0.7; font-size: clamp(16px, 1.8vw, 24px); }
+.acara-kosong { position: relative; color: #fff; opacity: 0.7; font-size: clamp(16px, 1.8cqw, 24px); }
 
 /* ---------- Halaman Jum'at (view "jumat") - slideshow gambar/video full-bleed ---------- */
-body.halaman-jumat { height: 100vh; margin: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
+#layar-16x9.halaman-jumat { margin: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
 .jumat-media { position: fixed; inset: 0; }
 .jumat-media img, .jumat-media video {
   position: absolute; inset: 0;
@@ -1528,13 +1567,13 @@ body.halaman-jumat { height: 100vh; margin: 0; overflow: hidden; background: #00
 @media (prefers-reduced-motion: reduce) {
   .jumat-media img, .jumat-media video { transition-duration: 1ms; }
 }
-.jumat-kosong { position: relative; color: #fff; opacity: 0.7; font-size: clamp(16px, 1.8vw, 24px); }
+.jumat-kosong { position: relative; color: #fff; opacity: 0.7; font-size: clamp(16px, 1.8cqw, 24px); }
 
 /* Overlay unlock audio (hanya muncul kalau autoplay diblok) */
 .unlock-audio {
   position: fixed; inset: 0; z-index: 50;
   display: flex; align-items: center; justify-content: center;
   background: rgba(0,0,0,0.6); color: #fff;
-  font-size: clamp(20px, 4vw, 48px); text-align: center; cursor: pointer;
+  font-size: clamp(20px, 4cqw, 48px); text-align: center; cursor: pointer;
 }
 

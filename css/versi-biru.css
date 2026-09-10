@@ -34,13 +34,13 @@ html[data-versi="biru"] .marquee-bar {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(212, 175, 55, 0.45);
   border-radius: 14px;
-  padding: 1.1vh 1.6vw;
-  gap: 1.4vw;
+  padding: 1.1cqh 1.6cqw;
+  gap: 1.4cqw;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 html[data-versi="biru"] .marquee-label {
   background: var(--biru-emas);
-  padding: 0.6vh 1vw;
+  padding: 0.6cqh 1cqw;
 }
 html[data-versi="biru"] .marquee-item { font-weight: 700; color: #fff; }
 html[data-versi="biru"] .marquee-bullet { color: #f4c542; }
@@ -48,7 +48,8 @@ html[data-versi="biru"] .topbar { display: none; }
 /* Cuma di halaman jadwal sholat (body.layar) - halaman lain SUDAH pakai
    gaya yang sama persis lewat style.css body:not(.layar) #tombol-...
    (tema Biru ini memang jadi gaya default tombol di halaman selain
-   jadwal sholat, apa pun tema jadwal sholat yang aktif). */
+   jadwal sholat, apa pun tema jadwal sholat yang aktif; selector pakai body
+   karena .tombol-grup-mengambang di luar #layar-16x9, lihat navigasi.js). */
 html[data-versi="biru"] body.layar #tombol-admin,
 html[data-versi="biru"] body.layar #tombol-fullscreen {
   width: 34px;
@@ -60,7 +61,7 @@ html[data-versi="biru"] body.layar #tombol-fullscreen {
 
 /* Foto latar full-bleed penuh layar (bukan kotak rounded di tengah). Body jadi
    pemegang background-nya; .konten cuma pembungkus transparan. */
-html[data-versi="biru"] body.layar {
+html[data-versi="biru"] #layar-16x9.layar {
   padding: 0;
   background: #000 url("../img/bg-jadwal-sholat.jpeg") center/cover no-repeat;
 }
@@ -96,8 +97,8 @@ html[data-versi="biru"] .kartu-waktu {
 html[data-versi="biru"] .kartu-ikon,
 html[data-versi="biru"] .kartu-pita,
 html[data-versi="biru"] .kartu-waktu .unit { display: none; }
-html[data-versi="biru"] .kartu-waktu .nama { font-size: clamp(14px, 3.0vw, 64px); line-height: 1; color: var(--biru-900); font-weight: 700; }
-html[data-versi="biru"] .kartu-waktu .jam { font-size: clamp(18px, 3.8vw, 88px); line-height: 1; color: #111827; font-weight: 800; }
+html[data-versi="biru"] .kartu-waktu .nama { font-size: clamp(14px, 3.0cqw, 64px); line-height: 1; color: var(--biru-900); font-weight: 700; }
+html[data-versi="biru"] .kartu-waktu .jam { font-size: clamp(18px, 3.8cqw, 88px); line-height: 1; color: #111827; font-weight: 800; }
 html[data-versi="biru"] .kartu-waktu.aktif .nama,
 html[data-versi="biru"] .kartu-waktu.aktif .jam { color: var(--biru-emas); }
 
@@ -117,8 +118,8 @@ html[data-versi="biru"] #jam-analog {
   display: block;
   position: fixed;
   left: 46.5%;
-  top: 2vh;
-  width: 18.5vw;
+  top: 2cqh;
+  width: 18.5cqw;
   aspect-ratio: 1;
   z-index: 2;
 }
@@ -128,9 +129,9 @@ html[data-versi="biru"] .jam-analog-wajah {
   height: 100%;
   border-radius: 50%;
   background: #faf8f2;
-  border: clamp(6px, 0.9vw, 14px) solid #17181c;
+  border: clamp(6px, 0.9cqw, 14px) solid #17181c;
   box-shadow:
-    0 0 0 clamp(2px, 0.3vw, 4px) rgba(255, 255, 255, 0.55) inset,
+    0 0 0 clamp(2px, 0.3cqw, 4px) rgba(255, 255, 255, 0.55) inset,
     0 10px 30px rgba(0, 0, 0, 0.45);
 }
 html[data-versi="biru"] .jam-analog-angka-wrap { position: absolute; inset: 0; }
@@ -139,9 +140,9 @@ html[data-versi="biru"] .jam-analog-angka {
   top: 50%;
   left: 50%;
   font-weight: 700;
-  font-size: clamp(9px, 1.05vw, 16px);
+  font-size: clamp(9px, 1.05cqw, 16px);
   color: #111;
-  transform: translate(-50%, -50%) rotate(calc(var(--n) * 30deg)) translateY(-7.3vw) rotate(calc(var(--n) * -30deg));
+  transform: translate(-50%, -50%) rotate(calc(var(--n) * 30deg)) translateY(-7.3cqw) rotate(calc(var(--n) * -30deg));
 }
 html[data-versi="biru"] .jam-analog-jarum {
   position: absolute;

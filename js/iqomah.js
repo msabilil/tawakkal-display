@@ -1,6 +1,6 @@
 import { mainkanNada } from "./nada.js";
 import { terapkanBgLayar } from "./bg-layar.js";
-import { tampilkan } from "./navigasi.js";
+import { tampilkan, elLayar } from "./navigasi.js";
 import { readCache } from "./api.js";
 import { nextSholat } from "./app.js";
 
@@ -27,12 +27,12 @@ function bacaState() {
 }
 
 function render(fase, label, sisaDetik) {
-  document.body.classList.toggle("fase-adzan", fase === "adzan");
-  document.body.classList.toggle("fase-iqomah", fase === "iqomah");
+  elLayar.classList.toggle("fase-adzan", fase === "adzan");
+  elLayar.classList.toggle("fase-iqomah", fase === "iqomah");
   elJudul.textContent = fase === "adzan" ? `Waktu ${label} Telah Masuk` : `Iqomah ${label}`;
   elAdzanLabel.textContent = `Adzan ${label}`;
   elWaktu.textContent = fmtMenitDetik(Math.max(sisaDetik, 0));
-  terapkanBgLayar(fase, document.body);
+  terapkanBgLayar(fase, elLayar);
 }
 
 function tick() {

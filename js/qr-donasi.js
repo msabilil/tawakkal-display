@@ -1,10 +1,10 @@
 import { loadRotasi, loadQr, lanjutRotasi } from "./rotasi.js";
 import { terapkanBgLayar } from "./bg-layar.js";
-import { tampilkan } from "./navigasi.js";
+import { tampilkan, elLayar } from "./navigasi.js";
 
 // Dipanggil router (navigasi.js) tiap masuk view "qr".
 export function start(opsi) {
-  terapkanBgLayar("donasi", document.body);
+  terapkanBgLayar("donasi", elLayar);
   const qr = loadQr();
   if (!qr && !opsi.preview) {
     tampilkan("sholat");

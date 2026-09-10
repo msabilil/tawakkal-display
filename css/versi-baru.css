@@ -19,6 +19,12 @@ html[data-versi="baru"] {
 html[data-versi="baru"] body {
   font-family: "Poppins", system-ui, sans-serif;
   color: var(--v2-900);
+}
+/* background di #layar-16x9 (bukan body) - biar letterbox di luar kotak
+   16:9 tetap hitam terlepas dari tema jadwal sholat yang aktif. Tetap
+   berlaku di body.admin juga (admin.html tidak punya #layar-16x9, jadi
+   selector ini simply tidak match apa-apa di situ - aman). */
+html[data-versi="baru"] #layar-16x9 {
   background: linear-gradient(180deg, #fbfdfc 0%, #f2f8f4 100%);
 }
 html[data-versi="baru"] .ambient-glow { display: none; }
@@ -45,7 +51,7 @@ html:not([data-versi="baru"]) .marquee-silent { display: none; }
 html[data-versi="baru"] .pill-titik { display: none; }
 
 /* ---------- Topbar ---------- */
-html[data-versi="baru"] .topbar { border-radius: 22px; padding: 1.3vh 1.6vw; }
+html[data-versi="baru"] .topbar { border-radius: 22px; padding: 1.3cqh 1.6cqw; }
 html[data-versi="baru"] .topbar-identitas { align-items: center; }
 html[data-versi="baru"] .topbar-dome {
   background: var(--v2-grad);
@@ -58,12 +64,13 @@ html[data-versi="baru"] .topbar-nama { color: var(--v2-900); font-weight: 700; l
 html[data-versi="baru"] .topbar-sub {
   display: block;
   color: var(--v2-abu);
-  font-size: clamp(12px, 1.05vw, 15px);
+  font-size: clamp(12px, 1.05cqw, 15px);
   font-weight: 400;
   margin-top: 1px;
 }
 /* Cuma di halaman jadwal sholat (body.layar) - halaman lain pakai gaya
-   Masjid Biru, lihat style.css body:not(.layar) #tombol-... */
+   Masjid Biru, lihat style.css body:not(.layar) #tombol-... (selector pakai
+   body karena .tombol-grup-mengambang di luar #layar-16x9, lihat navigasi.js). */
 html[data-versi="baru"] body.layar #tombol-fullscreen,
 html[data-versi="baru"] body.layar #tombol-admin {
   width: 46px;
@@ -88,7 +95,7 @@ html[data-versi="baru"] .hero-kiri {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: 3.4vh 2.2vw;
+  padding: 3.4cqh 2.2cqw;
   border-radius: 26px;
   border: 1px solid #dcece3;
   background: linear-gradient(150deg, #eef8f2 0%, #e2f2e9 55%, #d8eee2 100%);
@@ -125,13 +132,13 @@ html[data-versi="baru"] #jam {
   color: var(--v2-900);
   font-weight: 700;
   letter-spacing: -0.035em;
-  margin-bottom: 3.4vh;
+  margin-bottom: 3.4cqh;
 }
 html[data-versi="baru"] .hero-kiri .pill-menuju {
   background: var(--v2-grad);
   padding: 11px 22px;
   gap: 12px;
-  font-size: clamp(13px, 1.35vw, 18px);
+  font-size: clamp(13px, 1.35cqw, 18px);
   font-weight: 600;
   letter-spacing: 0.04em;
   box-shadow: 0 10px 24px -10px rgba(30, 124, 90, 0.75);
@@ -152,7 +159,7 @@ html[data-versi="baru"] .pill-pemisah {
 html[data-versi="baru"] .hero-kanan {
   background: #ffffff;
   border-radius: 26px;
-  padding: 2.6vh 2vw;
+  padding: 2.6cqh 2cqw;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -190,12 +197,12 @@ html[data-versi="baru"] .label-kecil {
 }
 html[data-versi="baru"] .tanggal-hijriah,
 html[data-versi="baru"] .tanggal-masehi { color: var(--v2-900); font-weight: 600; }
-html[data-versi="baru"] .tanggal-masehi { font-size: clamp(15px, 1.6vw, 21px); }
+html[data-versi="baru"] .tanggal-masehi { font-size: clamp(15px, 1.6cqw, 21px); }
 /* garis ornamen dengan berlian di tengah */
 html[data-versi="baru"] .hero-garis {
   position: relative;
   height: 1px;
-  margin: 2.2vh 0;
+  margin: 2.2cqh 0;
   background: linear-gradient(90deg, transparent 0%, #dfeae3 18%, #dfeae3 82%, transparent 100%);
 }
 html[data-versi="baru"] .hero-garis::after {
@@ -212,13 +219,13 @@ html[data-versi="baru"] .hero-garis::after {
 }
 
 /* ---------- Grid waktu sholat ---------- */
-html[data-versi="baru"] #grid-sholat { gap: 0.85vw; align-items: stretch; }
+html[data-versi="baru"] #grid-sholat { gap: 0.85cqw; align-items: stretch; }
 html[data-versi="baru"] .kartu-waktu {
   background: #ffffff;
   border: 1px solid var(--v2-garis);
   border-radius: 20px;
   box-shadow: var(--v2-kartu-shadow);
-  gap: 0.9vh;
+  gap: 0.9cqh;
 }
 html[data-versi="baru"] .kartu-ikon {
   border-radius: 50%;
@@ -233,8 +240,8 @@ html[data-versi="baru"] .kartu-waktu .unit { color: var(--v2-abu); font-weight: 
 
 html[data-versi="baru"] .kartu-waktu.aktif {
   position: relative;
-  margin: -1.4vh 0;
-  padding-top: 4.4vh;
+  margin: -1.4cqh 0;
+  padding-top: 4.4cqh;
   border: none;
   background: var(--v2-grad);
   box-shadow: 0 20px 40px -14px rgba(15, 81, 50, 0.55);
@@ -269,7 +276,7 @@ html[data-versi="baru"] .kartu-waktu.aktif .unit { color: rgba(255, 255, 255, 0.
 html[data-versi="baru"] .kartu-pita {
   background: linear-gradient(90deg, rgba(15, 81, 50, 0.55) 0%, rgba(15, 81, 50, 0.28) 100%);
   text-shadow: none;
-  font-size: clamp(11px, 1.05vw, 15px);
+  font-size: clamp(11px, 1.05cqw, 15px);
   font-weight: 600;
   letter-spacing: 0.08em;
   padding: 8px 0;
@@ -312,8 +319,8 @@ html[data-versi="baru"] .marquee-item {
   gap: 10px;
   color: var(--v2-abu);
   font-weight: 400;
-  padding: 0 3.5vw 0 0;
-  margin-right: 3.5vw;
+  padding: 0 3.5cqw 0 0;
+  margin-right: 3.5cqw;
   border-right: 1px solid var(--v2-garis);
 }
 html[data-versi="baru"] .marquee-item:last-child { border-right: none; margin-right: 0; padding-right: 0; }
