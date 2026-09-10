@@ -13,8 +13,9 @@ import { TEMA_TAMPILAN } from "./tema/tampilan/registry.js";
 import { simpanBgLayar, hapusBgLayar, urlBgLayar } from "./bg-layar.js";
 import { readCache, dateKey } from "./api.js";
 import { parseHM } from "./waktu.js";
-import { cloudAktif, cloudSet, cloudUploadMedia } from "./cloud.js";
+import { cloudAktif, cloudSet, cloudUploadMedia, cloudGetAll, cloudDeleteMedia } from "./cloud.js";
 import { sesiAktif, login, logout } from "./cloud-auth.js";
+import { tulisKeLocal } from "./cloud-sync.js";
 
 const $ = (id) => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -671,8 +672,11 @@ function simpanTemaTampilan(id) {
   cloudSet(KEY_TEMA_TAMPILAN, id);
 }
 
+// Idempoten (fieldset dikosongkan dulu) - dipanggil ulang setelah
+// tarikUlangDariCloud(), bukan cuma sekali saat load.
 function renderTema() {
   const fieldset = document.querySelector(`[data-tema-kartu="tampilan"]`);
+  fieldset.innerHTML = "";
   const tersimpan = bacaTemaTampilan();
   const dipilih = tersimpan && TEMA_TAMPILAN[tersimpan] ? tersimpan : Object.keys(TEMA_TAMPILAN)[0];
   syncTampilanToggle(dipilih);
@@ -694,16 +698,6 @@ function renderTema() {
     }, { once: true });
     fieldset.appendChild(kartu);
   }
-  fieldset.addEventListener("change", (e) => {
-    if (e.target.name === "tema-tampilan") syncTampilanToggle(e.target.value);
-  });
-
-  $("form-tema-tampilan").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const dipilih = document.querySelector(`input[name="tema-tampilan"]:checked`);
-    if (dipilih) simpanTemaTampilan(dipilih.value);
-    tampilkanStatus("status-tema-tampilan");
-  });
 }
 
 // ---------- QR Donasi ----------
@@ -1213,8 +1207,7 @@ async function tambahJumatSlide() {
 }
 
 async function hapusJumatSlide(s) {
-  // Hapus objek Storage cloud sendiri di luar scope (cleanup opsional) -
-  // cukup bersihkan referensinya dari daftar.
+  cloudDeleteMedia(s.urlCloud); // fire-and-forget, tidak nge-block hapus dari daftar
   saveJumatSlides(loadJumatSlides().filter((x) => x.id !== s.id));
   renderJumatSlides();
 }
@@ -1239,6 +1232,7 @@ function renderAcaraSlides() {
     `;
     li.querySelector('[data-aksi="hapus"]').addEventListener("click", () => {
       if (!confirm("Hapus gambar ini?")) return;
+      cloudDeleteMedia(s.urlCloud); // fire-and-forget, tidak nge-block hapus dari daftar
       saveAcaraSlides(loadAcaraSlides().filter((x) => x.id !== s.id));
       renderAcaraSlides();
     });
@@ -1268,18 +1262,34 @@ async function tambahAcaraSlide() {
 
 initFilePicker("murotal");
 initFilePicker("nada");
-renderIqomah();
-renderHening();
-renderTarawih();
-renderAcara();
-renderAcaraSlides();
-renderTampilan();
-renderPengumuman();
-renderRotasi();
-renderTema();
-renderAdzan();
-renderJumat();
-LAYAR_BG.forEach(renderBgLayar);
+
+// Dikumpulkan jadi satu fungsi supaya bisa dipanggil ulang setelah tarik
+// data terbaru dari cloud (lihat tarikUlangDariCloud() di bawah) - admin.html
+// beda dari kiosk, TIDAK auto-sync terus-menerus, jadi begitu dibuka perlu
+// tarik sekali biar tidak nampilin data basi kalau ada perubahan dari device lain.
+function renderSemuaData() {
+  renderIqomah();
+  renderHening();
+  renderTarawih();
+  renderAcara();
+  renderAcaraSlides();
+  renderTampilan();
+  renderPengumuman();
+  renderRotasi();
+  renderTema();
+  renderAdzan();
+  renderJumat();
+  LAYAR_BG.forEach(renderBgLayar);
+}
+renderSemuaData();
+
+async function tarikUlangDariCloud() {
+  if (!cloudAktif()) return;
+  const rows = await cloudGetAll();
+  tulisKeLocal(rows);
+  renderSemuaData();
+}
+tarikUlangDariCloud();
 
 $("form-iqomah").addEventListener("submit", simpanIqomah);
 $("form-hening").addEventListener("submit", simpanHening);
@@ -1297,6 +1307,15 @@ $("form-acara-sesudah").addEventListener("submit", simpanAcaraSesudah);
 $("form-tampilan").addEventListener("submit", simpanTampilan);
 $("tombol-tambah-pengumuman").addEventListener("click", tambahBarisPengumuman);
 $("form-rotasi").addEventListener("submit", simpanRotasi);
+document.querySelector(`[data-tema-kartu="tampilan"]`).addEventListener("change", (e) => {
+  if (e.target.name === "tema-tampilan") syncTampilanToggle(e.target.value);
+});
+$("form-tema-tampilan").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const dipilih = document.querySelector(`input[name="tema-tampilan"]:checked`);
+  if (dipilih) simpanTemaTampilan(dipilih.value);
+  tampilkanStatus("status-tema-tampilan");
+});
 // Stepper +/- generik - dipakai semua panel (termasuk baris dinamis Iqomah,
 // asal dirender sebelum baris ini jalan).
 document.querySelectorAll(".stepper-btn").forEach((btn) => {

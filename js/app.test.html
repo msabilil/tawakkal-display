@@ -34,6 +34,11 @@ const t3 = new Date(2026, 8, 3, 11, 55, 0);
 const s3 = iqomahState(t3, jadwal, iq, 5);
 eq("iqomah aktif key", s3 && s3.key, "dzuhur");
 eq("iqomah total detik", s3 && s3.totalDetik, 10*60); // fase iqomah = 10 menit penuh
+// start = jam azan ASLI dari jadwal (bukan `now`) - mulaiIqomah() di app.js
+// pakai ini buat hitung adzanEndTime/iqomahEndTime supaya tetap anchor ke
+// jam azan sebenarnya walau mulaiIqomah() kepanggil telat (mis. ganti
+// setting durasi adzan pas lagi iqomah, lihat catatan di mulaiIqomah()).
+eq("iqomah start = jam azan asli", s3 && s3.start.getTime(), parseHM(jadwal.dzuhur, t3).getTime());
 // Kamis 12:10 (18 menit setelah dzuhur, adzan5+iqomah10=15mnt) -> lewat window -> null
 eq("iqomah lewat", iqomahState(new Date(2026,8,3,12,10,0), jadwal, iq, 5), null);
 // Kamis 10:00 -> bukan waktu sholat -> null

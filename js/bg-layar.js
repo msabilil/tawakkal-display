@@ -2,7 +2,7 @@
 // layar, diupload ke Supabase Storage. localStorage/cloud cuma nyimpen URL-nya
 // (peta layar -> URL). Kosong (belum upload) = balik ke tampilan tema asli
 // lewat CSS.
-import { cloudAktif, cloudSet, cloudUploadMedia } from "./cloud.js";
+import { cloudAktif, cloudSet, cloudUploadMedia, cloudDeleteMedia } from "./cloud.js";
 
 const KEY_PETA = "bgLayarFile";
 
@@ -35,10 +35,8 @@ export async function simpanBgLayar(layar, file) {
 }
 
 export async function hapusBgLayar(layar) {
-  // Hapus objek di Storage cloud sendiri di luar scope (cleanup opsional,
-  // file lama jadi sampah tak terpakai tapi tidak memengaruhi kebenaran
-  // tampilan) - cukup bersihkan referensinya dari peta.
   const peta = petaFile();
+  cloudDeleteMedia(peta[`${layar}Cloud`]); // fire-and-forget, tidak nge-block hapus dari peta
   delete peta[`${layar}Cloud`];
   simpanPeta(peta);
 }

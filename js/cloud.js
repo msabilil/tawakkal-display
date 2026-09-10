@@ -63,6 +63,19 @@ export async function cloudUploadMedia(path, file) {
   return url ? `${url}?v=${Date.now()}` : null;
 }
 
+// Hapus file di Storage - terima path bare ATAU URL publik penuh (termasuk
+// query ?v=... dari cloudUploadMedia), diekstrak sendiri di sini biar
+// pemanggil (admin.js) tinggal oper apa yang sudah tersimpan di metadata.
+// Fire-and-forget sama seperti cloudSet - gagal diam-diam, tidak nge-block
+// hapus dari daftar/metadata yang sudah jalan lebih dulu.
+export function cloudDeleteMedia(urlAtauPath) {
+  if (!cloudAktif() || !urlAtauPath) return;
+  const path = urlAtauPath.includes("/media/") ? urlAtauPath.split("/media/")[1].split("?")[0] : urlAtauPath;
+  getSupabaseClient()
+    .then((c) => c && c.storage.from("media").remove([path]))
+    .catch(() => {});
+}
+
 // Path URL Storage publik Supabase deterministik - tidak butuh network call.
 export function cloudUrlMedia(path) {
   if (!cloudAktif()) return null;

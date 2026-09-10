@@ -31,7 +31,7 @@ export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
     if (now >= start && now < end) {
       const totalDetik = iqomahMenit * 60; // durasi fase iqomah saja, dipakai mulaiIqomah()
       const sisaDetik = Math.ceil((end - now) / 1000);
-      return { key, label, sisaDetik, totalDetik };
+      return { key, label, sisaDetik, totalDetik, start };
     }
   }
   return null;
@@ -214,9 +214,15 @@ function mulaiIqomah(iq) {
   // Fase Adzan dan fase Iqomah dua durasi terpisah, berurutan (bukan dipotong
   // dari total yang sama): adzan penuh sesuai menit di setting Adzan, BARU
   // iqomah dihitung penuh sesuai menit jeda di setting Iqomah sholat ini.
+  // Dihitung dari iq.start (jam azan ASLI dari jadwal), BUKAN dari `now` -
+  // kalau dihitung dari `now`, mulaiIqomah() yang kepanggil telat (mis.
+  // harusResumeIqomah gagal resume karena state lama sudah lewat) bakal
+  // reset balik ke fase adzan penuh walau azan aslinya sudah lama lewat
+  // (bug: ganti setting durasi adzan pas lagi iqomah bikin layar balik ke
+  // "Waktu X Telah Masuk" dengan durasi adzan yang baru).
   const adzanDetik = loadAdzan().menit * 60;
-  const adzanEndTime = new Date(now + adzanDetik * 1000).toISOString();
-  const iqomahEndTime = new Date(now + (adzanDetik + iq.totalDetik) * 1000).toISOString();
+  const adzanEndTime = new Date(iq.start.getTime() + adzanDetik * 1000).toISOString();
+  const iqomahEndTime = new Date(iq.start.getTime() + (adzanDetik + iq.totalDetik) * 1000).toISOString();
   localStorage.setItem(IQOMAH_KEY, JSON.stringify({ key: iq.key, label: iq.label, adzanEndTime, iqomahEndTime }));
   tampilkan("iqomah");
 }
