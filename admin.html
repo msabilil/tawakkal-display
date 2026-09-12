@@ -702,6 +702,7 @@
           </div>
           <div class="admin-aksi">
             <button type="button" id="tombol-tambah-acara" class="btn-inline">Tambah Gambar</button>
+            <button type="button" id="tombol-batal-acara" class="btn-inline" hidden>Batal Edit</button>
           </div>
           <p id="status-acara-slide" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
           <h3 class="admin-subjudul">Daftar Gambar</h3>
@@ -718,7 +719,7 @@
       <!-- ================= Jum'at ================= -->
       <section class="admin-kotak" data-panel="jumat" hidden>
         <h1>Jum'at</h1>
-        <p class="admin-ket">Layar khusus yang otomatis tampil di jam Dzuhur hari Jumat (gantiin skip-diam-diam yang lama), gambar/video bergilir. Cuma aktif kalau ada minimal 1 slide.</p>
+        <p class="admin-ket">Alurnya pada Jumat: layar Adzan Dzuhur, nada dering, slide khutbah, lalu Sholat Mode. Cuma aktif kalau ada minimal 1 slide.</p>
 
         <div class="admin-subsection admin-kolom-sempit">
           <h2 class="admin-subpanel-judul">Durasi Total</h2>
@@ -729,7 +730,7 @@
               </span>
               <div class="baris-kaya-teks">
                 <label class="label-sholat" for="jumat-menit">Tampil selama</label>
-                <p class="hint-baris">Total durasi layar Jum'at aktif sebelum balik ke tampilan biasa.</p>
+                <p class="hint-baris">Lama slide khutbah tampil setelah layar Adzan Dzuhur selesai.</p>
               </div>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-target="jumat-menit" data-arah="-1" aria-label="Kurangi durasi Jum'at">&minus;</button>
@@ -737,6 +738,16 @@
                 <span class="stepper-satuan">menit</span>
                 <button type="button" class="stepper-btn" data-target="jumat-menit" data-arah="1" aria-label="Tambah durasi Jum'at">+</button>
               </div>
+            </div>
+            <div class="baris-kaya">
+              <span class="ikon-baris" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg>
+              </span>
+              <div class="baris-kaya-teks">
+                <label class="label-sholat" for="jumat-sholat-mode-aktif">Sholat Mode setelah slide</label>
+                <p class="hint-baris">Jika aktif, layar langsung masuk Sholat Mode setelah durasi slide Jumat habis. Durasi layar hitam mengikuti pengaturan Dzuhur di halaman Sholat Mode.</p>
+              </div>
+              <label class="aktif-cek"><input type="checkbox" id="jumat-sholat-mode-aktif" aria-label="Aktifkan Sholat Mode setelah slide Jumat"></label>
             </div>
             <p id="status-jumat" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
           </form>
@@ -985,14 +996,30 @@
         </div>
 
         <div class="admin-subsection admin-kolom-sempit">
-          <h2 class="admin-subpanel-judul">Nada Iqomah</h2>
+          <h2 class="admin-subpanel-judul">Nada Masuk Waktu Sholat</h2>
+          <form id="form-nada-iqomah">
+          <div class="baris-kaya">
+            <span class="ikon-baris" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 9.5v3.5l2 1.5"/></svg>
+            </span>
+            <div class="baris-kaya-teks">
+              <label class="label-sholat" for="nada-iqomah-detik">Bunyi selama</label>
+              <p class="hint-baris">Nada diulang sampai durasi ini habis ketika waktu sholat masuk.</p>
+            </div>
+            <div class="stepper">
+              <button type="button" class="stepper-btn" data-target="nada-iqomah-detik" data-arah="-1" aria-label="Kurangi durasi nada Iqomah">&minus;</button>
+              <input type="number" min="1" max="120" step="1" id="nada-iqomah-detik" inputmode="numeric">
+              <span class="stepper-satuan">detik</span>
+              <button type="button" class="stepper-btn" data-target="nada-iqomah-detik" data-arah="1" aria-label="Tambah durasi nada Iqomah">+</button>
+            </div>
+          </div>
           <div class="baris-kaya baris-kaya-atas">
             <span class="ikon-baris" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
             </span>
             <div class="baris-kaya-teks">
               <label class="label-sholat">Berkas nada</label>
-              <p class="hint-baris">Bunyi sekali saat mode iqomah dimulai. Kosong = beep default.</p>
+              <p class="hint-baris">Bunyi saat waktu sholat masuk. Kosong = beep default.</p>
               <div class="file-picker" id="nada-file-picker">
                 <input type="file" id="nada-file" accept="audio/*" class="file-picker-input" aria-label="Berkas nada iqomah">
                 <div class="file-picker-empty" id="nada-file-empty">
@@ -1015,12 +1042,51 @@
             </div>
           </div>
           <div class="admin-aksi">
-            <button type="button" id="tombol-simpan-nada" class="tombol-sekunder">Simpan Nada</button>
+            <button type="submit" id="tombol-simpan-nada" class="tombol-sekunder">Simpan Nada</button>
             <button type="button" id="tombol-tes-nada" class="tombol-sekunder">Tes Nada</button>
             <button type="button" id="tombol-hapus-nada" class="tombol-sekunder btn-bahaya">Hapus (pakai beep default)</button>
           </div>
           <p id="status-nada" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
           <audio id="nada-preview"></audio>
+          </form>
+        </div>
+
+        <div class="admin-subsection admin-kolom-sempit">
+          <h2 class="admin-subpanel-judul">Nada Sholat Mode</h2>
+          <form id="form-nada-sholat-mode">
+          <div class="baris-kaya">
+            <span class="ikon-baris" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg>
+            </span>
+            <div class="baris-kaya-teks">
+              <label class="label-sholat" for="nada-sholat-mode-detik">Bunyi selama</label>
+              <p class="hint-baris">Nada berbunyi saat layar masuk Sholat Mode, termasuk setelah slide Jumat selesai.</p>
+            </div>
+            <div class="stepper">
+              <button type="button" class="stepper-btn" data-target="nada-sholat-mode-detik" data-arah="-1" aria-label="Kurangi durasi nada Sholat Mode">&minus;</button>
+              <input type="number" min="1" max="120" step="1" id="nada-sholat-mode-detik" inputmode="numeric">
+              <span class="stepper-satuan">detik</span>
+              <button type="button" class="stepper-btn" data-target="nada-sholat-mode-detik" data-arah="1" aria-label="Tambah durasi nada Sholat Mode">+</button>
+            </div>
+          </div>
+          <div class="baris-kaya">
+            <span class="ikon-baris" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            </span>
+            <div class="baris-kaya-teks">
+              <label class="label-sholat" for="nada-sholat-mode-file">Berkas nada</label>
+              <p class="hint-baris">Kosong = beep default berulang sesuai durasi di atas.</p>
+            </div>
+            <input type="file" id="nada-sholat-mode-file" accept="audio/*" aria-label="Berkas nada Sholat Mode">
+          </div>
+          <div class="admin-aksi">
+            <button type="submit" id="tombol-simpan-nada-sholat-mode" class="tombol-sekunder">Simpan Nada</button>
+            <button type="button" id="tombol-tes-nada-sholat-mode" class="tombol-sekunder">Tes Nada</button>
+            <button type="button" id="tombol-hapus-nada-sholat-mode" class="tombol-sekunder btn-bahaya">Hapus (pakai beep default)</button>
+          </div>
+          <p id="status-nada-sholat-mode" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+          <audio id="nada-sholat-mode-preview"></audio>
+          </form>
         </div>
 
         <div class="admin-aksi admin-aksi-section">

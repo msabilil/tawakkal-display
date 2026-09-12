@@ -16,7 +16,7 @@ function formatTanggal(tgl) {
 function baris(e) {
   const jamTeks = e._jam ? `, Pukul ${e._jam} WIB` : "";
   const kapan = `${formatTanggal(e._waktu)}${jamTeks}`;
-  const pengisi = e._pengisi ? `<span class="fokus-item-pengisi">${e._pengisi}</span>` : "";
+  const pengisi = e._pengisi ? `<span class="fokus-item-pengisi" style="color:#000 !important">${e._pengisi}</span>` : "";
   return `<li class="fokus-item"><span class="fokus-item-nama">${e.nama}</span><span class="fokus-item-kapan">${kapan}</span>${pengisi}</li>`;
 }
 

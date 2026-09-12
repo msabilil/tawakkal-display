@@ -5,6 +5,7 @@
 import { DEFAULT_JUMAT } from "./config.js";
 import { parseHM } from "./waktu.js";
 import { cloudSet } from "./cloud.js";
+import { loadAdzan, loadHening } from "./settings.js";
 
 const KEY_SETTINGS = "jumatSettings";
 const KEY_SLIDES = "jumatSlides"; // [{id, tipe:"gambar"|"video", file:"jumat-<id>.<ext>", durasiDetik}]
@@ -37,14 +38,27 @@ export function saveJumatSlides(slides) {
   cloudSet(KEY_SLIDES, slides);
 }
 
-// Aktif kalau: hari Jumat, sekarang di window [azan Dzuhur, azan Dzuhur +
-// durasi], dan ada minimal 1 slide (kalau kosong, biarkan perilaku lama:
-// dzuhur dilewati diam-diam, jangan nampilin layar kosong).
+// Alur Jumat: Adzan Dzuhur -> slide khutbah -> (opsional) Sholat Mode.
+// Durasi slide dihitung setelah Adzan selesai; kalau Sholat Mode aktif,
+// durasi layar hitam mengikuti durasi Dzuhur di pengaturan Sholat Mode.
 export function jumatState(now, jadwal) {
   if (now.getDay() !== 5) return null;
   if (!loadJumatSlides().length) return null;
+  const settings = loadJumatSettings();
   const mulai = parseHM(jadwal.dzuhur, now);
-  const selesai = new Date(mulai.getTime() + loadJumatSettings().durasiMenit * 60000);
-  if (now >= mulai && now < selesai) return { endTime: selesai.toISOString() };
+  const adzanEnd = new Date(mulai.getTime() + loadAdzan().menit * 60000);
+  const slideEnd = new Date(adzanEnd.getTime() + settings.durasiMenit * 60000);
+  const heningMenit = Math.max(0, loadHening().dzuhur.menit || 0);
+  const selesai = new Date(slideEnd.getTime() + (settings.sholatModeAktif ? heningMenit * 60000 : 0));
+  if (now >= mulai && now < selesai) {
+    const fase = now < adzanEnd ? "adzan" : now < slideEnd ? "slide" : "hening";
+    return {
+      fase,
+      adzanEndTime: adzanEnd.toISOString(),
+      slideEndTime: slideEnd.toISOString(),
+      sholatModeAktif: !!settings.sholatModeAktif,
+      endTime: selesai.toISOString(),
+    };
+  }
   return null;
 }

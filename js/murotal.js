@@ -53,6 +53,7 @@ let gagalBeruntun = 0;        // guard anti-loop kalau semua track gagal
 let simpanTerakhir = 0;       // throttle simpan posisi
 let winAktifKey = null;       // key jendela sholat yang sedang diamati tickMurotal (snapshot per tick)
 let jendelaGagal = null;      // key jendela yang baru saja gagal total, biar tidak retry tiap detik
+let trackDimuatId = null;     // cegah source yang sama dimuat ulang setiap tick pramuat
 
 export function initMurotal(refs) {
   audioEl = refs.audioEl;
@@ -92,7 +93,21 @@ function simpanPosisi() {
   saveMurotal(s);
 }
 
-async function muatTrack(item) {
+function pramuatPosisi(detik) {
+  if (!(detik > 0)) return;
+  const setPosisi = () => {
+    // Hanya untuk buffer sebelum main; jangan ganggu posisi saat audio sudah
+    // terdengar karena browser masih dapat mengirim loadedmetadata terlambat.
+    if (!sedangMain) {
+      try { audioEl.currentTime = detik; } catch {}
+    }
+  };
+  if (audioEl.readyState >= 1) setPosisi();
+  else audioEl.addEventListener("loadedmetadata", setPosisi, { once: true });
+}
+
+async function muatTrack(item, detikPramuat = 0) {
+  if (trackDimuatId === item.id && audioEl.src) return true;
   if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
   if (item.tipe === "offline") {
     // Lokal dulu (kerja offline, tanpa network) - baru fallback ke URL cloud
@@ -110,7 +125,27 @@ async function muatTrack(item) {
   } else {
     audioEl.src = item.url;
   }
+  trackDimuatId = item.id;
+  audioEl.preload = "auto";
+  audioEl.load();
+  pramuatPosisi(detikPramuat);
   return true;
+}
+
+// Streaming murotal dari CDN bisa butuh beberapa detik saat koneksi lambat.
+// Muat source satu menit sebelum jendela aktif supaya play() tinggal mulai
+// dari buffer yang sudah tersedia, bukan baru membuat request ketika waktunya
+// masuk.
+function perluPramuat(now, jadwal, settings) {
+  const batasMs = 60000;
+  for (const { key } of SHOLAT) {
+    if (!settings.perSholat[key]) continue;
+    const waktu = parseHM(jadwal[key], now);
+    const mulai = new Date(waktu.getTime() - settings.mulaiMenit * 60000);
+    const sisa = mulai.getTime() - now.getTime();
+    if (sisa > 0 && sisa <= batasMs) return true;
+  }
+  return false;
 }
 
 async function mainkanIndex(index, detik) {
@@ -177,6 +212,10 @@ export function tickMurotal(now, jadwal, paksa) {
     mainkanIndex(s.posisi.index, s.posisi.detik);
   } else if (!win && sedangMain) {
     hentikan(true);
+  } else if (!win && !sedangMain && perluPramuat(now, jadwal, s)) {
+    const idx = ((s.posisi.index % s.playlist.length) + s.playlist.length) % s.playlist.length;
+    const item = s.playlist[idx];
+    if (item) muatTrack(item, s.posisi.detik);
   }
 }
 

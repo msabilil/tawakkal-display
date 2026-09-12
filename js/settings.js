@@ -1,9 +1,10 @@
-import { DEFAULT_IQOMAH, DEFAULT_ADZAN, DEFAULT_HENING, SHOLAT, PENGUMUMAN } from "./config.js";
+import { DEFAULT_IQOMAH, DEFAULT_ADZAN, DEFAULT_HENING, DEFAULT_NADA, SHOLAT, PENGUMUMAN } from "./config.js";
 import { cloudSet } from "./cloud.js";
 
 const KEY = "iqomahSettings";
 const KEY_ADZAN = "adzanSettings";
 const KEY_HENING = "heningSettings";
+const KEY_NADA = "nadaSettings";
 const KEY_PENGUMUMAN = "pengumumanSettings";
 
 export function loadIqomah() {
@@ -52,6 +53,20 @@ export function loadHening() {
 export function saveHening(settings) {
   localStorage.setItem(KEY_HENING, JSON.stringify(settings));
   cloudSet(KEY_HENING, settings);
+}
+
+export function loadNada() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY_NADA));
+    return { ...DEFAULT_NADA, ...(s || {}) };
+  } catch {
+    return { ...DEFAULT_NADA };
+  }
+}
+
+export function saveNada(settings) {
+  localStorage.setItem(KEY_NADA, JSON.stringify(settings));
+  cloudSet(KEY_NADA, settings);
 }
 
 export function loadAdzan() {

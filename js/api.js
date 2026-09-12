@@ -40,12 +40,14 @@ export async function getJadwal(date) {
     return { jadwal, tanggalStr: j.tanggal, fromCache: false, fetchedAt };
   } catch (err) {
     const cache = readCache();
-    if (cache && cache.jadwal) {
+    // Jangan pernah memakai cache dari tanggal kemarin. Jadwal yang salah
+    // lebih berbahaya daripada menampilkan status offline sampai koneksi pulih.
+    if (cache && cache.dateKey === dk && cache.jadwal) {
       return {
         jadwal: cache.jadwal, tanggalStr: cache.tanggalStr,
         fromCache: true, fetchedAt: cache.fetchedAt,
       };
     }
-    throw new Error("Gagal fetch dan tidak ada cache: " + err.message);
+    throw new Error("Gagal fetch dan tidak ada cache jadwal untuk hari ini: " + err.message);
   }
 }

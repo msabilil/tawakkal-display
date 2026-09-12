@@ -1,5 +1,7 @@
-import { loadJumatSlides } from "./jumat-mode.js";
+import { loadJumatSlides, loadJumatSettings } from "./jumat-mode.js";
 import { tampilkan } from "./navigasi.js";
+import { mulaiHening } from "./hening.js";
+import { loadHening } from "./settings.js";
 
 const KEY = "jumatAktif";
 const elMedia = document.getElementById("jumat-media");
@@ -17,11 +19,35 @@ function bacaEndTime() {
   }
 }
 
+function bacaState() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY));
+  } catch {
+    return null;
+  }
+}
+
+function statePreview() {
+  const now = Date.now();
+  const settings = loadJumatSettings();
+  const slideEnd = now + settings.durasiMenit * 60000;
+  const heningMenit = Math.max(0, loadHening().dzuhur.menit || 0);
+  return {
+    slideEndTime: new Date(slideEnd).toISOString(),
+    sholatModeAktif: !!settings.sholatModeAktif,
+    endTime: new Date(slideEnd + (settings.sholatModeAktif ? heningMenit * 60000 : 0)).toISOString(),
+  };
+}
+
 const DURASI_TRANSISI_MS = 700;
 
 // Crossfade: elemen baru ditumpuk di atas yang lama, keduanya fade bareng
 // (baru masuk, lama keluar), baru yang lama dihapus setelah transisinya selesai.
-function tampilkanSlide(slides, i) {
+function tampilkanSlide(slides, i, state) {
+  if (Date.now() >= new Date(state.slideEndTime).getTime()) {
+    selesaiSlide(state);
+    return;
+  }
   const s = slides[i % slides.length];
   const url = s.urlCloud;
   const lama = elMedia.querySelector(".tampil");
@@ -44,21 +70,32 @@ function tampilkanSlide(slides, i) {
   });
   if (lama) setTimeout(() => lama.remove(), DURASI_TRANSISI_MS);
 
-  timerId = setTimeout(() => lanjut(slides, i + 1), Math.max(1, s.durasiDetik) * 1000);
+  const sampaiSlideSelesai = new Date(state.slideEndTime).getTime() - Date.now();
+  const jeda = Math.min(Math.max(1, s.durasiDetik) * 1000, sampaiSlideSelesai);
+  timerId = setTimeout(() => lanjut(slides, i + 1, state), Math.max(0, jeda));
 }
 
-// Preview: putar terus tanpa cek waktu selesai (biar admin bisa lihat siklusnya).
-// Normal: berhenti & balik ke view sholat begitu lewat endTime yang disimpan app.js.
-function lanjut(slides, i) {
-  if (!previewAktif) {
-    const endTime = bacaEndTime();
-    if (!endTime || new Date() >= endTime) {
-      localStorage.removeItem(KEY);
-      tampilkan("sholat");
-      return;
-    }
+function lanjut(slides, i, state) {
+  if (new Date() >= new Date(state.endTime)) {
+    localStorage.removeItem(KEY);
+    tampilkan("sholat");
+    return;
   }
-  tampilkanSlide(slides, i);
+  tampilkanSlide(slides, i, state);
+}
+
+function selesaiSlide(state) {
+  if (new Date() >= new Date(state.endTime)) {
+    localStorage.removeItem(KEY);
+    tampilkan("sholat");
+    return;
+  }
+  if (state.sholatModeAktif) {
+    mulaiHening(state.endTime, { putarNada: false });
+    return;
+  }
+  localStorage.removeItem(KEY);
+  tampilkan("sholat");
 }
 
 // Dipanggil router (navigasi.js) tiap masuk view "jumat".
@@ -71,10 +108,11 @@ export function start(opsi) {
     elKosong.hidden = false;
     return;
   }
-  if (!previewAktif && !bacaEndTime()) {
+  const state = previewAktif ? statePreview() : bacaState();
+  if (!state || (!previewAktif && !bacaEndTime())) {
     tampilkan("sholat");
     return;
   }
-  tampilkanSlide(slides, 0);
+  tampilkanSlide(slides, 0, state);
   return () => clearTimeout(timerId);
 }

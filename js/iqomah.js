@@ -3,6 +3,7 @@ import { terapkanBgLayar } from "./bg-layar.js";
 import { tampilkan, elLayar } from "./navigasi.js";
 import { readCache } from "./api.js";
 import { nextSholat } from "./app.js";
+import { loadAdzan, loadIqomah, loadNada } from "./settings.js";
 
 const KEY = "iqomahAktif";
 
@@ -52,10 +53,17 @@ function tick() {
   const faseAdzan = now < adzanEnd;
   const sisaDetik = Math.ceil(((faseAdzan ? adzanEnd : iqomahEnd) - now) / 1000);
   render(faseAdzan ? "adzan" : "iqomah", data.label, sisaDetik);
+  // Nada dipicu ketika waktu sholat benar-benar masuk, bukan setelah durasi
+  // layar Adzan habis. Ini juga membuat alur Jumat berbunyi sebelum slide
+  // khutbah dimulai. Flag disimpan di state agar refresh tidak mengulang nada.
+  if (!data.nadaDimainkan && (faseAdzan || data.putarNadaSaatMulai)) {
+    localStorage.setItem(KEY, JSON.stringify({ ...data, nadaDimainkan: true }));
+    const nada = loadNada();
+    mainkanNada(document.getElementById("audio-nada"), { durasiDetik: nada.iqomahDetik });
+  }
 }
 
 function mulaiCountdown() {
-  mainkanNada(document.getElementById("audio-nada"));
   tick();
   const id = setInterval(tick, 1000);
   return () => clearInterval(id);
@@ -72,10 +80,19 @@ export function start(opsi) {
     const now = Date.now();
     const cache = readCache();
     const sholat = cache && cache.jadwal ? nextSholat(new Date(now), cache.jadwal) : { key: "dzuhur", label: "Dzuhur" };
-    const adzanDetik = fase === "adzan" ? 8 : 0;
+    const iqSet = loadIqomah()[sholat.key] || {};
+    const iqomahDetik = iqSet.aktif && iqSet.menit > 0 ? iqSet.menit * 60 : 0;
+    const adzanDetik = fase === "adzan" ? loadAdzan().menit * 60 : 0;
     const adzanEndTime = new Date(now + adzanDetik * 1000).toISOString();
-    const iqomahEndTime = new Date(now + (adzanDetik + 12) * 1000).toISOString();
-    localStorage.setItem(KEY, JSON.stringify({ key: sholat.key, label: sholat.label, adzanEndTime, iqomahEndTime }));
+    const iqomahEndTime = new Date(now + (adzanDetik + iqomahDetik) * 1000).toISOString();
+    localStorage.setItem(KEY, JSON.stringify({
+      key: sholat.key,
+      label: sholat.label,
+      adzanEndTime,
+      iqomahEndTime,
+      putarNadaSaatMulai: true,
+      nadaDimainkan: false,
+    }));
     const stop = mulaiCountdown();
     return () => { stop(); localStorage.removeItem(KEY); };
   }

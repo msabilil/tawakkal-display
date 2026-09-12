@@ -1428,9 +1428,12 @@ body.admin {
   justify-content: center;
   text-align: center;
 }
-.fokus-item-nama { display: block; font-size: clamp(16px, 1.9cqw, 26px); font-weight: 700; line-height: 1.15; color: var(--biru-900); }
+.fokus-item-nama { display: block; font-size: clamp(16px, 1.9cqw, 26px); font-weight: 700; line-height: 1.15; color: #000; }
 .fokus-item-kapan { font-size: clamp(14px, 1.5cqw, 21px); color: #334155; margin-top: 3px; }
-.fokus-item-pengisi { display: block; font-size: clamp(14px, 1.4cqw, 19px); font-weight: 700; opacity: 0.75; margin-top: 1px; }
+.fokus-item-pengisi { display: block; font-size: clamp(14px, 1.4cqw, 19px); font-weight: 700; color: #000; opacity: 1; margin-top: 1px; }
+/* Nama kegiatan dan pengisi wajib hitam pada semua tema, termasuk Tosca. */
+#layar-16x9.halaman-kegiatan .fokus-item-nama,
+#layar-16x9.halaman-kegiatan .fokus-item-pengisi { color: #000 !important; opacity: 1; }
 /* Tinggi slot 17.8% (bukan ~9%) - itu tinggi kotak putih beneran di foto,
    diukur dari screenshot render nyata. */
 .fokus-item:nth-child(1) { left: 19.4%; top: 21.7%; width: 27.7%; height: 17.8%; }

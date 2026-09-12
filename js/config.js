@@ -49,10 +49,14 @@ export const QORI = {
 // lihat app.js mulaiIqomah, dua durasi ini independen/berurutan, bukan dipotong).
 export const DEFAULT_ADZAN = { menit: 5 };
 
-// Durasi total layar Jum'at (dari azan Dzuhur) sebelum otomatis balik ke
-// jadwal sholat. Cuma aktif kalau ada minimal 1 slide tersimpan (lihat
-// jumat-mode.js jumatState).
-export const DEFAULT_JUMAT = { durasiMenit: 60 };
+// Durasi slide Jum'at setelah layar Adzan Dzuhur. Cuma aktif kalau ada
+// minimal 1 slide tersimpan (lihat jumat-mode.js jumatState).
+export const DEFAULT_JUMAT = { durasiMenit: 60, sholatModeAktif: true };
+
+// Durasi bunyi untuk notifikasi ketika fase Iqomah dan Sholat Mode dimulai.
+// File audio akan diulang sampai durasi ini habis agar nada pendek pun tetap
+// terdengar sesuai waktu yang dipilih admin.
+export const DEFAULT_NADA = { iqomahDetik: 8, sholatModeDetik: 8 };
 
 // Playlist bawaan (tanpa perlu setting) - streaming langsung dari CDN
 // EQuran.id, pola URL-nya sama dengan yang dipakai fitur "Tambah dari API"

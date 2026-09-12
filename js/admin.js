@@ -1,5 +1,5 @@
 import { SHOLAT, WAKTU_HARIAN, QORI } from "./config.js";
-import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadPengumuman, savePengumuman } from "./settings.js";
+import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadNada, saveNada, loadPengumuman, savePengumuman } from "./settings.js";
 import { loadTarawihSettings, saveTarawihSettings, isRamadhanEfektif, tanggalHijriahLabel } from "./ramadhan.js";
 import { loadAcara, saveAcara, loadAcaraSlides, saveAcaraSlides } from "./acara-mode.js";
 import { loadTampilan, saveTampilan } from "./tampilan.js";
@@ -623,23 +623,43 @@ function tambahApiMurotal() {
   renderPlaylist();
 }
 
-// ---------- Nada Iqomah ----------
-async function simpanNada() {
-  const file = $("nada-file").files[0];
-  if (!file) { alert("Pilih file dulu."); return; }
-  const ok = await putMedia("nadaIqomah", file);
-  if (!ok) { alert("Gagal menyimpan (IndexedDB tidak tersedia)."); return; }
-  $("nada-file").value = "";
-  $("nada-file").dispatchEvent(new Event("change"));
-  tampilkanStatus("status-nada");
+// ---------- Nada Iqomah & Sholat Mode ----------
+function renderNada() {
+  const s = loadNada();
+  $("nada-iqomah-detik").value = s.iqomahDetik;
+  $("nada-sholat-mode-detik").value = s.sholatModeDetik;
 }
-async function hapusNada() {
-  if (!confirm("Hapus nada iqomah ini? Layar akan pakai beep default.")) return;
-  await delMedia("nadaIqomah");
-  tampilkanStatus("status-nada");
+
+function bacaDurasiNada(id, fallback) {
+  const nilai = parseInt($(id).value, 10);
+  return Number.isFinite(nilai) && nilai > 0 ? Math.min(nilai, 120) : fallback;
 }
-function tesNada() {
-  mainkanNada($("nada-preview"));
+
+async function simpanNadaForm(e, { mediaKey, fileId, durasiId, settingKey, statusId }) {
+  e.preventDefault();
+  const settings = loadNada();
+  settings[settingKey] = bacaDurasiNada(durasiId, settings[settingKey]);
+  saveNada(settings);
+
+  const file = $(fileId).files[0];
+  if (file) {
+    const ok = await putMedia(mediaKey, file);
+    if (!ok) { alert("Gagal menyimpan audio. Pastikan penyimpanan browser tersedia."); return; }
+    $(fileId).value = "";
+    $(fileId).dispatchEvent(new Event("change"));
+  }
+  tampilkanStatus(statusId);
+}
+
+async function hapusNada(mediaKey, statusId, nama) {
+  if (!confirm(`Hapus nada ${nama} ini? Layar akan pakai beep default.`)) return;
+  await delMedia(mediaKey);
+  tampilkanStatus(statusId);
+}
+
+function tesNada(audioId, mediaKey, settingKey) {
+  const settings = loadNada();
+  mainkanNada($(audioId), { mediaKey, durasiDetik: settings[settingKey] });
 }
 
 // ---------- Tema Tampilan ----------
@@ -1111,14 +1131,18 @@ function tambahPengajian(e) {
 
 // ---------- Jum'at ----------
 function renderJumat() {
-  $("jumat-menit").value = loadJumatSettings().durasiMenit;
+  const settings = loadJumatSettings();
+  $("jumat-menit").value = settings.durasiMenit;
+  $("jumat-sholat-mode-aktif").checked = settings.sholatModeAktif;
   renderJumatSlides();
 }
 
 function simpanJumatSettingsForm(e) {
   e.preventDefault();
   const menit = parseInt($("jumat-menit").value, 10);
-  saveJumatSettings({ durasiMenit: Number.isFinite(menit) && menit > 0 ? menit : loadJumatSettings().durasiMenit });
+  const settingsSebelumnya = loadJumatSettings();
+  const durasiMenit = Number.isFinite(menit) && menit > 0 ? Math.min(menit, 240) : settingsSebelumnya.durasiMenit;
+  saveJumatSettings({ durasiMenit, sholatModeAktif: $("jumat-sholat-mode-aktif").checked });
   tampilkanStatus("status-jumat");
 }
 
@@ -1213,6 +1237,8 @@ async function hapusJumatSlide(s) {
 }
 
 // ---------- Kegiatan Terdekat: daftar gambar (bisa lebih dari satu) ----------
+let editAcaraId = null;
+
 function renderAcaraSlides() {
   const arr = loadAcaraSlides();
   const ul = $("acara-list");
@@ -1220,6 +1246,7 @@ function renderAcaraSlides() {
   if (!arr.length) { ul.innerHTML = "<li>(belum ada gambar)</li>"; return; }
   arr.forEach((s) => {
     const li = document.createElement("li");
+    li.classList.toggle("aktif-edit", s.id === editAcaraId);
     li.innerHTML = `
       <div class="admin-item-thumb"><img src="${s.urlCloud}" alt="" loading="lazy"></div>
       <div class="admin-item-info">
@@ -1227,11 +1254,14 @@ function renderAcaraSlides() {
         <p class="admin-item-meta">${s.durasiDetik} detik</p>
       </div>
       <div class="admin-item-aksi">
+        <button type="button" class="btn-inline" data-aksi="edit">Edit</button>
         <button type="button" class="btn-inline btn-bahaya" data-aksi="hapus">Hapus</button>
       </div>
     `;
+    li.querySelector('[data-aksi="edit"]').addEventListener("click", () => mulaiEditAcara(s));
     li.querySelector('[data-aksi="hapus"]').addEventListener("click", () => {
       if (!confirm("Hapus gambar ini?")) return;
+      if (editAcaraId === s.id) batalEditAcara();
       cloudDeleteMedia(s.urlCloud); // fire-and-forget, tidak nge-block hapus dari daftar
       saveAcaraSlides(loadAcaraSlides().filter((x) => x.id !== s.id));
       renderAcaraSlides();
@@ -1240,9 +1270,47 @@ function renderAcaraSlides() {
   });
 }
 
+function mulaiEditAcara(s) {
+  editAcaraId = s.id;
+  $("acara-durasi").value = s.durasiDetik;
+  $("acara-file").value = "";
+  $("tombol-tambah-acara").textContent = "Simpan Perubahan";
+  $("tombol-batal-acara").hidden = false;
+  renderAcaraSlides();
+}
+
+function batalEditAcara() {
+  editAcaraId = null;
+  $("acara-file").value = "";
+  $("acara-durasi").value = 8;
+  $("tombol-tambah-acara").textContent = "Tambah Gambar";
+  $("tombol-batal-acara").hidden = true;
+  renderAcaraSlides();
+}
+
 async function tambahAcaraSlide() {
   const durasi = parseInt($("acara-durasi").value, 10) || 8;
   const file = $("acara-file").files[0];
+  if (editAcaraId) {
+    const slides = loadAcaraSlides();
+    const lama = slides.find((s) => s.id === editAcaraId);
+    if (!lama) { batalEditAcara(); return; }
+    let baru = { ...lama, durasiDetik: durasi };
+    if (file) {
+      if (!cloudAktif()) { alert("Cloud belum dikonfigurasi - lihat js/supabase-config.js."); return; }
+      const ekstensiMatch = /\.([a-z0-9]+)$/i.exec(file.name);
+      const ext = ekstensiMatch ? ekstensiMatch[1].toLowerCase() : "jpg";
+      const nama = `acara-${lama.id}.${ext}`;
+      const urlCloud = await cloudUploadMedia(nama, file);
+      if (!urlCloud) { alert("Gagal mengunggah gambar baru."); return; }
+      if (lama.urlCloud && lama.urlCloud.split("?")[0] !== urlCloud.split("?")[0]) cloudDeleteMedia(lama.urlCloud);
+      baru = { ...baru, file: nama, urlCloud };
+    }
+    saveAcaraSlides(slides.map((s) => (s.id === editAcaraId ? baru : s)));
+    tampilkanStatus("status-acara-slide");
+    batalEditAcara();
+    return;
+  }
   if (!file) { alert("Pilih gambar dulu."); return; }
   if (!cloudAktif()) {
     alert("Cloud belum dikonfigurasi - lihat js/supabase-config.js.");
@@ -1251,10 +1319,11 @@ async function tambahAcaraSlide() {
   const id = uid();
   const ekstensiMatch = /\.([a-z0-9]+)$/i.exec(file.name);
   const ext = ekstensiMatch ? ekstensiMatch[1].toLowerCase() : "jpg";
-  const urlCloud = await cloudUploadMedia(`acara-${id}.${ext}`, file);
+  const nama = `acara-${id}.${ext}`;
+  const urlCloud = await cloudUploadMedia(nama, file);
   if (!urlCloud) { alert("Gagal upload gambar ke cloud."); return; }
 
-  saveAcaraSlides([...loadAcaraSlides(), { id, durasiDetik: durasi, urlCloud }]);
+  saveAcaraSlides([...loadAcaraSlides(), { id, file: nama, durasiDetik: durasi, urlCloud }]);
   $("acara-file").value = "";
   tampilkanStatus("status-acara-slide");
   renderAcaraSlides();
@@ -1279,6 +1348,7 @@ function renderSemuaData() {
   renderTema();
   renderAdzan();
   renderJumat();
+  renderNada();
   LAYAR_BG.forEach(renderBgLayar);
 }
 renderSemuaData();
@@ -1338,6 +1408,7 @@ $("form-jumat").addEventListener("submit", simpanJumatSettingsForm);
 $("tombol-tambah-jumat").addEventListener("click", tambahJumatSlide);
 $("tombol-tambah-acara").addEventListener("click", tambahAcaraSlide);
 $("tombol-batal-jumat").addEventListener("click", batalEditJumat);
+$("tombol-batal-acara").addEventListener("click", batalEditAcara);
 LAYAR_BG.forEach((layar) => {
   $(`tombol-simpan-bg-${layar}`).addEventListener("click", () => simpanBgLayarForm(layar));
   $(`tombol-hapus-bg-${layar}`).addEventListener("click", () => hapusBgLayarForm(layar));
@@ -1364,9 +1435,16 @@ toggleTipePengajian();
 $("form-murotal").addEventListener("submit", simpanMurotal);
 $("tombol-tambah-file").addEventListener("click", tambahFileMurotal);
 $("tombol-tambah-api").addEventListener("click", tambahApiMurotal);
-$("tombol-simpan-nada").addEventListener("click", simpanNada);
-$("tombol-hapus-nada").addEventListener("click", hapusNada);
-$("tombol-tes-nada").addEventListener("click", tesNada);
+$("form-nada-iqomah").addEventListener("submit", (e) => simpanNadaForm(e, {
+  mediaKey: "nadaIqomah", fileId: "nada-file", durasiId: "nada-iqomah-detik", settingKey: "iqomahDetik", statusId: "status-nada",
+}));
+$("form-nada-sholat-mode").addEventListener("submit", (e) => simpanNadaForm(e, {
+  mediaKey: "nadaSholatMode", fileId: "nada-sholat-mode-file", durasiId: "nada-sholat-mode-detik", settingKey: "sholatModeDetik", statusId: "status-nada-sholat-mode",
+}));
+$("tombol-hapus-nada").addEventListener("click", () => hapusNada("nadaIqomah", "status-nada", "Iqomah"));
+$("tombol-tes-nada").addEventListener("click", () => tesNada("nada-preview", "nadaIqomah", "iqomahDetik"));
+$("tombol-hapus-nada-sholat-mode").addEventListener("click", () => hapusNada("nadaSholatMode", "status-nada-sholat-mode", "Sholat Mode"));
+$("tombol-tes-nada-sholat-mode").addEventListener("click", () => tesNada("nada-sholat-mode-preview", "nadaSholatMode", "sholatModeDetik"));
 $("form-qr").addEventListener("submit", simpanQr);
 $("tombol-hapus-qr").addEventListener("click", hapusQr);
 $("pengajian-tipe").addEventListener("change", toggleTipePengajian);

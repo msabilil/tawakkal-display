@@ -66,7 +66,7 @@ import { ICONS } from "./icons.js";
 import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
 import { tickHalamanSholat, mulaiSesiSholat } from "./rotasi.js";
 import { jumatState } from "./jumat-mode.js";
-import { tampilkan } from "./navigasi.js";
+import { tampilkan, viewAktif } from "./navigasi.js";
 
 const IQOMAH_KEY = "iqomahAktif";
 const JUMAT_KEY = "jumatAktif";
@@ -79,6 +79,7 @@ let jadwal = null;         // {imsak,subuh,terbit,dzuhur,ashar,maghrib,isya} dar
 let jadwalDateKey = null;  // "YYYY-MM-DD" jadwal yang sedang dipakai
 let offline = false;
 let fetchedAt = null;
+let sedangMuatJadwal = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -174,6 +175,8 @@ function tickJamAnalog(now) {
 }
 
 async function muatJadwal(now) {
+  if (sedangMuatJadwal) return;
+  sedangMuatJadwal = true;
   try {
     const r = await getJadwal(now);
     jadwal = r.jadwal;
@@ -184,6 +187,7 @@ async function muatJadwal(now) {
     jadwal = null;
     offline = true;
   }
+  sedangMuatJadwal = false;
   renderOffline();
 }
 
@@ -223,14 +227,41 @@ function mulaiIqomah(iq) {
   const adzanDetik = loadAdzan().menit * 60;
   const adzanEndTime = new Date(iq.start.getTime() + adzanDetik * 1000).toISOString();
   const iqomahEndTime = new Date(iq.start.getTime() + (adzanDetik + iq.totalDetik) * 1000).toISOString();
-  localStorage.setItem(IQOMAH_KEY, JSON.stringify({ key: iq.key, label: iq.label, adzanEndTime, iqomahEndTime }));
+  localStorage.setItem(IQOMAH_KEY, JSON.stringify({
+    key: iq.key,
+    label: iq.label,
+    adzanEndTime,
+    iqomahEndTime,
+    // Bila durasi Adzan nol, langsung bunyikan nada saat Iqomah dimulai.
+    putarNadaSaatMulai: adzanDetik === 0,
+    nadaDimainkan: false,
+  }));
   tampilkan("iqomah");
 }
 
 function mulaiJumat(jum) {
   stopMurotal();
-  localStorage.setItem(JUMAT_KEY, JSON.stringify({ endTime: jum.endTime }));
+  localStorage.setItem(JUMAT_KEY, JSON.stringify(jum));
   tampilkan("jumat");
+}
+
+function mulaiAdzanJumat(jum) {
+  stopMurotal();
+  const now = Date.now();
+  if (harusResumeIqomah(bacaIqomahState(), "jumat", now)) {
+    tampilkan("iqomah");
+    return;
+  }
+  // Jumat tetap memakai layar Adzan Dzuhur. Fase iqomah sengaja tidak dibuat
+  // karena sesudah adzan alurnya pindah ke nada lalu slide khutbah.
+  localStorage.setItem(IQOMAH_KEY, JSON.stringify({
+    key: "jumat",
+    label: "Dzuhur",
+    adzanEndTime: jum.adzanEndTime,
+    iqomahEndTime: jum.adzanEndTime,
+    nadaDimainkan: false,
+  }));
+  tampilkan("iqomah");
 }
 
 function mulaiTarawih(tw) {
@@ -246,9 +277,12 @@ function tick() {
 
   if (!jadwal) return; // belum ada data
 
+  const view = viewAktif();
   const jum = jumatState(now, jadwal);
   if (jum) {
-    mulaiJumat(jum);
+    if (jum.fase === "adzan" && view !== "iqomah") mulaiAdzanJumat(jum);
+    else if (jum.fase === "hening" && view !== "hening") mulaiHening(jum.endTime, { putarNada: false });
+    else if (jum.fase === "slide" && view !== "jumat") mulaiJumat(jum);
     return;
   }
 
@@ -256,35 +290,47 @@ function tick() {
   const adzanMenit = loadAdzan().menit;
   const iq = iqomahState(now, jadwal, iqSettings, adzanMenit);
   if (iq) {
-    mulaiIqomah(iq);
+    if (view !== "iqomah") mulaiIqomah(iq);
     return;
   }
 
   const tw = tarawihState(now, jadwal, iqSettings, adzanMenit);
   if (tw) {
-    mulaiTarawih(tw);
+    if (view !== "hening") mulaiTarawih(tw);
     return;
   }
 
   const hening = heningState(now, jadwal, iqSettings, loadHening(), adzanMenit);
   if (hening) {
-    mulaiHening(hening.endTime);
+    if (view !== "hening") mulaiHening(hening.endTime);
     return;
   }
+
+  // Murotal perlu dipantau walau layar sekunder sedang tampil. Kalau tidak,
+  // audio baru mulai saat rotasi selesai dan terasa terlambat.
+  tickMurotal(now, jadwal, modeDemo);
+  if (view !== "sholat") return;
 
   const next = nextSholat(now, jadwal);
   renderGrid(next);
   $("next-nama").textContent = next.label;
   $("countdown-waktu").textContent = fmtDurasi(Math.max(0, Math.ceil((next.time - now) / 1000)));
 
-  // Ditaruh terakhir dengan sengaja: kalau salah satu ini throw (mis. data
-  // hasil edit manual di localStorage rusak), grid/countdown di atas sudah
-  // sempat ter-update untuk tick ini - display utama tidak ikut macet.
-  tickMurotal(now, jadwal, modeDemo);
   tickHalamanSholat(now);
 }
 
 let intervalId = null;
+
+function mulaiPemantauWaktu() {
+  if (intervalId) return;
+  intervalId = setInterval(() => {
+    const now = new Date();
+    // Jadwal tetap dimuat ulang ketika hari berganti, sekalipun layar saat itu
+    // sedang menampilkan QR, kegiatan, atau poster.
+    if (jadwalDateKey && dateKey(now) !== jadwalDateKey) muatJadwal(now);
+    tick();
+  }, 1000);
+}
 
 // Dipanggil sekali dari kiosk.js sebelum view manapun jalan - bagian yang
 // pasang event listener atau bangun DOM sekali jadi (bukan per-kunjungan),
@@ -310,18 +356,8 @@ export function start() {
   // pertama) - jangan fetch API lagi tiap kali masuk view ini.
   if (jadwal && jadwalDateKey === dateKey(now)) tick();
   else muatJadwal(now).then(tick);
-  intervalId = setInterval(() => {
-    const now = new Date();
-    // Ganti hari: fetch jadwal baru (dipicu setelah lewat tengah malam)
-    if (jadwalDateKey && dateKey(now) !== jadwalDateKey) {
-      muatJadwal(now);
-    }
-    tick();
-  }, 1000);
-  return stop;
-}
-
-function stop() {
-  if (intervalId) clearInterval(intervalId);
-  intervalId = null;
+  mulaiPemantauWaktu();
+  // Pemantau waktu sengaja tidak dihentikan saat router berpindah layar;
+  // ia memastikan Adzan/iqomah memotong layar rotasi tepat pada waktunya.
+  return () => {};
 }

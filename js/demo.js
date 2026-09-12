@@ -16,7 +16,6 @@ import { slideAktif } from "./demo-slide.js";
 setupFullscreen();
 
 const URUTAN = slideAktif();
-const DURASI_MS = 10000;
 
 const $ = (id) => document.getElementById(id);
 const frame = $("demo-frame");
@@ -37,7 +36,10 @@ function render() {
 
 function jadwalkanBerikutnya() {
   clearTimeout(timer);
-  if (main) timer = setTimeout(() => geser(1), DURASI_MS);
+  if (!main) return;
+  const slide = URUTAN[idx];
+  const durasi = typeof slide.durasi === "function" ? slide.durasi() : 10000;
+  timer = setTimeout(() => geser(1), Math.max(1000, Number(durasi) || 10000));
 }
 
 function geser(arah) {
