@@ -1386,16 +1386,17 @@ $("form-tema-tampilan").addEventListener("submit", (e) => {
   if (dipilih) simpanTemaTampilan(dipilih.value);
   tampilkanStatus("status-tema-tampilan");
 });
-// Stepper +/- generik - dipakai semua panel (termasuk baris dinamis Iqomah,
-// asal dirender sebelum baris ini jalan).
-document.querySelectorAll(".stepper-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const input = $(btn.dataset.target);
-    const step = parseInt(input.step, 10) || 1;
-    input.value = (parseInt(input.value, 10) || 0) + step * Number(btn.dataset.arah);
-    clampBarisInput(input);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
+// Stepper +/- generik. Delegasi click menjaga tombol tetap berfungsi setelah
+// renderSemuaData() mengganti baris dinamis saat sinkronisasi cloud selesai.
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest?.(".stepper-btn");
+  if (!btn) return;
+  const input = $(btn.dataset.target);
+  if (!input) return;
+  const step = parseInt(input.step, 10) || 1;
+  input.value = (parseInt(input.value, 10) || 0) + step * Number(btn.dataset.arah);
+  clampBarisInput(input);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
 });
 document.querySelectorAll('.stepper input[type="number"]').forEach((input) => {
   input.addEventListener("change", () => clampBarisInput(input));
