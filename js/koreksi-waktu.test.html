@@ -3,7 +3,7 @@
 <title>Test koreksi waktu</title>
 <pre id="out"></pre>
 <script type="module">
-import { applyKoreksiWaktu, parseHM } from "./waktu.js";
+import { applyKoreksiWaktu, ringkasKoreksiWaktu, parseHM } from "./waktu.js";
 import { dateKey, getJadwal } from "./api.js";
 import { loadKoreksiWaktu, saveKoreksiWaktu, resetKoreksiWaktu } from "./settings.js";
 import { tulisKeLocal } from "./cloud-sync.js";
@@ -35,6 +35,15 @@ eq("koreksi hanya mengubah lima waktu sholat", applyKoreksiWaktu(jadwal, {
   dzuhur: "11:51", ashar: "15:39", maghrib: "17:26", isya: "19:01",
 });
 eq("koreksi tidak mengubah jadwal mentah", jadwal.subuh, "04:34");
+eq("ringkasan menampilkan waktu asli dan waktu berlaku", ringkasKoreksiWaktu(jadwal, {
+  subuh: 5, dzuhur: -2, ashar: 0, maghrib: 1, isya: 0,
+}), {
+  subuh: { asli: "04:34", berlaku: "04:39" },
+  dzuhur: { asli: "11:52", berlaku: "11:50" },
+  ashar: { asli: "15:09", berlaku: "15:09" },
+  maghrib: { asli: "17:56", berlaku: "17:57" },
+  isya: { asli: "19:01", berlaku: "19:01" },
+});
 
 const hasilSimpan = await saveKoreksiWaktu({ subuh: 30, dzuhur: -30, ashar: 2.5, maghrib: "3", isya: null }, tanpaCloud);
 eq("simpan mempertahankan batas dan fallback invalid", loadKoreksiWaktu(), {

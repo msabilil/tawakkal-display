@@ -11,8 +11,8 @@ import { putMedia, delMedia, getMedia } from "./media-db.js";
 import { mainkanNada } from "./nada.js";
 import { TEMA_TAMPILAN } from "./tema/tampilan/registry.js";
 import { simpanBgLayar, hapusBgLayar, urlBgLayar } from "./bg-layar.js";
-import { readCache, dateKey } from "./api.js";
-import { parseHM } from "./waktu.js";
+import { readCache, dateKey, getJadwal } from "./api.js";
+import { parseHM, ringkasKoreksiWaktu } from "./waktu.js";
 import { cloudAktif, cloudSet, cloudUploadMedia, cloudGetAll, cloudDeleteMedia } from "./cloud.js";
 import { sesiAktif, login, logout } from "./cloud-auth.js";
 import { tulisKeLocal } from "./cloud-sync.js";
@@ -20,6 +20,34 @@ import { tulisKeLocal } from "./cloud-sync.js";
 const $ = (id) => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const fmtJam = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+let jadwalKoreksiHariIni = null;
+let sumberJadwalKoreksi = "";
+
+function teksJam(jam) {
+  return jam ? `${String(jam).slice(0, 5)} WIB` : "--:-- WIB";
+}
+
+function bacaKoreksiForm() {
+  const settings = {};
+  for (const { key } of SHOLAT) settings[key] = Number($(`koreksi-${key}`)?.value);
+  return settings;
+}
+
+function renderRingkasanKoreksi() {
+  const status = $("status-jadwal-koreksi");
+  if (!jadwalKoreksiHariIni) {
+    status.textContent = "Jadwal sholat hari ini belum tersedia. Koreksi tetap dapat disimpan dan akan berlaku saat jadwal tersedia.";
+    return;
+  }
+  status.textContent = `Jadwal hari ini (${sumberJadwalKoreksi}): ${SHOLAT.map(({ key, label }) => `${label} ${teksJam(jadwalKoreksiHariIni[key])}`).join(" · ")}`;
+  const ringkasan = ringkasKoreksiWaktu(jadwalKoreksiHariIni, bacaKoreksiForm());
+  for (const { key } of SHOLAT) {
+    const preview = $(`preview-koreksi-${key}`);
+    if (!preview) continue;
+    const waktu = ringkasan[key];
+    preview.textContent = `Jadwal ${teksJam(waktu.asli)} · Berlaku ${teksJam(waktu.berlaku)}`;
+  }
+}
 
 // Pemilih berkas custom (ganti "Choose File" bawaan) - input file asli tetap
 // jadi elemen fungsional (disembunyikan visual lewat CSS .file-picker-input),
@@ -271,6 +299,7 @@ function renderKoreksiWaktu() {
       <div class="baris-kaya-teks">
         <label class="label-sholat" for="koreksi-${key}">${label}</label>
         <p class="hint-baris">Positif menambah menit, negatif mengurangi menit.</p>
+        <p class="hint-baris hint-koreksi-preview" id="preview-koreksi-${key}"></p>
       </div>
       <div class="baris-kaya-kontrol">
         <input type="number" min="-30" max="30" step="1" id="koreksi-${key}" value="${settings[key]}" inputmode="numeric" aria-label="Koreksi waktu ${label}">
@@ -279,6 +308,7 @@ function renderKoreksiWaktu() {
     `;
     wrap.appendChild(row);
   }
+  renderRingkasanKoreksi();
 }
 
 async function simpanKoreksiWaktu(e) {
@@ -304,6 +334,24 @@ async function resetKoreksiWaktuForm() {
     gagalCloud ? "Reset tersimpan di kiosk. Gagal sinkronisasi ke cloud." : "Reset tersimpan.",
     gagalCloud,
   );
+}
+
+async function muatJadwalKoreksiHariIni() {
+  const sekarang = new Date();
+  const cache = readCache();
+  if (cache && cache.dateKey === dateKey(sekarang) && cache.jadwal) {
+    jadwalKoreksiHariIni = cache.jadwal;
+    sumberJadwalKoreksi = "cache lokal";
+    renderRingkasanKoreksi();
+  }
+  try {
+    const hasil = await getJadwal(sekarang);
+    jadwalKoreksiHariIni = hasil.jadwal;
+    sumberJadwalKoreksi = hasil.fromCache ? "cache lokal/offline" : "API";
+  } catch {
+    sumberJadwalKoreksi = "belum tersedia";
+  }
+  renderRingkasanKoreksi();
 }
 
 function simpanPengumumanDariForm() {
@@ -1402,6 +1450,7 @@ function renderSemuaData() {
   LAYAR_BG.forEach(renderBgLayar);
 }
 renderSemuaData();
+muatJadwalKoreksiHariIni();
 
 async function tarikUlangDariCloud() {
   if (!cloudAktif()) return;
@@ -1413,6 +1462,7 @@ tarikUlangDariCloud();
 
 $("form-iqomah").addEventListener("submit", simpanIqomah);
 $("form-koreksi-waktu").addEventListener("submit", simpanKoreksiWaktu);
+$("form-koreksi-waktu").addEventListener("input", renderRingkasanKoreksi);
 $("tombol-reset-koreksi-waktu").addEventListener("click", resetKoreksiWaktuForm);
 $("form-hening").addEventListener("submit", simpanHening);
 $("form-tarawih").addEventListener("submit", simpanTarawih);

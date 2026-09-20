@@ -76,3 +76,13 @@ export function applyKoreksiWaktu(jadwal, koreksi = {}) {
   }
   return hasil;
 }
+
+// Ringkasan publik untuk admin/klien: jadwal mentah yang berlaku hari ini
+// dibandingkan dengan waktu setelah koreksi, tanpa mengubah objek sumber.
+export function ringkasKoreksiWaktu(jadwal, koreksi = {}) {
+  const berlaku = applyKoreksiWaktu(jadwal, koreksi);
+  return Object.fromEntries(KEYS_KOREKSI.map((key) => [key, {
+    asli: jadwal[key],
+    berlaku: berlaku[key],
+  }]));
+}

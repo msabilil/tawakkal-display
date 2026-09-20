@@ -862,6 +862,7 @@ body.admin {
 }
 .status.tampil { opacity: 1; transform: translateY(0); }
 .status.status-warn { color: #b45309; }
+.hint-koreksi-preview { margin-top: 4px; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   .status { transition: opacity 150ms ease; transform: none; }
 }
