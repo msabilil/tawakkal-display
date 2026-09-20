@@ -6,6 +6,8 @@
 import { applyKoreksiWaktu, parseHM } from "./waktu.js";
 import { dateKey, getJadwal } from "./api.js";
 import { loadKoreksiWaktu, saveKoreksiWaktu, resetKoreksiWaktu } from "./settings.js";
+import { tulisKeLocal } from "./cloud-sync.js";
+import { cloudSetDenganClient } from "./cloud.js";
 
 const out = [];
 let pass = 0, fail = 0;
@@ -33,12 +35,35 @@ eq("koreksi hanya mengubah lima waktu sholat", applyKoreksiWaktu(jadwal, {
 });
 eq("koreksi tidak mengubah jadwal mentah", jadwal.subuh, "04:34");
 
-saveKoreksiWaktu({ subuh: 30, dzuhur: -30, ashar: 2.5, maghrib: "3", isya: null });
+const hasilSimpan = await saveKoreksiWaktu({ subuh: 30, dzuhur: -30, ashar: 2.5, maghrib: "3", isya: null });
 eq("simpan mempertahankan batas dan fallback invalid", loadKoreksiWaktu(), {
   subuh: 30, dzuhur: -30, ashar: 0, maghrib: 0, isya: 0,
 });
+eq("simpan tetap lokal saat cloud nonaktif", hasilSimpan.cloud.active, false);
 
-resetKoreksiWaktu();
+tulisKeLocal([{ key: "koreksiWaktuSettings", value: {
+  subuh: 7, dzuhur: -2, ashar: 1, maghrib: 0, isya: 3,
+} }]);
+eq("nilai cloud yang ditarik menjadi sumber utama", loadKoreksiWaktu(), {
+  subuh: 7, dzuhur: -2, ashar: 1, maghrib: 0, isya: 3,
+});
+
+const hasilGagal = await saveKoreksiWaktu({ subuh: 9 }, async () => ({
+  ok: false, active: true, error: "offline",
+}));
+eq("gagal cloud tidak menghapus nilai lokal", loadKoreksiWaktu().subuh, 9);
+eq("gagal cloud dilaporkan ke admin", hasilGagal.cloud, {
+  ok: false, active: true, error: "offline",
+});
+
+const clientPalsu = { from: () => ({ upsert: async () => ({ error: null }) }) };
+eq("cloud client sukses dilaporkan", await cloudSetDenganClient("koreksiWaktuSettings", {}, clientPalsu), {
+  ok: true, active: true,
+});
+const clientGagal = { from: () => ({ upsert: async () => ({ error: "permission denied" }) }) };
+eq("cloud client gagal dilaporkan", (await cloudSetDenganClient("koreksiWaktuSettings", {}, clientGagal)).ok, false);
+
+await resetKoreksiWaktu();
 eq("reset mengembalikan semua ke nol", loadKoreksiWaktu(), {
   subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0,
 });

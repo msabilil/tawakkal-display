@@ -281,19 +281,29 @@ function renderKoreksiWaktu() {
   }
 }
 
-function simpanKoreksiWaktu(e) {
+async function simpanKoreksiWaktu(e) {
   e.preventDefault();
   const settings = {};
   for (const { key } of SHOLAT) settings[key] = Number($(`koreksi-${key}`).value);
-  saveKoreksiWaktu(settings);
+  const hasil = await saveKoreksiWaktu(settings);
   renderKoreksiWaktu();
-  tampilkanStatus("status-koreksi-waktu");
+  const gagalCloud = hasil.cloud && hasil.cloud.active && !hasil.cloud.ok;
+  tampilkanStatus(
+    "status-koreksi-waktu",
+    gagalCloud ? "Tersimpan di kiosk. Gagal sinkronisasi ke cloud." : "Tersimpan.",
+    gagalCloud,
+  );
 }
 
-function resetKoreksiWaktuForm() {
-  resetKoreksiWaktu();
+async function resetKoreksiWaktuForm() {
+  const hasil = await resetKoreksiWaktu();
   renderKoreksiWaktu();
-  tampilkanStatus("status-koreksi-waktu");
+  const gagalCloud = hasil.cloud && hasil.cloud.active && !hasil.cloud.ok;
+  tampilkanStatus(
+    "status-koreksi-waktu",
+    gagalCloud ? "Reset tersimpan di kiosk. Gagal sinkronisasi ke cloud." : "Reset tersimpan.",
+    gagalCloud,
+  );
 }
 
 function simpanPengumumanDariForm() {
@@ -396,8 +406,10 @@ function simpanRotasi(e) {
   tampilkanStatus("status-rotasi");
 }
 
-function tampilkanStatus(id) {
+function tampilkanStatus(id, teks, peringatan = false) {
   const el = $(id);
+  if (teks) el.textContent = teks;
+  el.classList.toggle("status-warn", peringatan);
   clearTimeout(el._timerStatus);
   el.hidden = false;
   requestAnimationFrame(() => el.classList.add("tampil"));

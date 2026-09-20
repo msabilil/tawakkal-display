@@ -42,13 +42,17 @@ export async function cloudGetAll() {
   return data;
 }
 
-// Fire-and-forget dengan sengaja - pemanggil (saveX() di admin.js) tidak
-// boleh nunggu network, biar UI admin tetap instan seperti sekarang.
+export async function cloudSetDenganClient(key, value, c) {
+  if (!c) return { ok: false, active: true, error: "Supabase client tidak tersedia" };
+  const { error } = await c.from("settings").upsert({ key, value, updated_at: new Date().toISOString() });
+  return error ? { ok: false, active: true, error } : { ok: true, active: true };
+}
+
 export function cloudSet(key, value) {
-  if (!cloudAktif()) return;
-  getSupabaseClient()
-    .then((c) => c && c.from("settings").upsert({ key, value, updated_at: new Date().toISOString() }))
-    .catch(() => {}); // gagal diam-diam, lihat spec bagian Error Handling
+  if (!cloudAktif()) return Promise.resolve({ ok: true, active: false });
+  return getSupabaseClient()
+    .then((c) => cloudSetDenganClient(key, value, c))
+    .catch((error) => ({ ok: false, active: true, error }));
 }
 
 export async function cloudUploadMedia(path, file) {

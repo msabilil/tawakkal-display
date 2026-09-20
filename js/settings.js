@@ -29,13 +29,15 @@ export function loadKoreksiWaktu() {
   return normalisasiKoreksi(bacaObject(KEY_KOREKSI_WAKTU));
 }
 
-export function saveKoreksiWaktu(settings) {
+export async function saveKoreksiWaktu(settings, sinkronkan = cloudSet) {
   const normalized = normalisasiKoreksi(settings || {});
   localStorage.setItem(KEY_KOREKSI_WAKTU, JSON.stringify(normalized));
+  const cloud = await sinkronkan(KEY_KOREKSI_WAKTU, normalized);
+  return { settings: normalized, cloud };
 }
 
-export function resetKoreksiWaktu() {
-  saveKoreksiWaktu(DEFAULT_KOREKSI_WAKTU);
+export async function resetKoreksiWaktu() {
+  return saveKoreksiWaktu(DEFAULT_KOREKSI_WAKTU);
 }
 
 export function loadIqomah() {
