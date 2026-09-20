@@ -699,9 +699,9 @@ init();
 
 Jalankan `python -m http.server 8000` di root, buka `http://localhost:8000/index.html`. Expected: nama masjid, jam berjalan, tanggal Masehi+Hijriah, grid 5 sholat dengan jadwal Bandung, sholat berikutnya ter-highlight, countdown jalan mundur. Buka DevTools → Network → offline → reload: data tetap tampil dari cache + indikator offline muncul.
 
-- [ ] **Step 3: Verifikasi mode iqomah (opsional, via console)**
+- [ ] **Step 3: Verifikasi mode iqomah (opsional)**
 
-Di console, sementara override untuk cek transisi: ubah salah satu jadwal ke waktu ~1 menit dari sekarang lewat DevTools tidak mudah; alternatif: percayai test Task 4 untuk logika, dan cek visual mode iqomah dengan set `document.getElementById('mode-normal').hidden=true; document.getElementById('mode-iqomah').hidden=false;` untuk memastikan layout iqomah benar. Kembalikan setelahnya.
+Gunakan `js/app.test.html` untuk logika transisi dan buka preview iqomah dari `demo.html` untuk cek visual. Jangan mengubah jadwal runtime lewat DevTools.
 
 Expected: layout mode iqomah (teks besar + countdown) tampil rapi.
 

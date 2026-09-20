@@ -82,7 +82,7 @@ Tombol "Simpan" — tulis ke `localStorage` key `iqomahSettings`. Tombol "Kembal
 
 Manual di Chrome (tanpa test framework — proyek statis kecil):
 - Cek jam & tanggal berjalan akurat.
-- Cek highlight sholat berikutnya benar sepanjang hari (test dengan override waktu via DevTools/console kalau perlu).
+- Cek highlight sholat berikutnya benar sepanjang hari lewat `js/app.test.html` dan `js/koreksi-waktu.test.html`; tidak ada helper override waktu khusus.
 - Cek transisi masuk/keluar mode iqomah pas jam sholat tercapai.
 - Cek fallback offline: matikan network di DevTools, reload, pastikan cache lama tetap tampil + indikator muncul.
 - Cek admin: ubah durasi, checkbox nonaktif, balik ke index.html, pastikan reflect.
@@ -254,9 +254,9 @@ Default `murotal.aktif = false` — fitur audio tidak main sampai pengurus senga
 - QR dataURL rusak → `<img>` `onerror` sembunyikan kartu QR dari rotasi.
 - Semua fitur baru "additive": kalau storage kosong/gagal, layar utama existing tetap jalan normal (jam, jadwal, iqomah).
 
-## Testing (tambahan, manual + reuse `js/testing.js` override waktu)
+## Testing (tambahan, manual + halaman test)
 
-- **Murotal jendela**: set override waktu ke `jamSubuh - 10 menit` → murotal mulai; ke `jamSubuh - 2 menit` (berhentiMenit=3) → murotal stop; masuk iqomah → posisi tersimpan, tak error.
+- **Murotal jendela**: uji perhitungan jendela di `js/murotal.test.html`; verifikasi pemutaran aktual dengan jadwal kiosk saat ini dan pastikan masuk iqomah menyimpan posisi tanpa error.
 - **Lanjut posisi**: main sebentar, reload/stop, cek `murotalSettings.posisi` terupdate, sesi berikut lanjut track & detik yang sama.
 - **Playlist campur**: 1 track offline + 1 API, cek `ended` pindah track, wrap ke awal.
 - **Track API gagal**: matikan network → track API di-skip, offline tetap main.

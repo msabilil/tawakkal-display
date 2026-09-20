@@ -54,7 +54,7 @@ Pemisahan tanggung jawab: tiap fitur satu modul yang memegang logika + view-nya 
 
 Sama dengan proyek existing: tanpa test framework. Fungsi pure diuji lewat halaman `*.test.html` yang meng-import fungsi, menjalankan assertion `eq(name, got, want)`, menampilkan `PASS/FAIL` di `<pre>` + console. Jalankan lewat server lokal (`python -m http.server 8000`) lalu buka `http://localhost:8000/js/<nama>.test.html`. Untuk IndexedDB, test memakai assertion async.
 
-Bagian impure (kontrol `<audio>`, IndexedDB streaming, rendering DOM, timer rotasi) diverifikasi manual di Chrome memakai override waktu yang sudah ada di `js/testing.js`.
+Bagian impure (kontrol `<audio>`, IndexedDB streaming, rendering DOM, timer rotasi) diverifikasi manual di Chrome memakai preview dan konfigurasi admin yang tersedia.
 
 Helper assertion standar yang dipakai di semua `*.test.html`:
 
@@ -1002,7 +1002,7 @@ setInterval(tick, 1000);
 
 - [ ] **Step 4: Verifikasi manual**
 
-Buka `http://localhost:8000/iqomah.html` langsung. Karena tanpa state `iqomahAktif` halaman akan redirect ke index; untuk mengetes nada, pakai override di admin (Task 8/9) atau sementara set `localStorage.setItem("iqomahAktif", JSON.stringify({label:"Dzuhur", endTime:new Date(Date.now()+60000).toISOString()}))` di console lalu buka `iqomah.html`.
+Buka preview iqomah dari `demo.html`; preview membuat state countdown sendiri sehingga tidak perlu mengubah `localStorage` lewat console.
 Expected: terdengar 3 beep pendek saat halaman load; countdown iqomah tampil.
 
 - [ ] **Step 5: Commit**
@@ -1125,9 +1125,9 @@ Di fungsi `init()`, setelah `setupTombolVersi();` (baris ~217), inisialisasi mur
 
 Jalankan server lokal, buka `http://localhost:8000/index.html` di Chrome. Untuk mengetes murotal tanpa menunggu waktu asli:
 1. Buka `admin.html` (setelah Task 9) → tambah 1 track API ke playlist, aktifkan murotal.
-2. Buka `admin.html` → bagian Pengujian → set override jam salah satu sholat ke ~10 menit dari sekarang, aktifkan override.
+2. Buka `admin.html` → bagian Koreksi Waktu Sholat → masukkan koreksi yang diperlukan, lalu simpan.
 3. Balik ke `index.html`. Saat masuk jendela `[sholat-15mnt, sholat-3mnt)`, indikator "Murotal" muncul & audio main.
-4. Set override ke ~2 menit dari sekarang → murotal berhenti (masuk jeda hening); saat jam sholat tercapai → pindah ke `iqomah.html` (murotal sudah stop, posisi tersimpan di `murotalSettings.posisi`).
+4. Amati jendela murotal pada jadwal yang berlaku; saat jam sholat tercapai, murotal berhenti dan posisi tersimpan di `murotalSettings.posisi`.
 
 Untuk rotasi: tambah entri jadwal pengajian & upload QR (Task 9), lalu cek slot bergilir sesuai durasi.
 Expected: indikator murotal muncul/hilang sesuai jendela; slot rotasi bergilir; tak ada error console.

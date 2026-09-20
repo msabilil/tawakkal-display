@@ -11,7 +11,7 @@ Aplikasi web statis untuk layar monitor di masjid At-Tawakkal 2. Menampilkan jam
 - **jumat** - otomatis tampil di jam Dzuhur hari Jumat (kalau ada slide diatur), gambar/video bergilir, lalu balik sendiri ke view sholat.
 - **qr**, **kegiatan** - layar sekunder yang gantian otomatis di antara jadwal sholat.
 
-`admin.html` - pengaturan semua view di atas (durasi, latar belakang, override testing, dll). `demo.html` - preview semua view berurutan lewat iframe, dipakai buat nunjukin ke pengurus tanpa buka admin.
+`admin.html` - pengaturan semua view di atas (durasi, latar belakang, koreksi waktu, dll). `demo.html` - preview semua view berurutan lewat iframe, dipakai buat nunjukin ke pengurus tanpa buka admin.
 
 ## Menjalankan
 
@@ -74,12 +74,13 @@ dikonfigurasi (`js/supabase-config.js` terisi) sebelum bisa upload apa pun.
 - QR donasi: unggah gambar QR, tampil bergilir di layar, + latar belakang.
 - Jadwal pengajian: kegiatan mingguan atau tanggal khusus, tampil bergilir di layar.
 - Jum'at: durasi total mode + daftar slide gambar/video yang tampil di jam Dzuhur hari Jumat.
+- Koreksi waktu sholat: tambah/kurangi Subuh, Dzuhur, Ashar, Maghrib, dan Isya sebesar -30 sampai +30 menit. Imsak dan Terbit tidak diubah. Nilai disimpan lokal dan, jika Supabase aktif, dibagikan ke kiosk lain; saat offline kiosk memakai nilai lokal.
 
 ## Pengaturan
 
 - **Nama masjid:** edit `NAMA_MASJID` di `js/config.js`.
 - **Durasi iqomah:** klik ikon setting di kanan atas layar utama, atau buka `admin.html`.
-- **Testing (uji coba halaman iqomah):** di `admin.html` bagian "Pengujian", isi jam salah satu waktu sholat (misal Dzuhur, 1-2 menit dari sekarang) lalu centang "Aktifkan override" dan Simpan. Balik ke layar utama, tunggu, halaman iqomah otomatis muncul. Field yang dikosongkan tetap pakai jadwal asli. Klik "Reset ke Jadwal Asli" untuk mematikan override.
+- **Koreksi waktu:** di `admin.html` bagian "Jadwal Sholat", masukkan angka menit positif untuk menambah waktu (lebih lambat) atau negatif untuk mengurangi waktu (lebih awal), lalu simpan. Rentangnya -30 sampai +30; tombol reset mengembalikan semua ke 0. Jika cloud gagal, nilai lokal tetap dipakai dan status admin menampilkan peringatan.
 
 ## Catatan
 
@@ -90,4 +91,4 @@ dikonfigurasi (`js/supabase-config.js` terisi) sebelum bisa upload apa pun.
 
 ## Menjalankan test logika
 
-Fungsi murni (hitung sholat berikutnya, state iqomah) diuji lewat `js/app.test.html` - buka file itu di Chrome, hasil PASS/FAIL tampil di layar dan console. Test serupa juga ada untuk fitur lain: `js/media-db.test.html`, `js/jadwal-pengajian.test.html`, `js/rotasi.test.html`, `js/murotal.test.html`, `js/jumat-mode.test.html`, `js/demo-slide.test.html`, `js/acara-mode.test.html` - dibuka dengan cara yang sama (lewat server lokal, sama seperti `app.test.html`).
+Fungsi murni (hitung sholat berikutnya, state iqomah, dan koreksi jadwal) diuji lewat `js/app.test.html`, `js/koreksi-waktu.test.html`, dan `js/jadwal-terkoreksi.test.html` - buka file itu di Chrome, hasil PASS/FAIL tampil di layar dan console. Test serupa juga ada untuk fitur lain: `js/media-db.test.html`, `js/jadwal-pengajian.test.html`, `js/rotasi.test.html`, `js/murotal.test.html`, `js/jumat-mode.test.html`, `js/demo-slide.test.html`, `js/acara-mode.test.html` - dibuka dengan cara yang sama (lewat server lokal, sama seperti `app.test.html`).
