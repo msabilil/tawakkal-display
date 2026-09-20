@@ -4,6 +4,7 @@ import { loadAcara, acaraAktif, loadAcaraSlides } from "./acara-mode.js";
 import { readCache } from "./api.js";
 import { tampilkan } from "./navigasi.js";
 import { cloudSet } from "./cloud.js";
+import { jadwalTerkoreksi } from "./jadwal-terkoreksi.js";
 
 const KEY_ROTASI = "rotasiSettings";
 const KEY_QR = "qrDonasi";
@@ -47,7 +48,7 @@ export function kartuTersedia(now) {
   const kartu = [];
   if (loadQr()) kartu.push("qr");
   const cache = readCache();
-  if (cache && cache.jadwal && loadAcaraSlides().length && acaraAktif(now, cache.jadwal, loadAcara())) kartu.push("acara");
+  if (cache && cache.jadwal && loadAcaraSlides().length && acaraAktif(now, jadwalTerkoreksi(cache.jadwal), loadAcara())) kartu.push("acara");
   if (entriAktif(now, loadJadwalPengajian()).length) kartu.push("kegiatan");
   return kartu;
 }

@@ -3,7 +3,9 @@
 <title>Test rotasi.js</title>
 <pre id="out"></pre>
 <script type="module">
-import { rotasiMaju } from "./rotasi.js";
+import { rotasiMaju, kartuTersedia } from "./rotasi.js";
+import { saveAcara, saveAcaraSlides } from "./acara-mode.js";
+import { saveKoreksiWaktu } from "./settings.js";
 
 const out = [];
 let pass = 0, fail = 0;
@@ -15,6 +17,19 @@ function eq(name, got, want) {
 
 const durasi = { jadwal: 20, qr: 15 };
 const kartu = ["jadwal", "qr"];
+const tanpaCloud = async () => ({ ok: true, active: false });
+
+localStorage.setItem("jadwalCache", JSON.stringify({ jadwal: {
+  subuh: "04:00", dzuhur: "12:00", ashar: "15:00", maghrib: "18:00", isya: "19:00",
+} }));
+saveAcara({ mode: "waktu", sebelum: { aktif: true, mulaiMenit: 30, selesaiMenit: 5 }, sesudah: { aktif: false, mulaiMenit: 5, selesaiMenit: 30 } });
+saveAcaraSlides([{ id: "a", urlCloud: "a.jpg", durasiDetik: 1 }]);
+await saveKoreksiWaktu({ dzuhur: -10 }, tanpaCloud);
+eq("kegiatan terdekat memakai waktu terkoreksi", kartuTersedia(new Date(2026, 8, 3, 11, 30, 0)).includes("acara"), true);
+localStorage.removeItem("jadwalCache");
+localStorage.removeItem("acaraSettings");
+localStorage.removeItem("acaraSlides");
+await saveKoreksiWaktu({}, tanpaCloud);
 
 // state awal null -> mulai di idx 0, gantiPada = 1000 + 20*1000
 let s = rotasiMaju(null, 1000, kartu, durasi);

@@ -15,6 +15,7 @@ function eq(name, got, want) {
 }
 
 const jadwal = { subuh:"04:34", dzuhur:"11:52", ashar:"15:09", maghrib:"17:56", isya:"19:01" };
+const jadwalTerkoreksi = { ...jadwal, dzuhur: "12:02" };
 const iq = { subuh:{menit:10,aktif:true}, dzuhur:{menit:10,aktif:true}, ashar:{menit:10,aktif:true}, maghrib:{menit:5,aktif:true}, isya:{menit:10,aktif:true} };
 
 // parseHM: gunakan Kamis 2026-09-03 (bukan Jumat) untuk uji dzuhur
@@ -35,6 +36,7 @@ const t3 = new Date(2026, 8, 3, 11, 55, 0);
 const s3 = iqomahState(t3, jadwal, iq, 5);
 eq("iqomah aktif key", s3 && s3.key, "dzuhur");
 eq("iqomah total detik", s3 && s3.totalDetik, 10*60); // fase iqomah = 10 menit penuh
+eq("iqomah mengikuti waktu dzuhur terkoreksi", iqomahState(new Date(2026,8,3,12,05,0), jadwalTerkoreksi, iq, 5)?.key, "dzuhur");
 // start = jam azan ASLI dari jadwal (bukan `now`) - mulaiIqomah() di app.js
 // pakai ini buat hitung adzanEndTime/iqomahEndTime supaya tetap anchor ke
 // jam azan sebenarnya walau mulaiIqomah() kepanggil telat (mis. ganti
@@ -65,6 +67,7 @@ const hening = { subuh:{menit:10,aktif:true}, dzuhur:{menit:10,aktif:true}, asha
 eq("hening belum masuk (masih iqomah)", heningState(t3, jadwal, iq, hening, 5), null);
 const h1 = heningState(new Date(2026,8,3,12,10,0), jadwal, iq, hening, 5);
 eq("hening aktif key", h1 && h1.key, "dzuhur");
+eq("hening mengikuti waktu sholat terkoreksi", heningState(new Date(2026,8,3,12,20,0), jadwalTerkoreksi, iq, hening, 5)?.key, "dzuhur");
 eq("hening lewat window", heningState(new Date(2026,8,3,12,20,0), jadwal, iq, hening, 5), null);
 const heningOff = JSON.parse(JSON.stringify(hening)); heningOff.dzuhur.aktif = false;
 eq("hening nonaktif -> null", heningState(new Date(2026,8,3,12,10,0), jadwal, iq, heningOff, 5), null);

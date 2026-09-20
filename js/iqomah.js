@@ -4,6 +4,7 @@ import { tampilkan, elLayar } from "./navigasi.js";
 import { readCache } from "./api.js";
 import { nextSholat } from "./app.js";
 import { loadAdzan, loadIqomah, loadNada } from "./settings.js";
+import { jadwalTerkoreksi } from "./jadwal-terkoreksi.js";
 
 const KEY = "iqomahAktif";
 
@@ -79,7 +80,7 @@ export function start(opsi) {
     const fase = opsi.fase === "adzan" ? "adzan" : "iqomah";
     const now = Date.now();
     const cache = readCache();
-    const sholat = cache && cache.jadwal ? nextSholat(new Date(now), cache.jadwal) : { key: "dzuhur", label: "Dzuhur" };
+    const sholat = cache && cache.jadwal ? nextSholat(new Date(now), jadwalTerkoreksi(cache.jadwal)) : { key: "dzuhur", label: "Dzuhur" };
     const iqSet = loadIqomah()[sholat.key] || {};
     const iqomahDetik = iqSet.aktif && iqSet.menit > 0 ? iqSet.menit * 60 : 0;
     const adzanDetik = fase === "adzan" ? loadAdzan().menit * 60 : 0;

@@ -8,12 +8,13 @@ import { loadAdzan, loadHening, loadIqomah } from "./settings.js";
 import { SHOLAT } from "./config.js";
 import { readCache } from "./api.js";
 import { parseHM } from "./waktu.js";
+import { jadwalTerkoreksi } from "./jadwal-terkoreksi.js";
 
-function sholatBerikutnya() {
+export function sholatBerikutnya(now = new Date()) {
   const cache = readCache();
-  const now = new Date();
   if (!cache || !cache.jadwal) return "dzuhur";
-  return (SHOLAT.find(({ key }) => parseHM(cache.jadwal[key], now) > now) || SHOLAT[0]).key;
+  const jadwal = jadwalTerkoreksi(cache.jadwal);
+  return (SHOLAT.find(({ key }) => parseHM(jadwal[key], now) > now) || SHOLAT[0]).key;
 }
 
 function durasiIqomah() {

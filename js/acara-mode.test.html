@@ -25,6 +25,7 @@ const s = loadAcara();
 
 // sebelum [azan-30, azan-5) - dzuhur 11:52 -> [11:22,11:47), tidak berubah.
 eq("dalam window sebelum -> true", acaraAktif(new Date(2026,8,3,11,30,0), jadwal, s), true);
+eq("window sebelum mengikuti waktu terkoreksi", acaraAktif(new Date(2026,8,3,11,50,0), { ...jadwal, dzuhur: "12:02" }, s), true);
 eq("tepat mulai sebelum (11:22) -> true", acaraAktif(new Date(2026,8,3,11,22,0), jadwal, s), true);
 eq("tepat selesai sebelum (11:47) -> false (exclusive)", acaraAktif(new Date(2026,8,3,11,47,0), jadwal, s), false);
 
