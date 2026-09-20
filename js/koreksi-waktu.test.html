@@ -1,0 +1,69 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test koreksi waktu</title>
+<pre id="out"></pre>
+<script type="module">
+import { applyKoreksiWaktu, parseHM } from "./waktu.js";
+import { dateKey, getJadwal } from "./api.js";
+import { loadKoreksiWaktu, saveKoreksiWaktu, resetKoreksiWaktu } from "./settings.js";
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+localStorage.removeItem("koreksiWaktuSettings");
+
+eq("default semua koreksi nol", loadKoreksiWaktu(), {
+  subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0,
+});
+
+const jadwal = {
+  imsak: "04:24", subuh: "04:34", terbit: "05:47",
+  dzuhur: "11:52", ashar: "15:09", maghrib: "17:56", isya: "19:01",
+};
+eq("koreksi hanya mengubah lima waktu sholat", applyKoreksiWaktu(jadwal, {
+  subuh: 2, dzuhur: -1, ashar: 30, maghrib: -30, isya: 0,
+}), {
+  imsak: "04:24", subuh: "04:36", terbit: "05:47",
+  dzuhur: "11:51", ashar: "15:39", maghrib: "17:26", isya: "19:01",
+});
+eq("koreksi tidak mengubah jadwal mentah", jadwal.subuh, "04:34");
+
+saveKoreksiWaktu({ subuh: 30, dzuhur: -30, ashar: 2.5, maghrib: "3", isya: null });
+eq("simpan mempertahankan batas dan fallback invalid", loadKoreksiWaktu(), {
+  subuh: 30, dzuhur: -30, ashar: 0, maghrib: 0, isya: 0,
+});
+
+resetKoreksiWaktu();
+eq("reset mengembalikan semua ke nol", loadKoreksiWaktu(), {
+  subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0,
+});
+
+// 17:30 UTC = 00:30 WIB pada hari berikutnya.
+const tengahMalamWib = new Date("2026-09-19T17:30:00Z");
+eq("dateKey memakai tanggal WIB", dateKey(tengahMalamWib), "2026-09-20");
+eq("parseHM membuat waktu sholat dalam WIB", parseHM("04:00", tengahMalamWib).toISOString(), "2026-09-19T21:00:00.000Z");
+
+const fetchAsli = globalThis.fetch;
+globalThis.fetch = async () => ({
+  ok: true,
+  json: async () => ({
+    status: true,
+    data: { jadwal: {
+      tanggal: "20 September 2026", imsak: "04:24", subuh: "04:34", terbit: "05:47",
+      dzuhur: "11:52", ashar: "15:09", maghrib: "17:56", isya: "19:01",
+    } },
+  }),
+});
+await getJadwal(new Date("2026-09-20T04:00:00Z"));
+eq("cache menyimpan jadwal mentah", JSON.parse(localStorage.getItem("jadwalCache")).jadwal.subuh, "04:34");
+globalThis.fetch = fetchAsli;
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>

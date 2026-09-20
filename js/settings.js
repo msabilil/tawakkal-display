@@ -1,11 +1,42 @@
-import { DEFAULT_IQOMAH, DEFAULT_ADZAN, DEFAULT_HENING, DEFAULT_NADA, SHOLAT, PENGUMUMAN } from "./config.js";
+import { DEFAULT_IQOMAH, DEFAULT_ADZAN, DEFAULT_HENING, DEFAULT_NADA, DEFAULT_KOREKSI_WAKTU, SHOLAT, PENGUMUMAN } from "./config.js";
 import { cloudSet } from "./cloud.js";
+import { normalizeKoreksiMenit } from "./waktu.js";
 
 const KEY = "iqomahSettings";
 const KEY_ADZAN = "adzanSettings";
 const KEY_HENING = "heningSettings";
 const KEY_NADA = "nadaSettings";
 const KEY_PENGUMUMAN = "pengumumanSettings";
+const KEY_KOREKSI_WAKTU = "koreksiWaktuSettings";
+
+function bacaObject(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function normalisasiKoreksi(stored) {
+  const result = {};
+  for (const { key } of SHOLAT) {
+    result[key] = normalizeKoreksiMenit(stored[key]);
+  }
+  return result;
+}
+
+export function loadKoreksiWaktu() {
+  return normalisasiKoreksi(bacaObject(KEY_KOREKSI_WAKTU));
+}
+
+export function saveKoreksiWaktu(settings) {
+  const normalized = normalisasiKoreksi(settings || {});
+  localStorage.setItem(KEY_KOREKSI_WAKTU, JSON.stringify(normalized));
+}
+
+export function resetKoreksiWaktu() {
+  saveKoreksiWaktu(DEFAULT_KOREKSI_WAKTU);
+}
 
 export function loadIqomah() {
   let stored = {};

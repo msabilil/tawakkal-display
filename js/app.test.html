@@ -4,6 +4,7 @@
 <pre id="out"></pre>
 <script type="module">
 import { parseHM, nextSholat, iqomahState, heningState, harusResumeIqomah } from "./app.js";
+import { formatJamWIB } from "./waktu.js";
 
 const out = [];
 let pass = 0, fail = 0;
@@ -18,8 +19,8 @@ const iq = { subuh:{menit:10,aktif:true}, dzuhur:{menit:10,aktif:true}, ashar:{m
 
 // parseHM: gunakan Kamis 2026-09-03 (bukan Jumat) untuk uji dzuhur
 const kamis = new Date(2026, 8, 3, 0, 0, 0);
-eq("parseHM jam", parseHM("11:52", kamis).getHours(), 11);
-eq("parseHM menit", parseHM("11:52", kamis).getMinutes(), 52);
+eq("parseHM jam WIB", formatJamWIB(parseHM("11:52", kamis)).slice(0, 2), "11");
+eq("parseHM menit WIB", formatJamWIB(parseHM("11:52", kamis)).slice(3, 5), "52");
 
 // nextSholat: jam 10:00 Kamis -> berikutnya Dzuhur
 const t1 = new Date(2026, 8, 3, 10, 0, 0);

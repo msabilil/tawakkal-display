@@ -1,5 +1,5 @@
 import { SHOLAT, WAKTU_HARIAN, QORI } from "./config.js";
-import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadNada, saveNada, loadPengumuman, savePengumuman } from "./settings.js";
+import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadNada, saveNada, loadKoreksiWaktu, saveKoreksiWaktu, resetKoreksiWaktu, loadPengumuman, savePengumuman } from "./settings.js";
 import { loadTarawihSettings, saveTarawihSettings, isRamadhanEfektif, tanggalHijriahLabel } from "./ramadhan.js";
 import { loadAcara, saveAcara, loadAcaraSlides, saveAcaraSlides } from "./acara-mode.js";
 import { loadTampilan, saveTampilan } from "./tampilan.js";
@@ -257,6 +257,43 @@ function simpanTampilan(e) {
     maklumat: $("tampilan-maklumat").checked,
   });
   tampilkanStatus("status-tampilan");
+}
+
+function renderKoreksiWaktu() {
+  const settings = loadKoreksiWaktu();
+  const wrap = $("baris-koreksi-waktu");
+  wrap.innerHTML = "";
+  for (const { key, label } of SHOLAT) {
+    const row = document.createElement("div");
+    row.className = "baris-kaya";
+    row.innerHTML = `
+      <span class="ikon-baris" aria-hidden="true">${IKON_IQOMAH}</span>
+      <div class="baris-kaya-teks">
+        <label class="label-sholat" for="koreksi-${key}">${label}</label>
+        <p class="hint-baris">Positif menambah menit, negatif mengurangi menit.</p>
+      </div>
+      <div class="baris-kaya-kontrol">
+        <input type="number" min="-30" max="30" step="1" id="koreksi-${key}" value="${settings[key]}" inputmode="numeric" aria-label="Koreksi waktu ${label}">
+        <span class="stepper-satuan">menit</span>
+      </div>
+    `;
+    wrap.appendChild(row);
+  }
+}
+
+function simpanKoreksiWaktu(e) {
+  e.preventDefault();
+  const settings = {};
+  for (const { key } of SHOLAT) settings[key] = Number($(`koreksi-${key}`).value);
+  saveKoreksiWaktu(settings);
+  renderKoreksiWaktu();
+  tampilkanStatus("status-koreksi-waktu");
+}
+
+function resetKoreksiWaktuForm() {
+  resetKoreksiWaktu();
+  renderKoreksiWaktu();
+  tampilkanStatus("status-koreksi-waktu");
 }
 
 function simpanPengumumanDariForm() {
@@ -1337,6 +1374,7 @@ initFilePicker("nada");
 // beda dari kiosk, TIDAK auto-sync terus-menerus, jadi begitu dibuka perlu
 // tarik sekali biar tidak nampilin data basi kalau ada perubahan dari device lain.
 function renderSemuaData() {
+  renderKoreksiWaktu();
   renderIqomah();
   renderHening();
   renderTarawih();
@@ -1362,6 +1400,8 @@ async function tarikUlangDariCloud() {
 tarikUlangDariCloud();
 
 $("form-iqomah").addEventListener("submit", simpanIqomah);
+$("form-koreksi-waktu").addEventListener("submit", simpanKoreksiWaktu);
+$("tombol-reset-koreksi-waktu").addEventListener("click", resetKoreksiWaktuForm);
 $("form-hening").addEventListener("submit", simpanHening);
 $("form-tarawih").addEventListener("submit", simpanTarawih);
 $("form-tarawih-tanggal").addEventListener("submit", simpanTarawihTanggal);
@@ -1536,6 +1576,7 @@ function setupSimpanSection() {
       const section = btn.closest("[data-panel]");
       const forms = [...section.querySelectorAll("form")].filter((f) => !f.classList.contains("form-tambah-item"));
       for (const f of forms) {
+        if (f.hasAttribute("data-skip-native-validation")) continue;
         if (!f.checkValidity()) { f.reportValidity(); return; }
       }
       forms.forEach((f) => f.requestSubmit());

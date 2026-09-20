@@ -1,5 +1,5 @@
 import { SHOLAT } from "./config.js";
-import { parseHM } from "./waktu.js";
+import { dayWIB, formatJamWIB, formatTanggalWIB, parseHM, applyKoreksiWaktu } from "./waktu.js";
 export { parseHM };
 
 export function nextSholat(now, jadwal) {
@@ -8,8 +8,7 @@ export function nextSholat(now, jadwal) {
     if (t > now) return { key, label, time: t };
   }
   // semua lewat -> Subuh besok
-  const besok = new Date(now);
-  besok.setDate(besok.getDate() + 1);
+  const besok = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const subuh = SHOLAT[0];
   return { key: subuh.key, label: subuh.label, time: parseHM(jadwal[subuh.key], besok) };
 }
@@ -21,7 +20,7 @@ export function nextSholat(now, jadwal) {
 // iqomah.js tick - adzanEndTime === iqomahEndTime kalau iqomah nonaktif).
 export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
   for (const { key, label } of SHOLAT) {
-    if (now.getDay() === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
+    if (dayWIB(now) === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
     const set = iqomahSettings[key] || {};
     const iqomahMenit = set.aktif && set.menit > 0 ? set.menit : 0;
     const totalMenit = adzanMenit + iqomahMenit;
@@ -43,7 +42,7 @@ export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
 // dari SELESAI iqomah, bukan dari azan.
 export function heningState(now, jadwal, iqomahSettings, heningSettings, adzanMenit) {
   for (const { key, label } of SHOLAT) {
-    if (now.getDay() === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
+    if (dayWIB(now) === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
     const hSet = heningSettings[key] || {};
     if (!hSet.aktif || !(hSet.menit > 0)) continue;
     const iqSet = iqomahSettings[key] || {};
@@ -58,7 +57,7 @@ export function heningState(now, jadwal, iqomahSettings, heningSettings, adzanMe
 
 import { NAMA_MASJID, TAGLINE_MASJID, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
-import { loadIqomah, loadAdzan, loadHening, loadPengumuman } from "./settings.js";
+import { loadIqomah, loadAdzan, loadHening, loadKoreksiWaktu, loadPengumuman } from "./settings.js";
 import { tarawihState } from "./ramadhan.js";
 import { mulaiHening } from "./hening.js";
 import { loadTampilan } from "./tampilan.js";
@@ -75,7 +74,9 @@ const JUMAT_KEY = "jumatAktif";
 const modeDemo = new URLSearchParams(location.search).get("demo") === "1";
 
 // State modul
-let jadwal = null;         // {imsak,subuh,terbit,dzuhur,ashar,maghrib,isya} dari API/cache
+let jadwal = null;         // jadwal yang sudah dikoreksi untuk seluruh logika layar
+let jadwalMentah = null;   // jadwal asli dari API/cache, tidak pernah ditimpa koreksi
+let koreksiTerakhir = null;
 let jadwalDateKey = null;  // "YYYY-MM-DD" jadwal yang sedang dipakai
 let offline = false;
 let fetchedAt = null;
@@ -107,11 +108,10 @@ function renderMarquee() {
 }
 
 function renderTanggal(now) {
-  $("tanggal-masehi").textContent = now.toLocaleDateString("id-ID", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
+  $("tanggal-masehi").textContent = formatTanggalWIB(now);
   try {
     $("tanggal-hijriah").textContent = new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
+      timeZone: "Asia/Jakarta",
       day: "numeric", month: "long", year: "numeric",
     }).format(now);
   } catch {
@@ -142,7 +142,8 @@ function renderOffline() {
   const el = $("offline-indikator");
   if (offline && fetchedAt) {
     const t = new Date(fetchedAt);
-    el.textContent = `Data offline, update terakhir ${pad(t.getDate())}/${pad(t.getMonth()+1)} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
+    const waktu = formatTanggalWIB(t);
+    el.textContent = `Data offline, update terakhir ${waktu} ${formatJamWIB(t).slice(0, 5)}`;
     el.hidden = false;
   } else {
     el.hidden = true;
@@ -163,9 +164,8 @@ function buatJamAnalogAngka() {
 }
 
 function tickJamAnalog(now) {
-  const jam = now.getHours() % 12;
-  const menit = now.getMinutes();
-  const detik = now.getSeconds();
+  const [jamMentah, menit, detik] = formatJamWIB(now).split(":").map(Number);
+  const jam = jamMentah % 12;
   const derajatJam = jam * 30 + menit * 0.5;
   const derajatMenit = menit * 6 + detik * 0.1;
   const derajatDetik = detik * 6;
@@ -179,16 +179,28 @@ async function muatJadwal(now) {
   sedangMuatJadwal = true;
   try {
     const r = await getJadwal(now);
-    jadwal = r.jadwal;
+    jadwalMentah = r.jadwal;
+    koreksiTerakhir = null;
+    sinkronkanKoreksi();
     offline = r.fromCache;
     fetchedAt = r.fetchedAt;
     jadwalDateKey = dateKey(now);
   } catch (e) {
+    jadwalMentah = null;
     jadwal = null;
     offline = true;
   }
   sedangMuatJadwal = false;
   renderOffline();
+}
+
+function sinkronkanKoreksi() {
+  if (!jadwalMentah) return;
+  const koreksi = loadKoreksiWaktu();
+  const serial = JSON.stringify(koreksi);
+  if (serial === koreksiTerakhir) return;
+  jadwal = applyKoreksiWaktu(jadwalMentah, koreksi);
+  koreksiTerakhir = serial;
 }
 
 // Exported murni buat testable - lihat app.test.html. Nentuin apa hitung
@@ -271,11 +283,12 @@ function mulaiTarawih(tw) {
 
 function tick() {
   const now = new Date();
-  $("jam").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  $("jam").textContent = formatJamWIB(now);
   renderTanggal(now);
   tickJamAnalog(now);
 
   if (!jadwal) return; // belum ada data
+  sinkronkanKoreksi();
 
   const view = viewAktif();
   const jum = jumatState(now, jadwal);
