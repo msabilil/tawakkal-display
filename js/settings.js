@@ -36,8 +36,8 @@ export async function saveKoreksiWaktu(settings, sinkronkan = cloudSet) {
   return { settings: normalized, cloud };
 }
 
-export async function resetKoreksiWaktu() {
-  return saveKoreksiWaktu(DEFAULT_KOREKSI_WAKTU);
+export async function resetKoreksiWaktu(sinkronkan = cloudSet) {
+  return saveKoreksiWaktu(DEFAULT_KOREKSI_WAKTU, sinkronkan);
 }
 
 export function loadIqomah() {

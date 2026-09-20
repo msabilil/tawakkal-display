@@ -50,9 +50,13 @@ export async function cloudSetDenganClient(key, value, c) {
 
 export function cloudSet(key, value) {
   if (!cloudAktif()) return Promise.resolve({ ok: true, active: false });
-  return getSupabaseClient()
+  const operasi = getSupabaseClient()
     .then((c) => cloudSetDenganClient(key, value, c))
     .catch((error) => ({ ok: false, active: true, error }));
+  const timeout = new Promise((resolve) => setTimeout(() => resolve({
+    ok: false, active: true, error: "Timeout sinkronisasi Supabase",
+  }), 8000));
+  return Promise.race([operasi, timeout]);
 }
 
 export async function cloudUploadMedia(path, file) {

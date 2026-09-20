@@ -11,6 +11,7 @@ import { cloudSetDenganClient } from "./cloud.js";
 
 const out = [];
 let pass = 0, fail = 0;
+const tanpaCloud = async () => ({ ok: true, active: false });
 function eq(name, got, want) {
   const g = JSON.stringify(got), w = JSON.stringify(want);
   if (g === w) { pass++; out.push(`PASS ${name}`); }
@@ -35,7 +36,7 @@ eq("koreksi hanya mengubah lima waktu sholat", applyKoreksiWaktu(jadwal, {
 });
 eq("koreksi tidak mengubah jadwal mentah", jadwal.subuh, "04:34");
 
-const hasilSimpan = await saveKoreksiWaktu({ subuh: 30, dzuhur: -30, ashar: 2.5, maghrib: "3", isya: null });
+const hasilSimpan = await saveKoreksiWaktu({ subuh: 30, dzuhur: -30, ashar: 2.5, maghrib: "3", isya: null }, tanpaCloud);
 eq("simpan mempertahankan batas dan fallback invalid", loadKoreksiWaktu(), {
   subuh: 30, dzuhur: -30, ashar: 0, maghrib: 0, isya: 0,
 });
@@ -63,7 +64,7 @@ eq("cloud client sukses dilaporkan", await cloudSetDenganClient("koreksiWaktuSet
 const clientGagal = { from: () => ({ upsert: async () => ({ error: "permission denied" }) }) };
 eq("cloud client gagal dilaporkan", (await cloudSetDenganClient("koreksiWaktuSettings", {}, clientGagal)).ok, false);
 
-await resetKoreksiWaktu();
+await resetKoreksiWaktu(tanpaCloud);
 eq("reset mengembalikan semua ke nol", loadKoreksiWaktu(), {
   subuh: 0, dzuhur: 0, ashar: 0, maghrib: 0, isya: 0,
 });
