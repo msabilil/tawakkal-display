@@ -1,2 +1,7 @@
 .claude/
 docs/
+.tmp-admin-analysis
+.agents
+AGENTS.md
+skills-lock.json
+CONTEXT.md

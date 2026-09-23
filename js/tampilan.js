@@ -1,4 +1,4 @@
-import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 
 const KEY = "tampilanSettings";
 
@@ -16,7 +16,6 @@ export function loadTampilan() {
   }
 }
 
-export function saveTampilan(settings) {
-  localStorage.setItem(KEY, JSON.stringify(settings));
-  cloudSet(KEY, settings);
+export function saveTampilan(settings, opsi) {
+  return simpanPengaturan(KEY, settings, opsi);
 }

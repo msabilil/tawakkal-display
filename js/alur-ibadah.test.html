@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test Alur Layar Ibadah</title>
+<pre id="out"></pre>
+<script type="module">
+let alur = {};
+try {
+  alur = await import("./alur-ibadah.js");
+} catch {
+  // Tes tetap menunjukkan perilaku yang belum disediakan module alur.
+}
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+const jadwal = { subuh: "04:34", dzuhur: "11:52", ashar: "15:09", maghrib: "17:56", isya: "19:01" };
+const iqomah = { subuh: { menit: 10, aktif: true }, dzuhur: { menit: 10, aktif: true }, ashar: { menit: 10, aktif: true }, maghrib: { menit: 5, aktif: true }, isya: { menit: 10, aktif: true } };
+const hening = { subuh: { menit: 10, aktif: true }, dzuhur: { menit: 10, aktif: true }, ashar: { menit: 10, aktif: true }, maghrib: { menit: 10, aktif: true }, isya: { menit: 10, aktif: true } };
+
+const biasa = alur.tentukanAlur?.({
+  now: new Date(2026, 8, 3, 11, 55), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { adaSlide: false }, tarawih: null,
+});
+eq("hari biasa saat adzan memutuskan layar iqomah", biasa && biasa.view, "iqomah");
+eq("hari biasa menyimpan fase adzan", biasa && biasa.state && biasa.state.fase, "adzan");
+eq("hari biasa membawa tenggat iqomah", biasa && biasa.state && biasa.state.iqomahEndTime, "2026-09-03T05:07:00.000Z");
+
+const heningBiasa = alur.tentukanAlur?.({
+  now: new Date(2026, 8, 3, 12, 10), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { adaSlide: false }, tarawih: null,
+});
+eq("hari biasa setelah iqomah memutuskan layar hening", heningBiasa && heningBiasa.view, "hening");
+
+const jumatSlide = alur.tentukanAlur?.({
+  now: new Date(2026, 8, 4, 12, 0), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { adaSlide: true, durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
+});
+eq("Jumat setelah adzan memutuskan layar slide", jumatSlide && jumatSlide.view, "jumat");
+eq("slide Jumat tidak memutar nada Sholat Mode", jumatSlide && jumatSlide.state && jumatSlide.state.putarNada, false);
+
+const jumatHening = alur.tentukanAlur?.({
+  now: new Date(2026, 8, 4, 12, 20), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { adaSlide: true, durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
+});
+eq("Jumat setelah slide memutuskan layar hening", jumatHening && jumatHening.view, "hening");
+eq("hening Jumat tetap tanpa nada kedua", jumatHening && jumatHening.state && jumatHening.state.putarNada, false);
+
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+</script>

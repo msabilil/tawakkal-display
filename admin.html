@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="admin">
+  <a class="skip-link" href="#admin-content">Lewati ke konten</a>
   <div id="admin-login-gate" hidden>
     <div class="admin-login-kotak">
       <div class="admin-login-brand" aria-hidden="true">
@@ -25,6 +26,27 @@
     </div>
   </div>
 
+  <header class="admin-app-header" aria-label="Header admin">
+    <div class="admin-app-brand">
+      <span class="admin-app-logo" aria-hidden="true">
+        <img src="img/logo-tawakal.png" alt="">
+      </span>
+      <div>
+        <p class="admin-app-title">Masjid At-Tawakkal 2</p>
+        <p class="admin-app-subtitle">Kiosk Control · Admin</p>
+      </div>
+    </div>
+    <div class="admin-app-meta">
+      <div class="admin-app-user" aria-label="Pengguna admin">
+        <div>
+          <p>Admin</p>
+          <span>Pengelola</span>
+        </div>
+        <span class="admin-app-avatar" aria-hidden="true">A</span>
+      </div>
+    </div>
+  </header>
+
   <div class="admin-shell">
     <aside class="admin-sidebar">
       <div class="admin-brand">
@@ -38,13 +60,14 @@
       </div>
 
       <nav class="admin-nav" aria-label="Bagian pengaturan">
-        <button type="button" class="admin-nav-item" data-section="rotasi">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1 -3 -6.7"/><path d="M21 3v6h-6"/></svg>
-          Rotasi Layar
-        </button>
+        <p class="admin-nav-label">Kontrol layar</p>
         <button type="button" class="admin-nav-item aktif" data-section="jadwal-sholat">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           Jadwal Sholat
+        </button>
+        <button type="button" class="admin-nav-item" data-section="rotasi">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1 -3 -6.7"/><path d="M21 3v6h-6"/></svg>
+          Rotasi Layar
         </button>
         <button type="button" class="admin-nav-item" data-section="adzan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 21a2 2 0 0 0 4 0"/><path d="M4 17h16l-1.6-2.7A6 6 0 0 1 17.6 11V9a5.6 5.6 0 0 0 -11.2 0v2a6 6 0 0 1 -0.8 3.3z"/></svg>
@@ -62,6 +85,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M15 15h2v2h-2z"/><path d="M19 15h1v1"/><path d="M15 19h1v1"/><path d="M19 19h1v1"/></svg>
           QR Donasi
         </button>
+        <p class="admin-nav-label">Isi layar</p>
         <button type="button" class="admin-nav-item" data-section="kegiatan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
           Jadwal Kegiatan
@@ -82,6 +106,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 8a5 5 0 0 1 0 8"/><path d="M17.7 5a9 9 0 0 1 0 14"/><path d="M6 8h-1a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h1l3.5 4v-16l-3.5 4z"/></svg>
           Audio
         </button>
+        <p class="admin-nav-label">Sistem</p>
         <a class="admin-nav-item" href="demo.html" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M10 17v4"/><path d="M14 17v4"/><path d="M9.5 8l4 2.5-4 2.5z"/></svg>
           Demo Layar
@@ -98,15 +123,25 @@
       </button>
     </aside>
 
-    <main class="admin-main">
+    <main class="admin-main" id="admin-content">
+      <header class="admin-topbar">
+        <div class="admin-topbar-copy">
+          <p class="admin-eyebrow" id="admin-page-eyebrow">Kontrol layar</p>
+          <h1 id="admin-page-title">Jadwal Sholat</h1>
+          <p id="admin-page-desc">Atur tema layar, header, dan maklumat berjalan.</p>
+        </div>
+        <div class="admin-topbar-kanan" aria-hidden="true"></div>
+      </header>
+
       <!-- ================= Jadwal Sholat (layar utama) ================= -->
       <section class="admin-kotak" data-panel="jadwal-sholat">
         <h1>Jadwal Sholat</h1>
         <p class="admin-ket">Ini layar utama yang tampil di TV masjid — menampilkan header dan jadwal sholat berjalan. Khusus layout Masjid Biru, foto latarnya sudah tetap mengikuti posisi kartu jadwal dan tidak bisa diganti.</p>
 
-        <div class="admin-subsection">
-          <h2 class="admin-subpanel-judul">Layout</h2>
-          <p class="admin-ket">Pilih layout dulu, baru atur bagian lainnya di bawah — tiap layout punya bagian yang berbeda. Misalnya, Masjid Biru tidak menampilkan header maupun maklumat berjalan.</p>
+        <div class="admin-jadwal-card">
+          <div class="admin-subsection">
+          <h2 class="admin-subpanel-judul">Tema Layout</h2>
+          <p class="admin-ket">Pilih tampilan utama yang dilihat jamaah.</p>
           <form class="tema-form" id="form-tema-tampilan">
             <fieldset class="tema-grid" data-tema-kartu="tampilan">
               <legend class="sr-only">Pilih layout layar utama</legend>
@@ -117,20 +152,18 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
             Setelah menyimpan, muat ulang layar utama di TV masjid untuk melihat perubahan layout.
           </p>
-        </div>
+          </div>
 
-        <div class="admin-subsection">
-          <h2 class="admin-subpanel-judul">Tampilan</h2>
-          <p class="admin-ket">Nyalakan atau matikan bagian layar utama. Berlaku hanya untuk layout yang mendukungnya.</p>
-          <form id="form-tampilan">
+          <div class="admin-subsection">
+            <form id="form-tampilan">
             <div id="tampilan-toggle-wrap">
               <div class="baris-kaya" id="baris-toggle-header">
                 <span class="ikon-baris" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
                 </span>
                 <div class="baris-kaya-teks">
-                  <label class="label-sholat" for="tampilan-header">Tampilkan header</label>
-                  <p class="hint-baris">Nama masjid &amp; tombol setting di bagian atas layar.</p>
+                  <label class="label-sholat" for="tampilan-header">Tampilkan Header</label>
+                  <p class="hint-baris">Nama masjid, logo, dan tanggal Hijriah.</p>
                 </div>
                 <label class="aktif-cek"><input type="checkbox" id="tampilan-header"></label>
               </div>
@@ -139,21 +172,34 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16M4 12h10M4 16h13"/></svg>
                 </span>
                 <div class="baris-kaya-teks">
-                  <label class="label-sholat" for="tampilan-maklumat">Tampilkan maklumat berjalan</label>
-                  <p class="hint-baris">Teks pengumuman berjalan di bagian bawah layar.</p>
+                  <label class="label-sholat" for="tampilan-maklumat">Maklumat Berjalan</label>
+                  <p class="hint-baris">Teks berjalan di bagian bawah layar.</p>
                 </div>
                 <label class="aktif-cek"><input type="checkbox" id="tampilan-maklumat"></label>
               </div>
             </div>
-            <p id="tampilan-toggle-kosong" class="admin-ket" hidden>Layout Masjid Biru sudah dirancang tanpa header (identitas masjid sudah ada di foto latar) - opsi ini tidak berlaku buat layout ini.</p>
+            <p id="tampilan-toggle-kosong" class="admin-ket" hidden>Layout Masjid Biru tidak menggunakan header.</p>
             <p id="status-tampilan" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
-          </form>
+            </form>
+          </div>
+          <div class="admin-subsection admin-jadwal-announcements" hidden>
+            <h2 class="admin-subpanel-judul">Pesan Maklumat Berjalan</h2>
+            <p class="admin-ket">Pesan yang tampil bergantian di layar.</p>
+            <ul id="pengumuman-list" class="admin-list"></ul>
+            <form id="form-tambah-pengumuman" class="pengumuman-tambah-form">
+              <label class="sr-only" for="pengumuman-baru">Pesan baru</label>
+              <input id="pengumuman-baru" type="text" placeholder="Tulis pesan baru..." autocomplete="off">
+              <p class="hint-baris pengumuman-tambah-hint">Tekan Enter atau gunakan Simpan Perubahan untuk menambahkan pesan.</p>
+            </form>
+            <p id="status-pengumuman" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+          </div>
         </div>
 
-        <div class="admin-subsection">
+        <div class="admin-subsection admin-koreksi-card">
           <h2 class="admin-subpanel-judul">Koreksi Waktu Sholat</h2>
-          <p class="admin-ket">Sesuaikan jadwal lima waktu sholat utama jika waktu resmi masjid berbeda dari jadwal API. Nilai positif menambah waktu, nilai negatif mengurangi waktu. Rentang yang diizinkan -30 sampai +30 menit.</p>
+          <p class="admin-ket">Atur selisih waktu dalam menit.</p>
           <p id="status-jadwal-koreksi" class="admin-ket">Memuat jadwal sholat hari ini...</p>
+          <div id="ringkasan-koreksi-waktu" class="koreksi-ringkasan" aria-live="polite"></div>
           <form id="form-koreksi-waktu" data-skip-native-validation novalidate>
             <div id="baris-koreksi-waktu"></div>
             <p id="status-koreksi-waktu" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
@@ -163,21 +209,6 @@
           </div>
         </div>
 
-        <div class="admin-subsection">
-          <h2 class="admin-subpanel-judul">Teks Maklumat Berjalan</h2>
-          <p class="admin-ket">Teks berjalan (running text) di bagian bawah layar - satu kotak = satu pesan, ditampilkan bergantian. Tersimpan otomatis tiap ada perubahan.</p>
-          <ul id="pengumuman-list" class="admin-list"></ul>
-          <div class="admin-aksi">
-            <button type="button" id="tombol-tambah-pengumuman" class="btn-inline">+ Tambah pesan</button>
-          </div>
-          <p id="status-pengumuman" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
-        </div>
-
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Rotasi Layar ================= -->
@@ -185,7 +216,7 @@
         <h1>Rotasi Layar</h1>
         <p class="admin-ket">Atur berapa lama tiap layar tampil sebelum berpindah ke layar berikutnya. Urutannya berulang otomatis: Jadwal Sholat &rarr; QR Donasi &rarr; Jadwal Kegiatan &rarr; kembali ke Jadwal Sholat.</p>
 
-        <div class="rotasi-timeline">
+        <div class="rotasi-timeline" hidden>
           <div class="rotasi-timeline-head">
             <h2 class="admin-subpanel-judul">Pratinjau urutan</h2>
             <p class="rotasi-total">Total 1 putaran: <strong id="rotasi-total-detik">95</strong> detik</p>
@@ -210,14 +241,16 @@
           </p>
         </div>
 
-        <div class="admin-subsection admin-kolom-sempit">
+        <div class="admin-subsection admin-lovable-card">
+          <h2 class="admin-subpanel-judul">Durasi Tiap Layar</h2>
+          <p class="admin-ket">Lama tampil sebelum berpindah.</p>
           <form id="form-rotasi">
             <div class="baris-kaya" id="baris-rotasi-sholat">
               <span class="ikon-baris" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
               </span>
               <div class="baris-kaya-teks">
-                <label class="label-sholat" for="rotasi-sholat">Jadwal sholat</label>
+                <label class="label-sholat" for="rotasi-sholat">Jadwal Sholat</label>
                 <p class="hint-baris">Durasi tampil sebelum berpindah ke layar berikutnya.</p>
                 <p class="baris-error">Nilai harus antara 5-600 detik.</p>
               </div>
@@ -234,7 +267,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M15 15h2v2h-2z"/><path d="M19 15h1v1"/><path d="M15 19h1v1"/><path d="M19 19h1v1"/></svg>
               </span>
               <div class="baris-kaya-teks">
-                <label class="label-sholat" for="rotasi-qr">QR donasi</label>
+                <label class="label-sholat" for="rotasi-qr">QR Donasi</label>
                 <p class="hint-baris">Durasi tampil kode QR donasi sebelum lanjut berputar.</p>
                 <p class="baris-error">Nilai harus antara 5-600 detik.</p>
               </div>
@@ -251,7 +284,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
               </span>
               <div class="baris-kaya-teks">
-                <label class="label-sholat" for="rotasi-kegiatan">Jadwal kegiatan</label>
+                <label class="label-sholat" for="rotasi-kegiatan">Jadwal Kegiatan</label>
                 <p class="hint-baris">Durasi tampil info kegiatan masjid sebelum kembali ke Jadwal Sholat.</p>
                 <p class="baris-error">Nilai harus antara 5-600 detik.</p>
               </div>
@@ -267,11 +300,6 @@
           </form>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Adzan ================= -->
@@ -306,15 +334,13 @@
           <p class="admin-ket">Foto latar khusus layar Adzan. Kosongkan untuk pakai tampilan layout asli.</p>
           <form id="form-bg-adzan">
           <img id="adzan-bg-preview" class="qr-preview" alt="Pratinjau latar Adzan" hidden>
-          <div class="baris-kaya">
-            <span class="ikon-baris" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5L5 21"/></svg>
-            </span>
-            <div class="baris-kaya-teks">
-              <label class="label-sholat" for="adzan-bg-file">Gambar latar</label>
-            </div>
-            <input type="file" id="adzan-bg-file" accept="image/*" aria-label="Foto latar Adzan">
-            <button type="button" id="tombol-simpan-bg-adzan" class="btn-inline">Simpan</button>
+          <div class="admin-upload-row">
+            <label class="lovable-upload-card admin-background-upload" for="adzan-bg-file">
+              <input type="file" id="adzan-bg-file" accept="image/*" aria-label="Foto latar Adzan">
+              <span class="lovable-upload-title">Unggah latar Adzan</span>
+              <span class="lovable-upload-desc">PNG/JPG maks 5MB</span>
+            </label>
+            <button type="button" id="tombol-simpan-bg-adzan" class="btn-inline">Simpan latar</button>
           </div>
           <div class="admin-aksi">
             <button type="button" id="tombol-hapus-bg-adzan" class="tombol-sekunder btn-bahaya">Hapus Latar</button>
@@ -323,11 +349,6 @@
           <p id="status-bg-adzan" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=iqomah&amp;fase=adzan">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Iqomah ================= -->
@@ -349,15 +370,13 @@
           <p class="admin-ket">Foto latar khusus layar Iqomah (fase hitung mundur). Kosongkan untuk pakai tampilan layout asli.</p>
           <form id="form-bg-iqomah">
           <img id="iqomah-bg-preview" class="qr-preview" alt="Pratinjau latar Iqomah" hidden>
-          <div class="baris-kaya">
-            <span class="ikon-baris" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5L5 21"/></svg>
-            </span>
-            <div class="baris-kaya-teks">
-              <label class="label-sholat" for="iqomah-bg-file">Gambar latar</label>
-            </div>
-            <input type="file" id="iqomah-bg-file" accept="image/*" aria-label="Foto latar Iqomah">
-            <button type="button" id="tombol-simpan-bg-iqomah" class="btn-inline">Simpan</button>
+          <div class="admin-upload-row">
+            <label class="lovable-upload-card admin-background-upload" for="iqomah-bg-file">
+              <input type="file" id="iqomah-bg-file" accept="image/*" aria-label="Foto latar Iqomah">
+              <span class="lovable-upload-title">Unggah latar Iqomah</span>
+              <span class="lovable-upload-desc">PNG/JPG maks 5MB</span>
+            </label>
+            <button type="button" id="tombol-simpan-bg-iqomah" class="btn-inline">Simpan latar</button>
           </div>
           <div class="admin-aksi">
             <button type="button" id="tombol-hapus-bg-iqomah" class="tombol-sekunder btn-bahaya">Hapus Latar</button>
@@ -366,11 +385,6 @@
           <p id="status-bg-iqomah" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=iqomah&amp;fase=iqomah">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Sholat Mode ================= -->
@@ -386,88 +400,55 @@
           </form>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=hening">Preview Hening</button>
-        </div>
       </section>
 
       <!-- ================= QR Donasi ================= -->
       <section class="admin-kotak" data-panel="donasi" hidden>
         <h1>QR Donasi</h1>
 
-        <div class="admin-subsection admin-kolom-sempit">
-          <h2 class="admin-subpanel-judul">QR Donasi</h2>
-          <p class="admin-ket">Unggah gambar QR (QRIS). Tampil bergilir di layar utama.</p>
-          <form id="form-qr">
-            <div class="baris-kaya">
-              <span class="ikon-baris" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14M12 5v14"/></svg>
-              </span>
-              <div class="baris-kaya-teks">
-                <label class="label-sholat" for="qr-judul">Judul</label>
-                <p class="hint-baris">Judul singkat di atas kode QR, mis. nama program donasi.</p>
-              </div>
-              <input type="text" id="qr-judul" placeholder="Donasi Masjid">
+        <div class="admin-subsection admin-lovable-card">
+          <h2 class="admin-subpanel-judul">Teks Layar Donasi</h2>
+          <form id="form-qr" class="lovable-form-stack">
+            <div class="lovable-field">
+              <label for="qr-judul">Judul QR</label>
+              <input type="text" id="qr-judul" placeholder="Infaq &amp; Shodaqoh Jamaah">
             </div>
-            <div class="baris-kaya">
-              <span class="ikon-baris" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a2 2 0 0 0 2 2h1l3 4V7l-3 4H5a2 2 0 0 0-2 2z"/><path d="M14 8a4 4 0 0 1 0 8"/><path d="M17 5a7 7 0 0 1 0 14"/></svg>
-              </span>
-              <div class="baris-kaya-teks">
-                <label class="label-sholat" for="qr-teks">Teks ajakan</label>
-                <p class="hint-baris">Kalimat pendek di bawah judul buat ngajak jemaah scan.</p>
-              </div>
-              <input type="text" id="qr-teks" placeholder="Scan untuk berdonasi via QRIS">
-            </div>
-            <div class="baris-kaya">
-              <span class="ikon-baris" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M15 15h2v2h-2z"/><path d="M19 15h1v1"/><path d="M15 19h1v1"/><path d="M19 19h1v1"/></svg>
-              </span>
-              <div class="baris-kaya-teks">
-                <label class="label-sholat" for="qr-file">Gambar QR</label>
-                <p class="hint-baris">Unggah gambar kode QRIS (PNG/JPG).</p>
-              </div>
-              <input type="file" id="qr-file" accept="image/*">
+            <div class="lovable-field">
+              <label for="qr-teks">Teks ajakan donasi</label>
+              <textarea id="qr-teks" rows="4" placeholder="Pindai QRIS berikut untuk menyalurkan infaq pembangunan masjid."></textarea>
             </div>
             <img id="qr-preview" class="qr-preview" alt="Pratinjau QR" hidden>
-            <div class="admin-aksi">
-              <button type="button" id="tombol-hapus-qr" class="tombol-sekunder btn-bahaya">Hapus QR</button>
-            </div>
             <p id="status-qr" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
           </form>
         </div>
 
-        <div class="admin-subsection admin-kolom-sempit">
-          <h2 class="admin-subpanel-judul">Latar Belakang</h2>
-          <p class="admin-ket">Foto latar khusus layar QR Donasi. Kosongkan untuk pakai tampilan layout asli.</p>
-          <form id="form-bg-donasi">
-          <img id="donasi-bg-preview" class="qr-preview" alt="Pratinjau latar QR Donasi" hidden>
-          <div class="baris-kaya">
-            <span class="ikon-baris" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5L5 21"/></svg>
-            </span>
-            <div class="baris-kaya-teks">
-              <label class="label-sholat" for="donasi-bg-file">Gambar latar</label>
-            </div>
-            <div class="baris-kaya-kontrol">
-              <input type="file" id="donasi-bg-file" accept="image/*" aria-label="Foto latar QR Donasi">
-              <button type="button" id="tombol-simpan-bg-donasi" class="btn-inline">Simpan</button>
-            </div>
+        <div class="admin-subsection admin-lovable-card">
+          <h2 class="admin-subpanel-judul">Gambar QRIS &amp; Latar</h2>
+          <div class="lovable-upload-grid">
+            <label class="lovable-upload-card" for="qr-file">
+              <input type="file" id="qr-file" accept="image/*" form="form-qr">
+              <span class="lovable-upload-title">Unggah QRIS</span>
+              <span class="lovable-upload-desc" id="qr-file-label">PNG/JPG, disarankan bujur sangkar</span>
+            </label>
+            <form id="form-bg-donasi" class="lovable-upload-form">
+              <img id="donasi-bg-preview" class="qr-preview" alt="Pratinjau latar QR Donasi" hidden>
+              <label class="lovable-upload-card" for="donasi-bg-file">
+                <input type="file" id="donasi-bg-file" accept="image/*" aria-label="Foto latar QR Donasi">
+                <span class="lovable-upload-title">Unggah Latar Donasi</span>
+                <span class="lovable-upload-desc" id="donasi-bg-file-label">PNG/JPG maks 5MB</span>
+              </label>
+              <div class="lovable-upload-actions">
+                <button type="button" id="tombol-simpan-bg-donasi" class="btn-inline">Simpan latar</button>
+                <button type="button" id="tombol-hapus-bg-donasi" class="tombol-sekunder btn-bahaya">Hapus Latar</button>
+              </div>
+              <p id="status-bg-donasi" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
+            </form>
           </div>
-          <div class="admin-aksi">
-            <button type="button" id="tombol-hapus-bg-donasi" class="tombol-sekunder btn-bahaya">Hapus Latar</button>
+          <div class="lovable-upload-actions">
+            <button type="button" id="tombol-hapus-qr" class="tombol-sekunder btn-bahaya">Hapus QR</button>
           </div>
-          </form>
-          <p id="status-bg-donasi" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=qr">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Jadwal Kegiatan ================= -->
@@ -602,10 +583,6 @@
               <ul id="pengajian-list" class="admin-list"></ul>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=kegiatan">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Kegiatan Terdekat ================= -->
@@ -618,6 +595,7 @@
           <form id="form-acara-mode">
             <label class="opsi-radio"><input type="radio" name="acara-mode" value="waktu"> Sesuai jadwal waktu (sebelum/sesudah sholat, atur di bawah)</label>
             <label class="opsi-radio"><input type="radio" name="acara-mode" value="selalu"> Selalu tampil - ikut rotasi utama seperti QR/Jadwal Kegiatan, tanpa batas waktu</label>
+            <p id="status-acara-mode" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
           </form>
         </div>
 
@@ -722,11 +700,6 @@
           <ul id="acara-list" class="admin-list"></ul>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=acara">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Jum'at ================= -->
@@ -803,11 +776,6 @@
               <ul id="jumat-list" class="admin-list"></ul>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=jumat">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Tarawih ================= -->
@@ -879,11 +847,6 @@
           </form>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html?preview=1&amp;view=hening">Preview</button>
-        </div>
       </section>
 
       <!-- ================= Audio ================= -->
@@ -1102,12 +1065,14 @@
           </form>
         </div>
 
-        <div class="admin-aksi admin-aksi-section">
-          <button type="button" class="btn-primary tombol-simpan-section">Simpan</button>
-          <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
-          <button type="button" class="tombol-sekunder tombol-preview-section" data-preview-src="index.html">Preview</button>
-        </div>
       </section>
+
+      <div class="admin-aksi admin-aksi-global">
+        <button type="button" class="btn-primary" id="tombol-simpan-global">Simpan Perubahan</button>
+        <p id="status-simpan-global" class="status" role="status" aria-live="polite" hidden></p>
+        <a href="index.html" class="tombol-sekunder">Kembali ke Halaman</a>
+        <button type="button" class="tombol-sekunder tombol-preview-global" id="tombol-preview-global">Preview</button>
+      </div>
 
     </main>
   </div>

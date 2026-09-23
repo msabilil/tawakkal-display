@@ -4,7 +4,7 @@
 // fiturnya bisa dilewati diam-diam kalau IndexedDB tidak tersedia (mis. mode
 // private).
 
-import { cloudAktif, cloudUploadMedia, cloudUrlMedia } from "./cloud.js";
+import { cloudAktif, cloudDeleteMedia, cloudUploadMedia, cloudUrlMedia } from "./cloud.js";
 
 const DB_NAME = "masjidMediaDB";
 const STORE = "media";
@@ -70,14 +70,22 @@ export async function getMedia(key) {
 
 export async function delMedia(key) {
   try {
+    // Jangan hapus cache lokal lebih dulu ketika cloud sedang aktif. Bila
+    // penghapusan cloud gagal, kiosk tetap memakai audio lama daripada UI
+    // menjanjikan beep/default sementara device lain masih memutar file itu.
+    if (cloudAktif()) {
+      const terhapusDiCloud = await cloudDeleteMedia(`offline/${key.replace(/[^a-zA-Z0-9_-]/g, "_")}`);
+      if (!terhapusDiCloud) return false;
+    }
     const db = await openDB();
-    await new Promise((resolve) => {
+    await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
       tx.objectStore(STORE).delete(key);
       tx.oncomplete = resolve;
-      tx.onerror = resolve;
+      tx.onerror = () => reject(tx.error);
     });
+    return true;
   } catch {
-    // diam
+    return false;
   }
 }

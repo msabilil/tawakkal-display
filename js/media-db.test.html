@@ -23,7 +23,7 @@ const got = await getMedia(key);
 eq("getMedia balik Blob", got instanceof Blob, true);
 eq("getMedia isi benar", await got.text(), "assalamualaikum");
 
-await delMedia(key);
+eq("delMedia sukses", await delMedia(key), true);
 eq("getMedia setelah del null", await getMedia(key), null);
 
 eq("getMedia key tak ada null", await getMedia("test:tidakada"), null);

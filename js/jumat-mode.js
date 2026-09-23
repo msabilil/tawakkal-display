@@ -3,9 +3,9 @@
 // Storage dari admin.js, di sini cuma urus metadata (localStorage/cloud) &
 // logika kapan mode ini aktif.
 import { DEFAULT_JUMAT } from "./config.js";
-import { parseHM } from "./waktu.js";
-import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 import { loadAdzan, loadHening } from "./settings.js";
+import { tentukanAlur } from "./alur-ibadah.js";
 
 const KEY_SETTINGS = "jumatSettings";
 const KEY_SLIDES = "jumatSlides"; // [{id, tipe:"gambar"|"video", file:"jumat-<id>.<ext>", durasiDetik}]
@@ -19,9 +19,8 @@ export function loadJumatSettings() {
   }
 }
 
-export function saveJumatSettings(settings) {
-  localStorage.setItem(KEY_SETTINGS, JSON.stringify(settings));
-  cloudSet(KEY_SETTINGS, settings);
+export function saveJumatSettings(settings, opsi) {
+  return simpanPengaturan(KEY_SETTINGS, settings, opsi);
 }
 
 export function loadJumatSlides() {
@@ -34,31 +33,30 @@ export function loadJumatSlides() {
 }
 
 export function saveJumatSlides(slides) {
-  localStorage.setItem(KEY_SLIDES, JSON.stringify(slides));
-  cloudSet(KEY_SLIDES, slides);
+  return simpanPengaturan(KEY_SLIDES, slides);
 }
 
 // Alur Jumat: Adzan Dzuhur -> slide khutbah -> (opsional) Sholat Mode.
 // Durasi slide dihitung setelah Adzan selesai; kalau Sholat Mode aktif,
 // durasi layar hitam mengikuti durasi Dzuhur di pengaturan Sholat Mode.
 export function jumatState(now, jadwal) {
-  if (now.getDay() !== 5) return null;
-  if (!loadJumatSlides().length) return null;
   const settings = loadJumatSettings();
-  const mulai = parseHM(jadwal.dzuhur, now);
-  const adzanEnd = new Date(mulai.getTime() + loadAdzan().menit * 60000);
-  const slideEnd = new Date(adzanEnd.getTime() + settings.durasiMenit * 60000);
-  const heningMenit = Math.max(0, loadHening().dzuhur.menit || 0);
-  const selesai = new Date(slideEnd.getTime() + (settings.sholatModeAktif ? heningMenit * 60000 : 0));
-  if (now >= mulai && now < selesai) {
-    const fase = now < adzanEnd ? "adzan" : now < slideEnd ? "slide" : "hening";
-    return {
-      fase,
-      adzanEndTime: adzanEnd.toISOString(),
-      slideEndTime: slideEnd.toISOString(),
-      sholatModeAktif: !!settings.sholatModeAktif,
-      endTime: selesai.toISOString(),
-    };
+  const keputusan = tentukanAlur({
+    now,
+    jadwal,
+    iqomah: {},
+    hening: loadHening(),
+    adzanMenit: loadAdzan().menit,
+    jumat: { ...settings, adaSlide: loadJumatSlides().length > 0 },
+    tarawih: null,
+  });
+  if (!keputusan) return null;
+  if (keputusan.view === "iqomah" && keputusan.state.key === "jumat") {
+    return { fase: "adzan", ...keputusan.state };
+  }
+  if (keputusan.view === "jumat") return { fase: "slide", ...keputusan.state };
+  if (keputusan.view === "hening" && keputusan.state.putarNada === false) {
+    return { fase: "hening", ...keputusan.state };
   }
   return null;
 }

@@ -36,7 +36,7 @@ const t3 = new Date(2026, 8, 3, 11, 55, 0);
 const s3 = iqomahState(t3, jadwal, iq, 5);
 eq("iqomah aktif key", s3 && s3.key, "dzuhur");
 eq("iqomah total detik", s3 && s3.totalDetik, 10*60); // fase iqomah = 10 menit penuh
-eq("iqomah mengikuti waktu dzuhur terkoreksi", iqomahState(new Date(2026,8,3,12,05,0), jadwalTerkoreksi, iq, 5)?.key, "dzuhur");
+eq("iqomah mengikuti waktu dzuhur terkoreksi", iqomahState(new Date(2026,8,3,12,5,0), jadwalTerkoreksi, iq, 5)?.key, "dzuhur");
 // start = jam azan ASLI dari jadwal (bukan `now`) - mulaiIqomah() di app.js
 // pakai ini buat hitung adzanEndTime/iqomahEndTime supaya tetap anchor ke
 // jam azan sebenarnya walau mulaiIqomah() kepanggil telat (mis. ganti

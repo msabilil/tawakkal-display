@@ -1,5 +1,6 @@
 import { DEFAULT_IQOMAH, DEFAULT_ADZAN, DEFAULT_HENING, DEFAULT_NADA, DEFAULT_KOREKSI_WAKTU, SHOLAT, PENGUMUMAN } from "./config.js";
 import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 import { normalizeKoreksiMenit } from "./waktu.js";
 
 const KEY = "iqomahSettings";
@@ -31,9 +32,8 @@ export function loadKoreksiWaktu() {
 
 export async function saveKoreksiWaktu(settings, sinkronkan = cloudSet) {
   const normalized = normalisasiKoreksi(settings || {});
-  localStorage.setItem(KEY_KOREKSI_WAKTU, JSON.stringify(normalized));
-  const cloud = await sinkronkan(KEY_KOREKSI_WAKTU, normalized);
-  return { settings: normalized, cloud };
+  const hasil = await simpanPengaturan(KEY_KOREKSI_WAKTU, normalized, { sinkronkan });
+  return { settings: normalized, ...hasil };
 }
 
 export async function resetKoreksiWaktu(sinkronkan = cloudSet) {
@@ -59,9 +59,8 @@ export function loadIqomah() {
   return result;
 }
 
-export function saveIqomah(settings) {
-  localStorage.setItem(KEY, JSON.stringify(settings));
-  cloudSet(KEY, settings);
+export function saveIqomah(settings, opsi) {
+  return simpanPengaturan(KEY, settings, opsi);
 }
 
 export function loadHening() {
@@ -83,9 +82,8 @@ export function loadHening() {
   return result;
 }
 
-export function saveHening(settings) {
-  localStorage.setItem(KEY_HENING, JSON.stringify(settings));
-  cloudSet(KEY_HENING, settings);
+export function saveHening(settings, opsi) {
+  return simpanPengaturan(KEY_HENING, settings, opsi);
 }
 
 export function loadNada() {
@@ -97,9 +95,8 @@ export function loadNada() {
   }
 }
 
-export function saveNada(settings) {
-  localStorage.setItem(KEY_NADA, JSON.stringify(settings));
-  cloudSet(KEY_NADA, settings);
+export function saveNada(settings, opsi) {
+  return simpanPengaturan(KEY_NADA, settings, opsi);
 }
 
 export function loadAdzan() {
@@ -111,21 +108,19 @@ export function loadAdzan() {
   }
 }
 
-export function saveAdzan(settings) {
-  localStorage.setItem(KEY_ADZAN, JSON.stringify(settings));
-  cloudSet(KEY_ADZAN, settings);
+export function saveAdzan(settings, opsi) {
+  return simpanPengaturan(KEY_ADZAN, settings, opsi);
 }
 
 export function loadPengumuman() {
   try {
     const arr = JSON.parse(localStorage.getItem(KEY_PENGUMUMAN));
-    return Array.isArray(arr) && arr.length ? arr : PENGUMUMAN;
+    return Array.isArray(arr) ? arr : PENGUMUMAN;
   } catch {
     return PENGUMUMAN;
   }
 }
 
-export function savePengumuman(arr) {
-  localStorage.setItem(KEY_PENGUMUMAN, JSON.stringify(arr));
-  cloudSet(KEY_PENGUMUMAN, arr);
+export function savePengumuman(arr, opsi) {
+  return simpanPengaturan(KEY_PENGUMUMAN, arr, opsi);
 }

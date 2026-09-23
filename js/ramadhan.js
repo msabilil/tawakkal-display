@@ -8,7 +8,7 @@
 // diumumkan (lihat isRamadhanEfektif), bukan angka koreksi abstrak.
 import { DEFAULT_TARAWIH } from "./config.js";
 import { parseHM } from "./waktu.js";
-import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 import { parseTanggal } from "./jadwal-pengajian.js";
 
 const KEY_SETTINGS = "tarawihSettings";
@@ -47,9 +47,8 @@ export function loadTarawihSettings() {
   }
 }
 
-export function saveTarawihSettings(settings) {
-  localStorage.setItem(KEY_SETTINGS, JSON.stringify(settings));
-  cloudSet(KEY_SETTINGS, settings);
+export function saveTarawihSettings(settings, opsi) {
+  return simpanPengaturan(KEY_SETTINGS, settings, opsi);
 }
 
 // Akhir hari (23:59:59.999) lokal dari "YYYY-MM-DD" - dipakai batas akhir

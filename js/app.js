@@ -64,8 +64,9 @@ import { loadTampilan } from "./tampilan.js";
 import { ICONS } from "./icons.js";
 import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
 import { tickHalamanSholat, mulaiSesiSholat } from "./rotasi.js";
-import { jumatState } from "./jumat-mode.js";
+import { loadJumatSettings, loadJumatSlides } from "./jumat-mode.js";
 import { tampilkan, viewAktif } from "./navigasi.js";
+import { tentukanAlur } from "./alur-ibadah.js";
 
 const IQOMAH_KEY = "iqomahAktif";
 const JUMAT_KEY = "jumatAktif";
@@ -218,10 +219,10 @@ function bacaIqomahState() {
   }
 }
 
-function mulaiIqomah(iq) {
+function mulaiIqomah(state) {
   stopMurotal();
   const now = Date.now();
-  if (harusResumeIqomah(bacaIqomahState(), iq.key, now)) {
+  if (harusResumeIqomah(bacaIqomahState(), state.key, now)) {
     // Sudah ada hitung mundur berjalan buat sholat yang sama (mis. balik
     // dari refresh) - lanjutkan pakai endTime lama, jangan reset ke awal.
     tampilkan("iqomah");
@@ -236,49 +237,17 @@ function mulaiIqomah(iq) {
   // reset balik ke fase adzan penuh walau azan aslinya sudah lama lewat
   // (bug: ganti setting durasi adzan pas lagi iqomah bikin layar balik ke
   // "Waktu X Telah Masuk" dengan durasi adzan yang baru).
-  const adzanDetik = loadAdzan().menit * 60;
-  const adzanEndTime = new Date(iq.start.getTime() + adzanDetik * 1000).toISOString();
-  const iqomahEndTime = new Date(iq.start.getTime() + (adzanDetik + iq.totalDetik) * 1000).toISOString();
   localStorage.setItem(IQOMAH_KEY, JSON.stringify({
-    key: iq.key,
-    label: iq.label,
-    adzanEndTime,
-    iqomahEndTime,
-    // Bila durasi Adzan nol, langsung bunyikan nada saat Iqomah dimulai.
-    putarNadaSaatMulai: adzanDetik === 0,
+    ...state,
     nadaDimainkan: false,
   }));
   tampilkan("iqomah");
 }
 
-function mulaiJumat(jum) {
+function mulaiJumat(state) {
   stopMurotal();
-  localStorage.setItem(JUMAT_KEY, JSON.stringify(jum));
+  localStorage.setItem(JUMAT_KEY, JSON.stringify(state));
   tampilkan("jumat");
-}
-
-function mulaiAdzanJumat(jum) {
-  stopMurotal();
-  const now = Date.now();
-  if (harusResumeIqomah(bacaIqomahState(), "jumat", now)) {
-    tampilkan("iqomah");
-    return;
-  }
-  // Jumat tetap memakai layar Adzan Dzuhur. Fase iqomah sengaja tidak dibuat
-  // karena sesudah adzan alurnya pindah ke nada lalu slide khutbah.
-  localStorage.setItem(IQOMAH_KEY, JSON.stringify({
-    key: "jumat",
-    label: "Dzuhur",
-    adzanEndTime: jum.adzanEndTime,
-    iqomahEndTime: jum.adzanEndTime,
-    nadaDimainkan: false,
-  }));
-  tampilkan("iqomah");
-}
-
-function mulaiTarawih(tw) {
-  stopMurotal();
-  mulaiHening(tw.endTime);
 }
 
 function tick() {
@@ -289,40 +258,43 @@ function tick() {
 
   if (!jadwal) return; // belum ada data
   sinkronkanKoreksi();
-
-  const view = viewAktif();
-  const jum = jumatState(now, jadwal);
-  if (jum) {
-    if (jum.fase === "adzan" && view !== "iqomah") mulaiAdzanJumat(jum);
-    else if (jum.fase === "hening" && view !== "hening") mulaiHening(jum.endTime, { putarNada: false });
-    else if (jum.fase === "slide" && view !== "jumat") mulaiJumat(jum);
-    return;
-  }
-
   const iqSettings = loadIqomah();
   const adzanMenit = loadAdzan().menit;
-  const iq = iqomahState(now, jadwal, iqSettings, adzanMenit);
-  if (iq) {
-    if (view !== "iqomah") mulaiIqomah(iq);
-    return;
-  }
-
   const tw = tarawihState(now, jadwal, iqSettings, adzanMenit);
-  if (tw) {
-    if (view !== "hening") mulaiTarawih(tw);
+  const keputusan = tentukanAlur({
+    now,
+    jadwal,
+    iqomah: iqSettings,
+    hening: loadHening(),
+    adzanMenit,
+    jumat: { ...loadJumatSettings(), adaSlide: loadJumatSlides().length > 0 },
+    tarawih: tw ? { view: "hening", state: { endTime: tw.endTime, putarNada: true } } : null,
+  });
+  if (keputusan) {
+    const view = viewAktif();
+    if (keputusan.view === "iqomah" && view !== "iqomah") mulaiIqomah(keputusan.state);
+    else if (keputusan.view === "jumat" && view !== "jumat") mulaiJumat(keputusan.state);
+    else if (keputusan.view === "hening" && view !== "hening") {
+      stopMurotal();
+      mulaiHening(keputusan.state.endTime, { putarNada: keputusan.state.putarNada !== false });
+    }
     return;
   }
 
-  const hening = heningState(now, jadwal, iqSettings, loadHening(), adzanMenit);
-  if (hening) {
-    if (view !== "hening") mulaiHening(hening.endTime);
+  // View fase tidak menentukan perpindahan sendiri. Saat keputusan alur
+  // berakhir, pemilik tunggal ini membersihkan state dan kembali normal.
+  if (["iqomah", "jumat", "hening"].includes(viewAktif())) {
+    localStorage.removeItem(IQOMAH_KEY);
+    localStorage.removeItem(JUMAT_KEY);
+    localStorage.removeItem("heningAktif");
+    tampilkan("sholat");
     return;
   }
 
   // Murotal perlu dipantau walau layar sekunder sedang tampil. Kalau tidak,
   // audio baru mulai saat rotasi selesai dan terasa terlambat.
   tickMurotal(now, jadwal, modeDemo);
-  if (view !== "sholat") return;
+  if (viewAktif() !== "sholat") return;
 
   const next = nextSholat(now, jadwal);
   renderGrid(next);

@@ -3,24 +3,38 @@
 // dll) TIDAK berubah sama sekali - mereka baca localStorage seperti biasa,
 // cuma sekarang isinya bisa dimutakhirkan dari luar device ini.
 import { cloudAktif, cloudGetAll, cloudSubscribe } from "./cloud.js";
+import { cobaUlangPengaturanTertunda, terapkanDariCloud } from "./penyimpanan-pengaturan.js";
 
 const POLL_MS = 60000;
+
+function pertahankanPosisiMurotal(rows) {
+  return rows.map((row) => {
+    if (!row || row.key !== "murotalSettings") return row;
+    try {
+      const lokal = JSON.parse(localStorage.getItem(row.key));
+      if (!lokal || !lokal.posisi) return row;
+      return { ...row, value: { ...row.value, posisi: lokal.posisi } };
+    } catch {
+      return row;
+    }
+  });
+}
 
 // Diekspor terpisah dari mulaiCloudSync() supaya bisa diuji tanpa network -
 // satu-satunya bagian yang non-trivial (mapping rows -> localStorage keys).
 export function tulisKeLocal(rows) {
-  for (const row of rows) {
-    try {
-      localStorage.setItem(row.key, JSON.stringify(row.value));
-    } catch {
-      // kuota localStorage penuh dsb - diam-diam, lihat pola existing (QR donasi)
-    }
-  }
+  terapkanDariCloud(pertahankanPosisiMurotal(rows));
 }
 
 async function pullSekali() {
   const rows = await cloudGetAll();
   tulisKeLocal(rows);
+}
+
+async function sinkronkanLaluTarik(onUpdate) {
+  await cobaUlangPengaturanTertunda();
+  await pullSekali();
+  if (onUpdate) onUpdate();
 }
 
 // onUpdate: dipanggil tiap kali localStorage baru saja dimutakhirkan (pull
@@ -36,11 +50,12 @@ export async function mulaiCloudSync(onUpdate) {
   // macetkan boot kiosk - kalau timeout, lanjut pakai localStorage yang
   // sudah ada (mirror dari sync sebelumnya, atau default tiap modul kalau
   // kiosk baru).
-  await Promise.race([pullSekali().then(notify), new Promise((resolve) => setTimeout(resolve, 3000))]);
+  await Promise.race([sinkronkanLaluTarik(notify), new Promise((resolve) => setTimeout(resolve, 3000))]);
 
   cloudSubscribe((row) => {
     if (row && row.key) { tulisKeLocal([row]); notify(); }
   });
 
-  setInterval(() => pullSekali().then(notify), POLL_MS);
+  window.addEventListener("online", () => sinkronkanLaluTarik(notify));
+  setInterval(() => sinkronkanLaluTarik(notify), POLL_MS);
 }

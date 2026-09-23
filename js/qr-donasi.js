@@ -11,7 +11,7 @@ export function start(opsi) {
     return;
   }
   document.getElementById("qr-judul").textContent = (qr && qr.judul) || "Donasi";
-  document.getElementById("qr-gambar").src = qr ? qr.dataUrl : "";
+  document.getElementById("qr-gambar").src = qr ? (qr.urlCloud || qr.dataUrl) : "";
   document.getElementById("qr-teks").textContent = (qr && qr.teks) || "";
 
   if (!opsi.preview) {

@@ -5,6 +5,7 @@ import { readCache } from "./api.js";
 import { nextSholat } from "./app.js";
 import { loadAdzan, loadIqomah, loadNada } from "./settings.js";
 import { jadwalTerkoreksi } from "./jadwal-terkoreksi.js";
+import { buatPratinjauIqomah } from "./alur-ibadah.js";
 
 const KEY = "iqomahAktif";
 
@@ -40,15 +41,12 @@ function render(fase, label, sisaDetik) {
 function tick() {
   const data = bacaState();
   if (!data || !data.adzanEndTime || !data.iqomahEndTime) {
-    tampilkan("sholat");
     return;
   }
   const now = new Date();
   const adzanEnd = new Date(data.adzanEndTime);
   const iqomahEnd = new Date(data.iqomahEndTime);
   if (now >= iqomahEnd) {
-    localStorage.removeItem(KEY);
-    tampilkan("sholat");
     return;
   }
   const faseAdzan = now < adzanEnd;
@@ -83,15 +81,16 @@ export function start(opsi) {
     const sholat = cache && cache.jadwal ? nextSholat(new Date(now), jadwalTerkoreksi(cache.jadwal)) : { key: "dzuhur", label: "Dzuhur" };
     const iqSet = loadIqomah()[sholat.key] || {};
     const iqomahDetik = iqSet.aktif && iqSet.menit > 0 ? iqSet.menit * 60 : 0;
-    const adzanDetik = fase === "adzan" ? loadAdzan().menit * 60 : 0;
-    const adzanEndTime = new Date(now + adzanDetik * 1000).toISOString();
-    const iqomahEndTime = new Date(now + (adzanDetik + iqomahDetik) * 1000).toISOString();
-    localStorage.setItem(KEY, JSON.stringify({
+    const keputusan = buatPratinjauIqomah({
+      sekarang: new Date(now),
+      fase,
       key: sholat.key,
       label: sholat.label,
-      adzanEndTime,
-      iqomahEndTime,
-      putarNadaSaatMulai: true,
+      adzanMenit: loadAdzan().menit,
+      iqomahMenit: iqomahDetik / 60,
+    });
+    localStorage.setItem(KEY, JSON.stringify({
+      ...keputusan.state,
       nadaDimainkan: false,
     }));
     const stop = mulaiCountdown();

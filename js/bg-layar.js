@@ -2,7 +2,9 @@
 // layar, diupload ke Supabase Storage. localStorage/cloud cuma nyimpen URL-nya
 // (peta layar -> URL). Kosong (belum upload) = balik ke tampilan tema asli
 // lewat CSS.
-import { cloudAktif, cloudSet, cloudUploadMedia, cloudDeleteMedia } from "./cloud.js";
+import { cloudAktif } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
+import { hapusMedia, simpanMedia } from "./kelola-media.js";
 
 const KEY_PETA = "bgLayarFile";
 
@@ -11,8 +13,7 @@ function petaFile() {
   catch { return {}; }
 }
 function simpanPeta(peta) {
-  localStorage.setItem(KEY_PETA, JSON.stringify(peta));
-  cloudSet(KEY_PETA, peta);
+  return simpanPengaturan(KEY_PETA, peta);
 }
 
 function ekstensi(file) {
@@ -25,20 +26,24 @@ function ekstensi(file) {
 export async function simpanBgLayar(layar, file) {
   if (!cloudAktif()) return false;
   const nama = `bg-${layar}.${ekstensi(file)}`;
-  const urlCloud = await cloudUploadMedia(nama, file);
-  if (!urlCloud) return false;
-
   const peta = petaFile();
-  peta[`${layar}Cloud`] = urlCloud;
-  simpanPeta(peta);
-  return true;
+  return simpanMedia({
+    file,
+    nama,
+    mediaLama: peta[`${layar}Cloud`],
+    buatMetadata: (urlCloud) => ({ ...peta, [`${layar}Cloud`]: urlCloud }),
+    simpanMetadata: simpanPeta,
+  });
 }
 
 export async function hapusBgLayar(layar) {
   const peta = petaFile();
-  cloudDeleteMedia(peta[`${layar}Cloud`]); // fire-and-forget, tidak nge-block hapus dari peta
-  delete peta[`${layar}Cloud`];
-  simpanPeta(peta);
+  const key = `${layar}Cloud`;
+  return hapusMedia({
+    media: peta[key],
+    buatMetadata: () => { const baru = { ...peta }; delete baru[key]; return baru; },
+    simpanMetadata: simpanPeta,
+  });
 }
 
 export function urlBgLayar(layar) {

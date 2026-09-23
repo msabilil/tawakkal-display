@@ -18,6 +18,14 @@ tulisKeLocal([{ key: "tesKeySync", value: { a: 1 } }]);
 eq("tulisKeLocal nulis JSON ke localStorage", localStorage.getItem("tesKeySync"), JSON.stringify({ a: 1 }));
 localStorage.removeItem("tesKeySync");
 
+// Posisi murotal adalah keadaan khusus kiosk. Cloud hanya menyimpan
+// konfigurasi/playlist, sehingga tarikan cloud tidak boleh menghapus posisi
+// pemutaran yang sedang berlangsung di perangkat ini.
+localStorage.setItem("murotalSettings", JSON.stringify({ aktif: true, posisi: { index: 3, detik: 75 } }));
+tulisKeLocal([{ key: "murotalSettings", value: { aktif: false } }]);
+eq("tarikan cloud murotal mempertahankan posisi lokal kiosk", localStorage.getItem("murotalSettings"), JSON.stringify({ aktif: false, posisi: { index: 3, detik: 75 } }));
+localStorage.removeItem("murotalSettings");
+
 // supabase-config.js kosong di repo default -> mulaiCloudSync harus selesai
 // cepat tanpa efek samping (tidak nyoba network sama sekali).
 const mulai = Date.now();

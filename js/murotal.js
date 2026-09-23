@@ -1,6 +1,7 @@
 import { SHOLAT, DEFAULT_MUROTAL } from "./config.js";
 import { parseHM } from "./waktu.js";
 import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 
 const KEY = "murotalSettings";
 
@@ -19,9 +20,17 @@ export function loadMurotal() {
   }
 }
 
-export function saveMurotal(s) {
-  localStorage.setItem(KEY, JSON.stringify(s));
-  cloudSet(KEY, s);
+export function saveMurotal(s, opsi) {
+  const { posisi, ...pengaturanCloud } = s;
+  return simpanPengaturan(KEY, s, { ...opsi, nilaiCloud: pengaturanCloud });
+}
+
+function simpanPosisiLokal(s) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(s));
+  } catch {
+    // Posisi hanya kenyamanan lokal; pemutaran tetap dapat berjalan.
+  }
 }
 
 // Sholat yang jendela murotalnya sedang aktif, atau null.
@@ -90,7 +99,7 @@ export function initMurotal(refs) {
 function simpanPosisi() {
   const s = loadMurotal();
   s.posisi = { index: s.posisi.index, detik: audioEl.currentTime || 0 };
-  saveMurotal(s);
+  simpanPosisiLokal(s);
 }
 
 function pramuatPosisi(detik) {
@@ -154,7 +163,7 @@ async function mainkanIndex(index, detik) {
   const idx = ((index % s.playlist.length) + s.playlist.length) % s.playlist.length;
   const item = s.playlist[idx];
   s.posisi = { index: idx, detik: detik || 0 };
-  saveMurotal(s);
+  simpanPosisiLokal(s);
   const ok = await muatTrack(item);
   if (!ok) {
     gagalBeruntun++;
