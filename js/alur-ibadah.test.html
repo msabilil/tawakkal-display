@@ -30,6 +30,17 @@ eq("hari biasa saat adzan memutuskan layar iqomah", biasa && biasa.view, "iqomah
 eq("hari biasa menyimpan fase adzan", biasa && biasa.state && biasa.state.fase, "adzan");
 eq("hari biasa membawa tenggat iqomah", biasa && biasa.state && biasa.state.iqomahEndTime, "2026-09-03T05:07:00.000Z");
 
+// Layar dan nada Adzan harus sudah dimulai 10 detik sebelum jadwal, tanpa
+// memajukan akhir Adzan maupun awal Iqomah yang sudah dikonfigurasi.
+const sebelumAdzan = alur.tentukanAlur?.({
+  now: new Date(2026, 8, 3, 11, 51, 50), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { adaSlide: false }, tarawih: null,
+});
+eq("10 detik sebelum jadwal memutuskan layar adzan", sebelumAdzan && sebelumAdzan.view, "iqomah");
+eq("10 detik sebelum jadwal tetap fase adzan", sebelumAdzan && sebelumAdzan.state && sebelumAdzan.state.fase, "adzan");
+eq("adzan awal menyimpan waktu mulai hitung mundur", sebelumAdzan && sebelumAdzan.state && sebelumAdzan.state.adzanStartTime, "2026-09-03T04:52:00.000Z");
+eq("adzan awal tidak memajukan tenggat iqomah", sebelumAdzan && sebelumAdzan.state && sebelumAdzan.state.iqomahEndTime, "2026-09-03T05:07:00.000Z");
+
 const heningBiasa = alur.tentukanAlur?.({
   now: new Date(2026, 8, 3, 12, 10), jadwal, iqomah, hening,
   adzanMenit: 5, jumat: { adaSlide: false }, tarawih: null,
@@ -42,6 +53,13 @@ const jumatSlide = alur.tentukanAlur?.({
 });
 eq("Jumat setelah adzan memutuskan layar slide", jumatSlide && jumatSlide.view, "jumat");
 eq("slide Jumat tidak memutar nada Sholat Mode", jumatSlide && jumatSlide.state && jumatSlide.state.putarNada, false);
+
+const jumatSebelumAdzan = alur.tentukanAlur?.({
+  now: new Date(2026, 8, 4, 11, 51, 50), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { adaSlide: true, durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
+});
+eq("Jumat 10 detik sebelum jadwal memutuskan layar adzan", jumatSebelumAdzan && jumatSebelumAdzan.view, "iqomah");
+eq("Jumat 10 detik sebelum jadwal tetap fase adzan", jumatSebelumAdzan && jumatSebelumAdzan.state && jumatSebelumAdzan.state.fase, "adzan");
 
 const jumatHening = alur.tentukanAlur?.({
   now: new Date(2026, 8, 4, 12, 20), jadwal, iqomah, hening,

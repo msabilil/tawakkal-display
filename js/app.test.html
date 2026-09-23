@@ -46,6 +46,11 @@ eq("iqomah start = jam azan asli", s3 && s3.start.getTime(), parseHM(jadwal.dzuh
 eq("iqomah lewat", iqomahState(new Date(2026,8,3,12,10,0), jadwal, iq, 5), null);
 // Kamis 10:00 -> bukan waktu sholat -> null
 eq("iqomah bukan waktu", iqomahState(t1, jadwal, iq, 5), null);
+// Layar Adzan mulai 10 detik sebelum jadwal, tetapi tenggat fase berikutnya
+// tetap dihitung dari waktu sholat yang telah ditetapkan.
+const sSebelumAdzan = iqomahState(new Date(2026,8,3,11,51,50), jadwal, iq, 5);
+eq("iqomah mulai 10 detik sebelum adzan", sSebelumAdzan && sSebelumAdzan.key, "dzuhur");
+eq("iqomah awal tidak menggeser tenggat", sSebelumAdzan && sSebelumAdzan.start.getTime(), parseHM(jadwal.dzuhur, t3).getTime());
 // Jumat 11:55 dzuhur -> dilewati -> null
 eq("iqomah jumat dzuhur null", iqomahState(new Date(2026,8,4,11,55,0), jadwal, iq, 5), null);
 // iqomah nonaktif -> adzan tetap wajib tampil (window cuma sepanjang adzan, fase iqomah 0 detik)

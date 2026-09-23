@@ -7,7 +7,7 @@ Aplikasi web statis untuk layar monitor di masjid At-Tawakkal 2. Menampilkan jam
 `index.html` satu-satunya layar display - berisi 5 "view" (section yang di-toggle lewat JS, bukan halaman terpisah, biar fullscreen browser tidak ke-reset tiap gantian - lihat `js/navigasi.js`):
 
 - **sholat** - view default, jalan terus selama tidak ada sholat yang masuk waktunya.
-- **iqomah** - otomatis tampil begitu waktu sholat masuk: fase Adzan (tanpa hitung mundur) dulu, lalu fase Iqomah (hitung mundur), baru balik sendiri ke view sholat.
+- **iqomah** - otomatis tampil 10 detik sebelum waktu sholat dan menyalakan nada Adzan. Tepat saat waktu sholat masuk, hitung mundur fase Adzan dimulai dengan efek berkedip; setelahnya fase Iqomah (hitung mundur), lalu kembali sendiri ke view sholat.
 - **jumat** - otomatis tampil di jam Dzuhur hari Jumat (kalau ada slide diatur), gambar/video bergilir, lalu balik sendiri ke view sholat.
 - **qr**, **kegiatan** - layar sekunder yang gantian otomatis di antara jadwal sholat.
 

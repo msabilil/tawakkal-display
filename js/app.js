@@ -1,5 +1,5 @@
-import { SHOLAT } from "./config.js";
-import { dayWIB, formatJamWIB, formatTanggalWIB, parseHM, applyKoreksiWaktu } from "./waktu.js";
+import { ADZAN_LEBIH_AWAL_DETIK, SHOLAT } from "./config.js";
+import { dayWIB, formatJamWIB, formatTanggalWIB, formatTanggalHijriahWIB, parseHM, applyKoreksiWaktu } from "./waktu.js";
 export { parseHM };
 
 export function nextSholat(now, jadwal) {
@@ -26,8 +26,9 @@ export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
     const totalMenit = adzanMenit + iqomahMenit;
     if (totalMenit <= 0) continue; // adzan 0 menit & iqomah nonaktif -> tidak ada apa-apa
     const start = parseHM(jadwal[key], now);
+    const adzanMulai = new Date(start.getTime() - ADZAN_LEBIH_AWAL_DETIK * 1000);
     const end = new Date(start.getTime() + totalMenit * 60000);
-    if (now >= start && now < end) {
+    if (now >= adzanMulai && now < end) {
       const totalDetik = iqomahMenit * 60; // durasi fase iqomah saja, dipakai mulaiIqomah()
       const sisaDetik = Math.ceil((end - now) / 1000);
       return { key, label, sisaDetik, totalDetik, start };
@@ -67,6 +68,8 @@ import { tickHalamanSholat, mulaiSesiSholat } from "./rotasi.js";
 import { loadJumatSettings, loadJumatSlides } from "./jumat-mode.js";
 import { tampilkan, viewAktif } from "./navigasi.js";
 import { tentukanAlur } from "./alur-ibadah.js";
+import { loadJadwalPengajian } from "./jadwal-pengajian.js";
+import { kegiatanTerdekat } from "./hero-kegiatan.js";
 
 const IQOMAH_KEY = "iqomahAktif";
 const JUMAT_KEY = "jumatAktif";
@@ -110,14 +113,24 @@ function renderMarquee() {
 
 function renderTanggal(now) {
   $("tanggal-masehi").textContent = formatTanggalWIB(now);
-  try {
-    $("tanggal-hijriah").textContent = new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
-      timeZone: "Asia/Jakarta",
-      day: "numeric", month: "long", year: "numeric",
-    }).format(now);
-  } catch {
-    $("tanggal-hijriah").textContent = "";
-  }
+  $("tanggal-hijriah").textContent = formatTanggalHijriahWIB(now);
+}
+
+function renderHeroKegiatan(now) {
+  const kegiatan = kegiatanTerdekat(now, loadJadwalPengajian());
+  const tampilkanKegiatan = kegiatan && Math.floor(now.getTime() / 10000) % 2 === 1;
+  const hero = $("hero-kegiatan");
+  const panel = $("hero-kegiatan").parentElement;
+
+  panel.classList.toggle("hero-kanan-menampilkan-kegiatan", !!tampilkanKegiatan);
+  hero.setAttribute("aria-hidden", String(!tampilkanKegiatan));
+  if (!kegiatan) return;
+
+  $("hero-kegiatan-nama").textContent = kegiatan.nama;
+  $("hero-kegiatan-tanggal").textContent = kegiatan.tanggal;
+  $("hero-kegiatan-jam").textContent = kegiatan.jam;
+  $("hero-kegiatan-pengisi").textContent = kegiatan.pengisi ? `Pengisi: ${kegiatan.pengisi}` : "";
+  $("hero-kegiatan-pengisi").hidden = !kegiatan.pengisi;
 }
 
 function renderGrid(next) {
@@ -254,6 +267,7 @@ function tick() {
   const now = new Date();
   $("jam").textContent = formatJamWIB(now);
   renderTanggal(now);
+  renderHeroKegiatan(now);
   tickJamAnalog(now);
 
   if (!jadwal) return; // belum ada data

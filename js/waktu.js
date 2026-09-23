@@ -19,6 +19,17 @@ const FORMATTER_TANGGAL_WIB = new Intl.DateTimeFormat("id-ID", {
   month: "long",
   year: "numeric",
 });
+const FORMATTER_HIJRIAH_WIB = new Intl.DateTimeFormat("en-u-ca-islamic", {
+  timeZone: ZONA_WAKTU,
+  day: "numeric",
+  month: "numeric",
+  year: "numeric",
+});
+const BULAN_HIJRIAH = [
+  "Muharam", "Safar", "Rabiulawal", "Rabiulakhir",
+  "Jumadilawal", "Jumadilakhir", "Rajab", "Syakban",
+  "Ramadan", "Syawal", "Zulkaidah", "Zulhijah",
+];
 const KEYS_KOREKSI = ["subuh", "dzuhur", "ashar", "maghrib", "isya"];
 
 function bagianWIB(date) {
@@ -43,6 +54,23 @@ export function formatJamWIB(date) {
 
 export function formatTanggalWIB(date) {
   return FORMATTER_TANGGAL_WIB.format(date);
+}
+
+// Beberapa browser TV memiliki data lokalisasi Hijriah Indonesia yang tidak
+// lengkap: angka kalendernya benar, tetapi nama bulan/era dapat tercampur
+// dengan kalender Masehi. Ambil hanya angka dari Intl, lalu bentuk label
+// Indonesia sendiri agar tampilan konsisten lintas-perangkat.
+export function formatTanggalHijriahWIB(date) {
+  try {
+    const bagian = Object.fromEntries(FORMATTER_HIJRIAH_WIB.formatToParts(date)
+      .filter(({ type }) => ["day", "month", "year"].includes(type))
+      .map(({ type, value }) => [type, Number(value)]));
+    if (!Number.isInteger(bagian.day) || !Number.isInteger(bagian.month)
+      || !Number.isInteger(bagian.year) || !BULAN_HIJRIAH[bagian.month - 1]) return "";
+    return `${bagian.day} ${BULAN_HIJRIAH[bagian.month - 1]} ${bagian.year} H`;
+  } catch {
+    return "";
+  }
 }
 
 function waktuWIBKeEpoch(parts, jam, menit) {

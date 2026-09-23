@@ -29,11 +29,18 @@ function bacaState() {
   }
 }
 
-function render(fase, label, sisaDetik) {
+function render(fase, label, sisaDetik, pemberitahuanAwal = false) {
   elLayar.classList.toggle("fase-adzan", fase === "adzan");
   elLayar.classList.toggle("fase-iqomah", fase === "iqomah");
-  elJudul.textContent = fase === "adzan" ? `Waktu ${label} Telah Masuk` : `Iqomah ${label}`;
+  elLayar.classList.toggle("pemberitahuan-awal", pemberitahuanAwal);
+  elJudul.textContent = fase === "adzan"
+    ? (pemberitahuanAwal ? `Adzan ${label} Akan Segera Dimulai` : `Waktu ${label} Telah Masuk`)
+    : `Iqomah ${label}`;
   elAdzanLabel.textContent = `Adzan ${label}`;
+  // Selama 10 detik pemberitahuan awal countdown tetap terlihat pada nilai
+  // durasi Adzan dan berkedip. Nilai baru mulai berkurang tepat saat jadwal
+  // Adzan masuk.
+  elWaktu.hidden = false;
   elWaktu.textContent = fmtMenitDetik(Math.max(sisaDetik, 0));
   terapkanBgLayar(fase, elLayar);
 }
@@ -50,11 +57,19 @@ function tick() {
     return;
   }
   const faseAdzan = now < adzanEnd;
-  const sisaDetik = Math.ceil(((faseAdzan ? adzanEnd : iqomahEnd) - now) / 1000);
-  render(faseAdzan ? "adzan" : "iqomah", data.label, sisaDetik);
-  // Nada dipicu ketika waktu sholat benar-benar masuk, bukan setelah durasi
-  // layar Adzan habis. Ini juga membuat alur Jumat berbunyi sebelum slide
-  // khutbah dimulai. Flag disimpan di state agar refresh tidak mengulang nada.
+  // Pada 10 detik pemberitahuan awal, layar dan nada sudah aktif tetapi
+  // hitung mundur baru ditampilkan tepat ketika waktu Adzan masuk.
+  const adzanMulai = data.adzanStartTime ? new Date(data.adzanStartTime) : null;
+  const hitungMundurDimulai = !adzanMulai || now >= adzanMulai;
+  const pemberitahuanAwal = faseAdzan && !hitungMundurDimulai;
+  const sisaDetik = pemberitahuanAwal
+    ? Math.ceil((adzanEnd - adzanMulai) / 1000)
+    : Math.ceil(((faseAdzan ? adzanEnd : iqomahEnd) - now) / 1000);
+  render(faseAdzan ? "adzan" : "iqomah", data.label, sisaDetik, pemberitahuanAwal);
+  // Nada dipicu ketika fase Adzan mulai (10 detik sebelum jadwal), bukan
+  // setelah durasi layar Adzan habis. Ini juga membuat alur Jumat berbunyi
+  // sebelum slide khutbah dimulai. Flag disimpan di state agar refresh tidak
+  // mengulang nada.
   if (!data.nadaDimainkan && (faseAdzan || data.putarNadaSaatMulai)) {
     localStorage.setItem(KEY, JSON.stringify({ ...data, nadaDimainkan: true }));
     const nada = loadNada();

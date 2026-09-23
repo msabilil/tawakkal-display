@@ -54,5 +54,6 @@ export function urlBgLayar(layar) {
 // path relatif, gak butuh akses folder/izin sama sekali.
 export function terapkanBgLayar(layar, el) {
   const url = urlBgLayar(layar);
-  el.style.backgroundImage = url ? `url(${url})` : "";
+  if (url) el.style.setProperty("background-image", `url(${url})`, "important");
+  else el.style.removeProperty("background-image");
 }

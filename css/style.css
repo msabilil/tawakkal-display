@@ -301,7 +301,29 @@ body:not(.layar) #tombol-fullscreen {
   pointer-events: none;
 }
 .hero-kanan-bg svg { width: 100%; height: 100%; }
-.hero-kanan-isi { position: relative; z-index: 1; }
+.hero-kanan-isi {
+  position: relative;
+  z-index: 1;
+  transition: opacity 500ms ease, visibility 500ms ease;
+}
+.hero-kanan-kegiatan {
+  position: absolute;
+  inset: 2.8cqh 1.6cqw;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 500ms ease, visibility 500ms ease;
+}
+.hero-kanan-menampilkan-kegiatan .hero-kanan-isi {
+  opacity: 0;
+  visibility: hidden;
+}
+.hero-kanan-menampilkan-kegiatan .hero-kanan-kegiatan {
+  opacity: 1;
+  visibility: visible;
+}
 .hero-kanan-baris { display: flex; align-items: center; gap: 12px; }
 .hero-kanan-baris-bawah { justify-content: space-between; align-items: flex-start; }
 .hero-garis { height: 1px; background: var(--border); margin: 1.6cqh 0; }
@@ -323,6 +345,23 @@ body:not(.layar) #tombol-fullscreen {
   font-weight: 700;
   color: var(--text-dim);
   margin-top: 2px;
+}
+.hero-kegiatan-nama {
+  margin-top: 2px;
+  font-size: clamp(22px, 2.6cqw, 34px);
+  font-weight: 800;
+  line-height: 1.18;
+}
+.hero-kegiatan-detail {
+  margin-top: 6px;
+  font-size: clamp(15px, 1.7cqw, 22px);
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.hero-kegiatan-pengisi {
+  margin-top: 10px;
+  font-size: clamp(13px, 1.35cqw, 18px);
+  font-weight: 600;
 }
 .chip-zona {
   padding: 4px 12px;
@@ -458,6 +497,13 @@ body:not(.layar) #tombol-fullscreen {
   color: var(--biru-900);
   font-variant-numeric: tabular-nums;
 }
+#layar-16x9.iqomah-page.fase-adzan.pemberitahuan-awal #iqomah-waktu:not([hidden]) {
+  animation: adzan-countdown-kedip 1s steps(1, end) infinite;
+}
+@keyframes adzan-countdown-kedip {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.18; }
+}
 
 /* ---------- Footer ---------- */
 .footer { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 1cqh; flex-shrink: 0; }
@@ -504,6 +550,7 @@ body:not(.layar) #tombol-fullscreen {
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
   .pill-titik { animation: none; }
+  #layar-16x9.iqomah-page.fase-adzan #iqomah-waktu { animation: none; }
 }
 
 .status-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 4px; }
@@ -2531,8 +2578,11 @@ body.admin .stepper-btn {
   background-position: center !important;
   background-repeat: no-repeat !important;
 }
-/* !important - lihat catatan di #layar-16x9.iqomah-page. */
-#layar-16x9.halaman-qr { background-image: url("../img/bg-iqomah.jpeg") !important; }
+/* !important - lihat catatan di #layar-16x9.iqomah-page.
+   Latar bawaan QR memakai area tengah yang lapang agar judul, ajakan
+   donasi, dan QRIS tetap terbaca. Latar donasi dari admin tetap menimpa
+   fallback ini lewat style inline. */
+#layar-16x9.halaman-qr { background-image: url("../img/WhatsApp Image 2026-09-07 at 20.02.40 (3).jpeg") !important; }
 #layar-16x9.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") !important; }
 
 
@@ -2564,7 +2614,13 @@ body.admin .stepper-btn {
   text-shadow: 0 2px 10px rgba(0, 0, 0, .35);
 }
 .fokus-qr-img { width: clamp(160px, 32cqh, 340px); height: auto; border-radius: 18px; box-shadow: none; }
-.fokus-qr-teks { font-size: clamp(13px, 1.6cqw, 20px); margin: 0; color: #334155; }
+.fokus-qr-teks {
+  font-size: clamp(13px, 1.6cqw, 20px);
+  margin: 0;
+  color: #e6f7ff;
+  font-weight: 600;
+  text-shadow: 0 1px 5px rgba(0, 20, 56, 0.8);
+}
 .fokus-kosong { opacity: 0.7; font-size: clamp(16px, 1.8cqw, 24px); color: #fff; }
 
 /* Kotak foto jadwal kegiatan: img/bg-jadwal-kegiatan.jpeg, grid 2 kolom x 4 baris tetap. */

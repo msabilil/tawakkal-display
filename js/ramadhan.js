@@ -7,7 +7,7 @@
 // override LANGSUNG pakai tanggal Masehi mulai/selesai Ramadhan yang resmi
 // diumumkan (lihat isRamadhanEfektif), bukan angka koreksi abstrak.
 import { DEFAULT_TARAWIH } from "./config.js";
-import { parseHM } from "./waktu.js";
+import { formatTanggalHijriahWIB, parseHM } from "./waktu.js";
 import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 import { parseTanggal } from "./jadwal-pengajian.js";
 
@@ -31,11 +31,7 @@ export function isRamadhan(date) {
 }
 
 export function tanggalHijriahLabel(date) {
-  try {
-    return new Intl.DateTimeFormat("id-ID-u-ca-islamic", { day: "numeric", month: "long", year: "numeric" }).format(date);
-  } catch {
-    return "-";
-  }
+  return formatTanggalHijriahWIB(date) || "-";
 }
 
 export function loadTarawihSettings() {

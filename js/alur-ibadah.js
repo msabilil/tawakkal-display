@@ -1,4 +1,4 @@
-import { SHOLAT } from "./config.js";
+import { ADZAN_LEBIH_AWAL_DETIK, SHOLAT } from "./config.js";
 import { parseHM } from "./waktu.js";
 
 function waktuIqomah(now, jadwal, iqomah, adzanMenit) {
@@ -8,15 +8,17 @@ function waktuIqomah(now, jadwal, iqomah, adzanMenit) {
     const menitIqomah = pengaturan.aktif && pengaturan.menit > 0 ? pengaturan.menit : 0;
     if (adzanMenit + menitIqomah <= 0) continue;
     const mulai = parseHM(jadwal[key], now);
+    const adzanMulai = new Date(mulai.getTime() - ADZAN_LEBIH_AWAL_DETIK * 1000);
     const adzanSelesai = new Date(mulai.getTime() + adzanMenit * 60000);
     const selesai = new Date(adzanSelesai.getTime() + menitIqomah * 60000);
-    if (now < mulai || now >= selesai) continue;
+    if (now < adzanMulai || now >= selesai) continue;
     return {
       view: "iqomah",
       state: {
         key,
         label,
         fase: now < adzanSelesai ? "adzan" : "iqomah",
+        adzanStartTime: mulai.toISOString(),
         adzanEndTime: adzanSelesai.toISOString(),
         iqomahEndTime: selesai.toISOString(),
         putarNadaSaatMulai: adzanMenit === 0,
@@ -46,11 +48,12 @@ function waktuHening(now, jadwal, iqomah, hening, adzanMenit) {
 function alurJumat(now, jadwal, hening, adzanMenit, jumat) {
   if (now.getDay() !== 5 || !jumat?.adaSlide) return null;
   const mulai = parseHM(jadwal.dzuhur, now);
+  const adzanMulai = new Date(mulai.getTime() - ADZAN_LEBIH_AWAL_DETIK * 1000);
   const adzanSelesai = new Date(mulai.getTime() + adzanMenit * 60000);
   const slideSelesai = new Date(adzanSelesai.getTime() + jumat.durasiMenit * 60000);
   const menitHening = Math.max(0, hening.dzuhur?.menit || 0);
   const selesai = new Date(slideSelesai.getTime() + (jumat.sholatModeAktif ? menitHening * 60000 : 0));
-  if (now < mulai || now >= selesai) return null;
+  if (now < adzanMulai || now >= selesai) return null;
   if (now < adzanSelesai) {
     return {
       view: "iqomah",
@@ -58,6 +61,7 @@ function alurJumat(now, jadwal, hening, adzanMenit, jumat) {
         key: "jumat",
         label: "Dzuhur",
         fase: "adzan",
+        adzanStartTime: mulai.toISOString(),
         adzanEndTime: adzanSelesai.toISOString(),
         iqomahEndTime: adzanSelesai.toISOString(),
         putarNadaSaatMulai: false,
@@ -88,6 +92,7 @@ export function buatPratinjauIqomah({ sekarang, fase, key, label, adzanMenit, iq
       key,
       label,
       fase,
+      adzanStartTime: sekarang.toISOString(),
       adzanEndTime: adzanSelesai.toISOString(),
       iqomahEndTime: selesai.toISOString(),
       putarNadaSaatMulai: true,

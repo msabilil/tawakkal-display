@@ -190,6 +190,7 @@ html[data-versi="baru"] .hero-kanan-ilustrasi {
 /* ganti simbol SVG flat dengan ilustrasi masjid asli di atas */
 html[data-versi="baru"] .hero-kanan-ilustrasi svg { display: none; }
 html[data-versi="baru"] .hero-kanan-isi { position: relative; z-index: 1; max-width: 66%; }
+html[data-versi="baru"] .hero-kanan-kegiatan { inset: 2.6cqh 2cqw; max-width: 66%; }
 html[data-versi="baru"] .label-kecil {
   color: var(--v2-700);
   font-weight: 600;
@@ -198,6 +199,8 @@ html[data-versi="baru"] .label-kecil {
 html[data-versi="baru"] .tanggal-hijriah,
 html[data-versi="baru"] .tanggal-masehi { color: var(--v2-900); font-weight: 600; }
 html[data-versi="baru"] .tanggal-masehi { font-size: clamp(15px, 1.6cqw, 21px); }
+html[data-versi="baru"] .hero-kegiatan-nama { color: var(--v2-900); font-weight: 700; }
+html[data-versi="baru"] .hero-kegiatan-detail { color: var(--v2-900); }
 /* garis ornamen dengan berlian di tengah */
 html[data-versi="baru"] .hero-garis {
   position: relative;

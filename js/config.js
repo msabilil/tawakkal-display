@@ -56,6 +56,7 @@ export const QORI = {
 // Iqomah (hitung mundur terpisah, penuh sesuai menit jeda di DEFAULT_IQOMAH -
 // lihat app.js mulaiIqomah, dua durasi ini independen/berurutan, bukan dipotong).
 export const DEFAULT_ADZAN = { menit: 5 };
+export const ADZAN_LEBIH_AWAL_DETIK = 10;
 
 // Durasi slide Jum'at setelah layar Adzan Dzuhur. Cuma aktif kalau ada
 // minimal 1 slide tersimpan (lihat jumat-mode.js jumatState).
