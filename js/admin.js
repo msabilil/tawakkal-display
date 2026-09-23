@@ -1,5 +1,5 @@
 import { SHOLAT, WAKTU_HARIAN, QORI } from "./config.js";
-import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadNada, saveNada, loadPengumuman, savePengumuman } from "./settings.js";
+import { loadIqomah, saveIqomah, loadAdzan, saveAdzan, loadHening, saveHening, loadNada, saveNada, loadKoreksiWaktu, saveKoreksiWaktu, resetKoreksiWaktu, loadPengumuman, savePengumuman } from "./settings.js";
 import { loadTarawihSettings, saveTarawihSettings, isRamadhanEfektif, tanggalHijriahLabel } from "./ramadhan.js";
 import { loadAcara, saveAcara, loadAcaraSlides, saveAcaraSlides } from "./acara-mode.js";
 import { loadTampilan, saveTampilan } from "./tampilan.js";
@@ -11,15 +11,62 @@ import { putMedia, delMedia, getMedia } from "./media-db.js";
 import { mainkanNada } from "./nada.js";
 import { TEMA_TAMPILAN } from "./tema/tampilan/registry.js";
 import { simpanBgLayar, hapusBgLayar, urlBgLayar } from "./bg-layar.js";
-import { readCache, dateKey } from "./api.js";
-import { parseHM } from "./waktu.js";
-import { cloudAktif, cloudSet, cloudUploadMedia, cloudGetAll, cloudDeleteMedia } from "./cloud.js";
+import { readCache, dateKey, getJadwal } from "./api.js";
+import { parseHM, ringkasKoreksiWaktu } from "./waktu.js";
+import { cloudAktif, cloudGetAll } from "./cloud.js";
+import { cobaUlangPembersihanMedia, hapusMedia, simpanMedia } from "./kelola-media.js";
 import { sesiAktif, login, logout } from "./cloud-auth.js";
 import { tulisKeLocal } from "./cloud-sync.js";
+import { simpanPengaturan, tungguSemuaPengaturan } from "./penyimpanan-pengaturan.js";
 
 const $ = (id) => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const fmtJam = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+let jadwalKoreksiHariIni = null;
+let sumberJadwalKoreksi = "";
+
+function teksJam(jam) {
+  return jam ? `${String(jam).slice(0, 5)} WIB` : "--:-- WIB";
+}
+
+function bacaKoreksiForm() {
+  const settings = {};
+  for (const { key } of SHOLAT) settings[key] = Number($(`koreksi-${key}`)?.value);
+  return settings;
+}
+
+function renderRingkasanKoreksi() {
+  const ringkasanEl = $("ringkasan-koreksi-waktu");
+  if (!ringkasanEl) return;
+  ringkasanEl.innerHTML = "";
+  if (!jadwalKoreksiHariIni) {
+    const kosong = document.createElement("p");
+    kosong.className = "koreksi-ringkasan-kosong";
+    kosong.textContent = "Jadwal hari ini belum tersedia. Koreksi tetap dapat disimpan.";
+    ringkasanEl.appendChild(kosong);
+    return;
+  }
+  const koreksi = bacaKoreksiForm();
+  const ringkasan = ringkasKoreksiWaktu(jadwalKoreksiHariIni, koreksi);
+  for (const { key, label } of SHOLAT) {
+    const waktu = ringkasan[key];
+    const menitKoreksi = Number.isFinite(koreksi[key]) ? koreksi[key] : 0;
+    const kartu = document.createElement("div");
+    kartu.className = "koreksi-waktu-kartu";
+    kartu.setAttribute("aria-label", `${label}, ${teksJam(waktu.berlaku)}, koreksi ${menitKoreksi} menit`);
+    const judul = document.createElement("span");
+    judul.className = "koreksi-waktu-judul";
+    judul.textContent = label;
+    const nilai = document.createElement("strong");
+    nilai.className = "koreksi-waktu-nilai";
+    nilai.textContent = teksJam(waktu.berlaku);
+    const meta = document.createElement("span");
+    meta.className = "koreksi-waktu-meta";
+    meta.textContent = `Koreksi ${menitKoreksi > 0 ? "+" : ""}${menitKoreksi} menit`;
+    kartu.append(judul, nilai, meta);
+    ringkasanEl.appendChild(kartu);
+  }
+}
 
 // Pemilih berkas custom (ganti "Choose File" bawaan) - input file asli tetap
 // jadi elemen fungsional (disembunyikan visual lewat CSS .file-picker-input),
@@ -75,7 +122,7 @@ function renderIqomah() {
   }
 }
 
-function simpanIqomah(e) {
+async function simpanIqomah(e) {
   e.preventDefault();
   const settings = {};
   for (const { key } of SHOLAT) {
@@ -85,8 +132,8 @@ function simpanIqomah(e) {
       aktif: $(`aktif-${key}`).checked,
     };
   }
-  saveIqomah(settings);
-  tampilkanStatus("status-simpan");
+  tampilkanStatus("status-simpan", "Menyimpan…", false, true);
+  await simpanDenganStatus("status-simpan", e.currentTarget, () => saveIqomah(settings));
 }
 
 const IKON_HENING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/></svg>`;
@@ -119,7 +166,7 @@ function renderHening() {
   }
 }
 
-function simpanHening(e) {
+async function simpanHening(e) {
   e.preventDefault();
   const settings = {};
   for (const { key } of SHOLAT) {
@@ -129,8 +176,8 @@ function simpanHening(e) {
       aktif: $(`aktif-hening-${key}`).checked,
     };
   }
-  saveHening(settings);
-  tampilkanStatus("status-hening");
+  tampilkanStatus("status-hening", "Menyimpan…", false, true);
+  await simpanDenganStatus("status-hening", e.currentTarget, () => saveHening(settings));
 }
 
 // Baca dari form langsung (bukan storage) - dipakai buat live-preview status
@@ -166,26 +213,24 @@ function renderTarawih() {
   renderTarawihStatus();
 }
 
-function simpanTarawihTanggal(e) {
+async function simpanTarawihTanggal(e) {
   e.preventDefault();
   const settings = loadTarawihSettings();
   settings.tanggalMulai = $("tarawih-tanggal-mulai").value;
   settings.tanggalSelesai = $("tarawih-tanggal-selesai").value;
   settings.nonaktif = $("tarawih-nonaktif").checked;
-  saveTarawihSettings(settings);
+  await simpanDenganStatus("status-tarawih", e.currentTarget, () => saveTarawihSettings(settings));
   renderTarawihStatus();
-  tampilkanStatus("status-tarawih");
 }
 
-function simpanTarawih(e) {
+async function simpanTarawih(e) {
   e.preventDefault();
   const jeda = parseInt($("tarawih-jeda").value, 10);
   const durasi = parseInt($("tarawih-durasi").value, 10);
   const settings = loadTarawihSettings();
   settings.jedaMenit = Number.isFinite(jeda) && jeda >= 0 ? jeda : 0;
   settings.durasiMenit = Number.isFinite(durasi) && durasi >= 1 ? durasi : 1;
-  saveTarawihSettings(settings);
-  tampilkanStatus("status-tarawih");
+  await simpanDenganStatus("status-tarawih", e.currentTarget, () => saveTarawihSettings(settings));
 }
 
 function syncAcaraModeToggle(mode) {
@@ -206,17 +251,17 @@ function renderAcara() {
   $("acara-sesudah-selesai").value = sesudah.selesaiMenit;
 }
 
-function simpanAcaraMode(e) {
+async function simpanAcaraMode(e) {
   e.preventDefault();
   const dipilih = document.querySelector('input[name="acara-mode"]:checked');
   const mode = dipilih ? dipilih.value : "waktu";
   const settings = loadAcara();
   settings.mode = mode;
-  saveAcara(settings);
+  await simpanDenganStatus("status-acara-mode", e.currentTarget, () => saveAcara(settings));
   syncAcaraModeToggle(mode);
 }
 
-function simpanAcaraSebelum(e) {
+async function simpanAcaraSebelum(e) {
   e.preventDefault();
   const mulai = parseInt($("acara-sebelum-mulai").value, 10);
   const selesai = parseInt($("acara-sebelum-selesai").value, 10);
@@ -226,11 +271,10 @@ function simpanAcaraSebelum(e) {
     mulaiMenit: Number.isFinite(mulai) && mulai >= 0 ? mulai : 0,
     selesaiMenit: Number.isFinite(selesai) && selesai >= 0 ? selesai : 0,
   };
-  saveAcara(settings);
-  tampilkanStatus("status-acara-sebelum");
+  await simpanDenganStatus("status-acara-sebelum", e.currentTarget, () => saveAcara(settings));
 }
 
-function simpanAcaraSesudah(e) {
+async function simpanAcaraSesudah(e) {
   e.preventDefault();
   const mulai = parseInt($("acara-sesudah-mulai").value, 10);
   const selesai = parseInt($("acara-sesudah-selesai").value, 10);
@@ -240,8 +284,7 @@ function simpanAcaraSesudah(e) {
     mulaiMenit: Number.isFinite(mulai) && mulai >= 0 ? mulai : 0,
     selesaiMenit: Number.isFinite(selesai) && selesai >= 0 ? selesai : 0,
   };
-  saveAcara(settings);
-  tampilkanStatus("status-acara-sesudah");
+  await simpanDenganStatus("status-acara-sesudah", e.currentTarget, () => saveAcara(settings));
 }
 
 function renderTampilan() {
@@ -250,51 +293,174 @@ function renderTampilan() {
   $("tampilan-maklumat").checked = t.maklumat;
 }
 
-function simpanTampilan(e) {
+async function simpanTampilan(e) {
   e.preventDefault();
-  saveTampilan({
+  await simpanDenganStatus("status-tampilan", e.currentTarget, () => saveTampilan({
     header: $("tampilan-header").checked,
     maklumat: $("tampilan-maklumat").checked,
-  });
-  tampilkanStatus("status-tampilan");
+  }));
 }
 
-function simpanPengumumanDariForm() {
-  const arr = [...document.querySelectorAll(".pengumuman-input")].map((el) => el.value.trim()).filter(Boolean);
-  savePengumuman(arr);
-  tampilkanStatus("status-pengumuman");
+function renderKoreksiWaktu() {
+  const settings = loadKoreksiWaktu();
+  const wrap = $("baris-koreksi-waktu");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  for (const { key, label } of SHOLAT) {
+    const row = document.createElement("div");
+    row.className = "baris-kaya";
+    row.innerHTML = `
+      <span class="ikon-baris" aria-hidden="true">${IKON_IQOMAH}</span>
+      <div class="baris-kaya-teks">
+        <label class="label-sholat" for="koreksi-${key}">${label}</label>
+      </div>
+      <div class="stepper koreksi-stepper">
+        <button type="button" class="stepper-btn" data-target="koreksi-${key}" data-arah="-1" aria-label="Kurangi koreksi ${label}">&minus;</button>
+        <input type="number" min="-30" max="30" step="1" id="koreksi-${key}" value="${settings[key]}" inputmode="numeric" aria-label="Koreksi waktu ${label}">
+        <span class="stepper-satuan">menit</span>
+        <button type="button" class="stepper-btn" data-target="koreksi-${key}" data-arah="1" aria-label="Tambah koreksi ${label}">+</button>
+      </div>
+    `;
+    wrap.appendChild(row);
+    row.querySelector(`#koreksi-${key}`).addEventListener("input", renderRingkasanKoreksi);
+  }
+  renderRingkasanKoreksi();
 }
 
-function buatBarisPengumuman(teks) {
+async function simpanKoreksiWaktu(e) {
+  e.preventDefault();
+  const settings = {};
+  for (const { key } of SHOLAT) settings[key] = Number($(`koreksi-${key}`).value);
+  await simpanDenganStatus("status-koreksi-waktu", e.currentTarget, () => saveKoreksiWaktu(settings));
+  renderKoreksiWaktu();
+}
+
+async function resetKoreksiWaktuForm() {
+  await simpanDenganStatus("status-koreksi-waktu", $("form-koreksi-waktu"), () => resetKoreksiWaktu());
+  renderKoreksiWaktu();
+}
+
+async function muatJadwalKoreksiHariIni() {
+  const sekarang = new Date();
+  const cache = readCache();
+  if (cache && cache.dateKey === dateKey(sekarang) && cache.jadwal) {
+    jadwalKoreksiHariIni = cache.jadwal;
+    sumberJadwalKoreksi = "cache lokal";
+    renderRingkasanKoreksi();
+  }
+  try {
+    const hasil = await getJadwal(sekarang);
+    jadwalKoreksiHariIni = hasil.jadwal;
+    sumberJadwalKoreksi = hasil.fromCache ? "cache lokal/offline" : "API";
+  } catch {
+    sumberJadwalKoreksi = "belum tersedia";
+  }
+  renderRingkasanKoreksi();
+}
+
+const IKON_EDIT_PENGUMUMAN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
+const IKON_HAPUS_PENGUMUMAN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="m6 7 1 13h10l1-13M9 7V4h6v3"/></svg>';
+const IKON_SELESAI_PENGUMUMAN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
+const IKON_BATAL_PENGUMUMAN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+
+function buatTombolIkonPengumuman(className, label, icon) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `pengumuman-action ${className}`;
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.innerHTML = icon;
+  return button;
+}
+
+async function simpanDaftarPengumuman(arr, form) {
+  return simpanDenganStatus("status-pengumuman", form, () => savePengumuman(arr));
+}
+
+function buatBarisPengumuman(teks, index) {
   const li = document.createElement("li");
+  li.className = "pengumuman-item";
+
+  const tampilan = document.createElement("div");
+  tampilan.className = "pengumuman-tampilan";
+  const isi = document.createElement("span");
+  isi.className = "pengumuman-teks";
+  isi.textContent = teks;
+  const aksi = document.createElement("div");
+  aksi.className = "pengumuman-aksi";
+  const edit = buatTombolIkonPengumuman("pengumuman-edit", "Edit pesan", IKON_EDIT_PENGUMUMAN);
+  const hapus = buatTombolIkonPengumuman("pengumuman-hapus", "Hapus pesan", IKON_HAPUS_PENGUMUMAN);
+
+  const form = document.createElement("form");
+  form.className = "pengumuman-edit-form";
+  form.hidden = true;
   const input = document.createElement("input");
   input.type = "text";
   input.className = "pengumuman-input";
   input.placeholder = "Tulis pesan...";
   input.value = teks;
-  input.addEventListener("change", simpanPengumumanDariForm);
-  const hapus = document.createElement("button");
-  hapus.type = "button";
-  hapus.className = "btn-inline btn-bahaya";
-  hapus.textContent = "Hapus";
-  hapus.addEventListener("click", () => {
-    li.remove();
-    simpanPengumumanDariForm();
+  input.required = true;
+  input.setAttribute("aria-label", `Edit pesan ${index + 1}`);
+  const simpan = buatTombolIkonPengumuman("pengumuman-simpan", "Simpan pesan", IKON_SELESAI_PENGUMUMAN);
+  simpan.type = "submit";
+  const batal = buatTombolIkonPengumuman("pengumuman-batal", "Batal edit pesan", IKON_BATAL_PENGUMUMAN);
+
+  edit.addEventListener("click", () => {
+    tampilan.hidden = true;
+    form.hidden = false;
+    input.focus();
+    input.select();
   });
-  li.append(input, hapus);
+  batal.addEventListener("click", () => {
+    tampilan.hidden = false;
+    form.hidden = true;
+  });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nilai = input.value.trim();
+    if (!nilai) { input.focus(); return; }
+    const arr = [...loadPengumuman()];
+    if (index < arr.length) arr[index] = nilai;
+    await simpanDaftarPengumuman(arr, form);
+    renderPengumuman();
+  });
+  hapus.addEventListener("click", async () => {
+    const arr = [...loadPengumuman()];
+    arr.splice(index, 1);
+    await simpanDaftarPengumuman(arr);
+    renderPengumuman();
+  });
+
+  aksi.append(edit, hapus);
+  tampilan.append(isi, aksi);
+  form.append(input, simpan, batal);
+  li.append(tampilan, form);
   return li;
 }
 
 function renderPengumuman() {
   const ul = $("pengumuman-list");
   ul.innerHTML = "";
-  loadPengumuman().forEach((teks) => ul.appendChild(buatBarisPengumuman(teks)));
+  const daftar = loadPengumuman();
+  if (!daftar.length) {
+    const kosong = document.createElement("li");
+    kosong.className = "pengumuman-kosong";
+    kosong.textContent = "Belum ada pesan.";
+    ul.appendChild(kosong);
+    return;
+  }
+  daftar.forEach((teks, index) => ul.appendChild(buatBarisPengumuman(teks, index)));
 }
 
-function tambahBarisPengumuman() {
-  const li = buatBarisPengumuman("");
-  $("pengumuman-list").appendChild(li);
-  li.querySelector("input").focus();
+async function tambahPengumuman(e) {
+  e.preventDefault();
+  const input = $("pengumuman-baru");
+  const teks = input.value.trim();
+  if (!teks) return;
+  await simpanDaftarPengumuman([...loadPengumuman(), teks], e.currentTarget);
+  input.value = "";
+  renderPengumuman();
+  input.focus();
 }
 
 const ROTASI_FIELDS = {
@@ -345,29 +511,56 @@ function clampBarisInput(input) {
   if (invalid) setTimeout(() => baris.classList.remove("invalid"), 2200);
 }
 
-function simpanRotasi(e) {
+async function simpanRotasi(e) {
   e.preventDefault();
   const angka = (val, def) => {
     const n = parseInt(val, 10);
     return Number.isFinite(n) && n > 0 ? n : def;
   };
-  saveRotasi({
+  tampilkanStatus("status-rotasi", "Menyimpan…", false, true);
+  await simpanDenganStatus("status-rotasi", e.currentTarget, () => saveRotasi({
     sholatDetik: angka($("rotasi-sholat").value, 60),
     jadwalPengajianDetik: angka($("rotasi-kegiatan").value, 20),
     qrDonasiDetik: angka($("rotasi-qr").value, 15),
-  });
-  tampilkanStatus("status-rotasi");
+  }));
 }
 
-function tampilkanStatus(id) {
+function tampilkanStatus(id, teks, peringatan = false, tetap = false) {
   const el = $(id);
+  if (teks) el.textContent = teks;
+  el.classList.toggle("status-warn", peringatan);
   clearTimeout(el._timerStatus);
   el.hidden = false;
   requestAnimationFrame(() => el.classList.add("tampil"));
+  if (tetap) return;
   el._timerStatus = setTimeout(() => {
     el.classList.remove("tampil");
     setTimeout(() => { el.hidden = true; }, 200);
   }, 2000);
+}
+
+function tampilkanHasilSimpan(id, hasil) {
+  if (!hasil.lokal) {
+    tampilkanStatus(id, "Pengaturan berhasil diperbarui, tetapi penyimpanan perangkat penuh. Kosongkan penyimpanan browser agar perubahan tetap tersedia tanpa koneksi.", true, true);
+  } else if (hasil.tertunda) {
+    tampilkanStatus(id, "Pengaturan berhasil disimpan. Koneksi sedang bermasalah, perubahan akan diperbarui otomatis saat koneksi kembali.", true, true);
+  } else {
+    tampilkanStatus(id, "Tersimpan.");
+  }
+}
+
+async function simpanDenganStatus(id, form, aksi) {
+  const tombol = form?.querySelector('[type="submit"]');
+  if (tombol?.disabled) return null;
+  if (tombol) tombol.disabled = true;
+  tampilkanStatus(id, "Menyimpan…", false, true);
+  try {
+    const hasil = await aksi();
+    tampilkanHasilSimpan(id, hasil);
+    return hasil;
+  } finally {
+    if (tombol) tombol.disabled = false;
+  }
 }
 
 // ---------- Adzan ----------
@@ -375,11 +568,11 @@ function renderAdzan() {
   $("adzan-menit").value = loadAdzan().menit;
 }
 
-function simpanAdzanForm(e) {
+async function simpanAdzanForm(e) {
   e.preventDefault();
   const menit = parseInt($("adzan-menit").value, 10);
-  saveAdzan({ menit: Number.isFinite(menit) && menit >= 0 ? menit : 0 });
-  tampilkanStatus("status-adzan");
+  tampilkanStatus("status-adzan", "Menyimpan…", false, true);
+  await simpanDenganStatus("status-adzan", e.currentTarget, () => saveAdzan({ menit: Number.isFinite(menit) && menit >= 0 ? menit : 0 }));
 }
 
 // ---------- Background per layar (adzan/iqomah/donasi) ----------
@@ -398,18 +591,18 @@ async function simpanBgLayarForm(layar, { requireFile = true } = {}) {
     if (requireFile) alert("Pilih gambar dulu.");
     return;
   }
-  const ok = await simpanBgLayar(layar, file);
-  if (!ok) { alert("Gagal menyimpan. Pastikan cloud sudah dikonfigurasi (lihat js/supabase-config.js)."); return; }
+  const hasil = await simpanBgLayar(layar, file);
+  if (!hasil || !hasil.ok) { alert("Gagal menyimpan. Pastikan cloud sudah dikonfigurasi (lihat js/supabase-config.js)."); return; }
   $(`${layar}-bg-file`).value = "";
   renderBgLayar(layar);
-  tampilkanStatus(`status-bg-${layar}`);
+  tampilkanStatus(`status-bg-${layar}`, hasil.pembersihanTertunda ? "Latar diperbarui. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil.pembersihanTertunda, !!hasil.pembersihanTertunda);
 }
 
 async function hapusBgLayarForm(layar) {
   if (!confirm("Hapus foto latar ini?")) return;
-  await hapusBgLayar(layar);
+  const hasil = await hapusBgLayar(layar);
   renderBgLayar(layar);
-  tampilkanStatus(`status-bg-${layar}`);
+  tampilkanStatus(`status-bg-${layar}`, hasil?.pembersihanTertunda ? "Latar dihapus. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil?.pembersihanTertunda, !!hasil?.pembersihanTertunda);
 }
 
 // ---------- Murotal ----------
@@ -538,10 +731,13 @@ function renderPlaylist() {
     li.querySelector('[data-aksi="hapus"]').addEventListener("click", async () => {
       if (!confirm(`Hapus "${item.label}" dari playlist?`)) return;
       const cur = loadMurotal();
+      if (item.tipe === "offline" && !(await delMedia(item.mediaKey))) {
+        alert("Gagal menghapus audio. File lama tetap dipertahankan agar semua kiosk konsisten.");
+        return;
+      }
       cur.playlist = cur.playlist.filter((p) => p.id !== item.id);
-      if (item.tipe === "offline") await delMedia(item.mediaKey);
       if (cur.posisi.index >= cur.playlist.length) cur.posisi = { index: 0, detik: 0 };
-      saveMurotal(cur);
+      await simpanDenganStatus("status-murotal", null, () => saveMurotal(cur));
       if (trackAktifId === item.id) trackAktifId = null;
       renderPlaylist();
     });
@@ -549,7 +745,7 @@ function renderPlaylist() {
   });
 }
 
-function simpanMurotal(e) {
+async function simpanMurotal(e) {
   e.preventDefault();
   const s = loadMurotal();
   s.aktif = $("murotal-aktif").checked;
@@ -562,8 +758,7 @@ function simpanMurotal(e) {
   s.mulaiMenit = mulai;
   s.berhentiMenit = berhenti;
   for (const { key } of SHOLAT) s.perSholat[key] = $(`murotal-sholat-${key}`).checked;
-  saveMurotal(s);
-  tampilkanStatus("status-murotal");
+  await simpanDenganStatus("status-murotal", e.currentTarget, () => saveMurotal(s));
 }
 
 async function tambahFileMurotal() {
@@ -574,7 +769,7 @@ async function tambahFileMurotal() {
   if (!ok) { alert("Gagal menyimpan file (IndexedDB tidak tersedia)."); return; }
   const s = loadMurotal();
   s.playlist.push({ id: uid(), tipe: "offline", label: file.name, mediaKey });
-  saveMurotal(s);
+  await simpanDenganStatus("status-murotal", null, () => saveMurotal(s));
   $("murotal-file").value = "";
   $("murotal-file").dispatchEvent(new Event("change"));
   renderPlaylist();
@@ -608,7 +803,7 @@ async function muatDaftarSurah() {
   }
 }
 
-function tambahApiMurotal() {
+async function tambahApiMurotal() {
   const nomor = parseInt($("murotal-surah").value, 10);
   const qori = $("murotal-qori").value;
   const surah = daftarSurah.find((s) => s.nomor === nomor);
@@ -619,7 +814,7 @@ function tambahApiMurotal() {
     label: `${surah.namaLatin} - ${QORI[qori]}`,
     url: surah.audioFull[qori],
   });
-  saveMurotal(s);
+  await simpanDenganStatus("status-murotal", null, () => saveMurotal(s));
   renderPlaylist();
 }
 
@@ -639,7 +834,6 @@ async function simpanNadaForm(e, { mediaKey, fileId, durasiId, settingKey, statu
   e.preventDefault();
   const settings = loadNada();
   settings[settingKey] = bacaDurasiNada(durasiId, settings[settingKey]);
-  saveNada(settings);
 
   const file = $(fileId).files[0];
   if (file) {
@@ -648,12 +842,15 @@ async function simpanNadaForm(e, { mediaKey, fileId, durasiId, settingKey, statu
     $(fileId).value = "";
     $(fileId).dispatchEvent(new Event("change"));
   }
-  tampilkanStatus(statusId);
+  await simpanDenganStatus(statusId, e.currentTarget, () => saveNada(settings));
 }
 
 async function hapusNada(mediaKey, statusId, nama) {
   if (!confirm(`Hapus nada ${nama} ini? Layar akan pakai beep default.`)) return;
-  await delMedia(mediaKey);
+  if (!(await delMedia(mediaKey))) {
+    tampilkanStatus(statusId, "Gagal menghapus audio. Nada lama tetap dipertahankan agar semua kiosk konsisten.", true, true);
+    return;
+  }
   tampilkanStatus(statusId);
 }
 
@@ -676,6 +873,8 @@ function syncTampilanToggle(temaId) {
   const kosong = TEMA_TANPA_HEADER.includes(temaId);
   $("baris-toggle-header").hidden = kosong;
   $("tampilan-toggle-kosong").hidden = !kosong;
+  const pengumuman = document.querySelector(".admin-jadwal-announcements");
+  if (pengumuman) pengumuman.hidden = !( $("tampilan-maklumat")?.checked );
 }
 
 // KEY_TEMA_TAMPILAN dulunya raw string (bukan JSON) - sekarang di-JSON.stringify
@@ -688,8 +887,7 @@ function bacaTemaTampilan() {
   try { return JSON.parse(raw); } catch { return raw; }
 }
 function simpanTemaTampilan(id) {
-  localStorage.setItem(KEY_TEMA_TAMPILAN, JSON.stringify(id));
-  cloudSet(KEY_TEMA_TAMPILAN, id);
+  return simpanPengaturan(KEY_TEMA_TAMPILAN, id);
 }
 
 // Idempoten (fieldset dikosongkan dulu) - dipanggil ulang setelah
@@ -726,42 +924,61 @@ function renderQr() {
   if (q) {
     $("qr-judul").value = q.judul || "";
     $("qr-teks").value = q.teks || "";
-    $("qr-preview").src = q.dataUrl;
+    $("qr-preview").src = q.urlCloud || q.dataUrl;
     $("qr-preview").hidden = false;
   }
 }
 
-function simpanQr(e) {
+async function simpanQr(e) {
   e.preventDefault();
   const file = $("qr-file").files[0];
   const judul = $("qr-judul").value.trim();
   const teks = $("qr-teks").value.trim();
-  const simpanObj = (dataUrl) => {
-    try { saveQr({ dataUrl, judul, teks }); }
-    catch { alert("Gambar terlalu besar untuk disimpan. Pakai gambar QR yang lebih kecil."); return; }
-    $("qr-preview").src = dataUrl;
+  const simpanObj = async (obj) => {
+    const hasil = await saveQr(obj);
+    if (!hasil.lokal && !hasil.cloud?.ok) { alert("Gambar terlalu besar untuk disimpan. Pakai gambar QR yang lebih kecil."); return; }
+    $("qr-preview").src = obj.urlCloud || obj.dataUrl;
     $("qr-preview").hidden = false;
-    tampilkanStatus("status-qr");
+    tampilkanHasilSimpan("status-qr", hasil);
   };
   if (file) {
+    if (cloudAktif()) {
+      const ekstensi = /\.([a-z0-9]+)$/i.exec(file.name)?.[1]?.toLowerCase() || "png";
+      const lama = loadQr();
+      const hasil = await simpanMedia({
+        file,
+        nama: `qr-donasi.${ekstensi}`,
+        mediaLama: lama?.urlCloud,
+        buatMetadata: (urlCloud) => ({ urlCloud, judul, teks }),
+        simpanMetadata: saveQr,
+      });
+      if (!hasil.ok) { alert("Gagal menyimpan QR dan metadata."); return; }
+      $("qr-preview").src = loadQr()?.urlCloud || "";
+      $("qr-preview").hidden = false;
+      tampilkanStatus("status-qr", hasil.pembersihanTertunda ? "QR diperbarui. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil.pembersihanTertunda, !!hasil.pembersihanTertunda);
+      return;
+    }
     const reader = new FileReader();
     reader.onerror = () => alert("Gagal membaca file gambar.");
-    reader.onload = () => simpanObj(reader.result);
+    reader.onload = () => simpanObj({ dataUrl: reader.result, judul, teks });
     reader.readAsDataURL(file);
   } else {
     const q = loadQr();
     if (!q) { alert("Pilih gambar QR dulu."); return; }
-    simpanObj(q.dataUrl); // update judul/teks saja
+    await simpanObj({ ...q, judul, teks });
   }
 }
-function hapusQr() {
+async function hapusQr() {
   if (!confirm("Hapus QR donasi ini?")) return;
-  clearQr();
+  const q = loadQr();
+  const hasil = q?.urlCloud
+    ? await hapusMedia({ media: q.urlCloud, buatMetadata: () => ({}), simpanMetadata: clearQr })
+    : await clearQr();
   $("qr-preview").hidden = true;
   $("qr-judul").value = "";
   $("qr-teks").value = "";
   $("qr-file").value = "";
-  tampilkanStatus("status-qr");
+  tampilkanStatus("status-qr", hasil?.pembersihanTertunda ? "QR dihapus. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil?.pembersihanTertunda, !!hasil?.pembersihanTertunda);
 }
 
 // ---------- Jadwal Pengajian ----------
@@ -1046,9 +1263,9 @@ function renderPengajian() {
       ${bisaDetail ? '<div class="mg-detail-panel" hidden></div>' : ""}
     `;
     li.querySelector('[data-aksi="edit"]').addEventListener("click", () => mulaiEditPengajian(e));
-    li.querySelector('[data-aksi="hapus"]').addEventListener("click", () => {
+    li.querySelector('[data-aksi="hapus"]').addEventListener("click", async () => {
       if (!confirm(`Hapus kegiatan "${e.nama}"?`)) return;
-      saveJadwalPengajian(loadJadwalPengajian().filter((x) => x.id !== e.id));
+      await simpanDenganStatus("status-pengajian", null, () => saveJadwalPengajian(loadJadwalPengajian().filter((x) => x.id !== e.id)));
       if (editPengajianId === e.id) batalEditPengajian();
       renderPengajian();
     });
@@ -1094,9 +1311,10 @@ function batalEditPengajian() {
   renderPengajian();
 }
 
-function tambahPengajian(e) {
+async function tambahPengajian(e) {
   e.preventDefault();
   const tipe = $("pengajian-tipe").value;
+  let daftarBaru;
 
   if (tipe === "tanggal") {
     const baris = [...document.querySelectorAll("#daftar-baris-jadwal .jadwal-baris-item")].map(bacaBarisJadwal);
@@ -1105,12 +1323,12 @@ function tambahPengajian(e) {
       const b = baris[0];
       if (!b.nama) { alert("Nama kegiatan wajib diisi."); return; }
       if (!b.tanggal) { alert("Tanggal wajib diisi."); return; }
-      saveJadwalPengajian(loadJadwalPengajian().map((x) => (x.id === editPengajianId ? buatEntry(editPengajianId, b) : x)));
+      daftarBaru = loadJadwalPengajian().map((x) => (x.id === editPengajianId ? buatEntry(editPengajianId, b) : x));
     } else {
       const isi = baris.filter((b) => b.nama);
       if (!isi.length) { alert("Nama kegiatan wajib diisi minimal satu baris."); return; }
       if (isi.some((b) => !b.tanggal)) { alert("Tanggal wajib diisi tiap baris."); return; }
-      saveJadwalPengajian([...loadJadwalPengajian(), ...isi.map((b) => buatEntry(uid(), b))]);
+      daftarBaru = [...loadJadwalPengajian(), ...isi.map((b) => buatEntry(uid(), b))];
     }
   } else {
     const series = mgAmbilForm();
@@ -1118,15 +1336,14 @@ function tambahPengajian(e) {
     if (!series.tanggalMulai) { alert("Tanggal mulai wajib diisi."); return; }
     if (series.akhir.jenis === "tanggal" && !series.akhir.sampai) { alert("Tanggal akhir seri wajib diisi."); return; }
     const entry = { id: editPengajianId || uid(), tipe: "mingguan", ...series };
-    saveJadwalPengajian(
+    daftarBaru =
       editPengajianId
         ? loadJadwalPengajian().map((x) => (x.id === editPengajianId ? entry : x))
-        : [...loadJadwalPengajian(), entry]
-    );
+        : [...loadJadwalPengajian(), entry];
   }
+  await simpanDenganStatus("status-pengajian", e.currentTarget, () => saveJadwalPengajian(daftarBaru));
   renderDatalistPengisi();
   batalEditPengajian();
-  tampilkanStatus("status-pengajian");
 }
 
 // ---------- Jum'at ----------
@@ -1137,13 +1354,12 @@ function renderJumat() {
   renderJumatSlides();
 }
 
-function simpanJumatSettingsForm(e) {
+async function simpanJumatSettingsForm(e) {
   e.preventDefault();
   const menit = parseInt($("jumat-menit").value, 10);
   const settingsSebelumnya = loadJumatSettings();
   const durasiMenit = Number.isFinite(menit) && menit > 0 ? Math.min(menit, 240) : settingsSebelumnya.durasiMenit;
-  saveJumatSettings({ durasiMenit, sholatModeAktif: $("jumat-sholat-mode-aktif").checked });
-  tampilkanStatus("status-jumat");
+  await simpanDenganStatus("status-jumat", e.currentTarget, () => saveJumatSettings({ durasiMenit, sholatModeAktif: $("jumat-sholat-mode-aktif").checked }));
 }
 
 let editJumatId = null;
@@ -1218,22 +1434,29 @@ async function tambahJumatSlide() {
     alert("Cloud belum dikonfigurasi - lihat js/supabase-config.js.");
     return;
   }
-  const urlCloud = await cloudUploadMedia(nama, file);
-  if (!urlCloud) {
-    alert("Gagal upload file ke cloud.");
+  const hasil = await simpanMedia({
+    file,
+    nama,
+    buatMetadata: (urlCloud) => [...loadJumatSlides(), { id, tipe, file: nama, durasiDetik: durasi, urlCloud }],
+    simpanMetadata: saveJumatSlides,
+  });
+  if (!hasil.ok) {
+    alert("Gagal menyimpan file dan metadata slide.");
     return;
   }
-
-  saveJumatSlides([...loadJumatSlides(), { id, tipe, file: nama, durasiDetik: durasi, urlCloud }]);
   $("jumat-file").value = "";
   tampilkanStatus("status-jumat-slide");
   renderJumatSlides();
 }
 
 async function hapusJumatSlide(s) {
-  cloudDeleteMedia(s.urlCloud); // fire-and-forget, tidak nge-block hapus dari daftar
-  saveJumatSlides(loadJumatSlides().filter((x) => x.id !== s.id));
+  const hasil = await hapusMedia({
+    media: s.urlCloud,
+    buatMetadata: () => loadJumatSlides().filter((x) => x.id !== s.id),
+    simpanMetadata: saveJumatSlides,
+  });
   renderJumatSlides();
+  tampilkanStatus("status-jumat-slide", hasil.pembersihanTertunda ? "Slide dihapus. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil.pembersihanTertunda, !!hasil.pembersihanTertunda);
 }
 
 // ---------- Kegiatan Terdekat: daftar gambar (bisa lebih dari satu) ----------
@@ -1259,12 +1482,16 @@ function renderAcaraSlides() {
       </div>
     `;
     li.querySelector('[data-aksi="edit"]').addEventListener("click", () => mulaiEditAcara(s));
-    li.querySelector('[data-aksi="hapus"]').addEventListener("click", () => {
+    li.querySelector('[data-aksi="hapus"]').addEventListener("click", async () => {
       if (!confirm("Hapus gambar ini?")) return;
       if (editAcaraId === s.id) batalEditAcara();
-      cloudDeleteMedia(s.urlCloud); // fire-and-forget, tidak nge-block hapus dari daftar
-      saveAcaraSlides(loadAcaraSlides().filter((x) => x.id !== s.id));
+      const hasil = await hapusMedia({
+        media: s.urlCloud,
+        buatMetadata: () => loadAcaraSlides().filter((x) => x.id !== s.id),
+        simpanMetadata: saveAcaraSlides,
+      });
       renderAcaraSlides();
+      tampilkanStatus("status-acara-slide", hasil.pembersihanTertunda ? "Gambar dihapus. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil.pembersihanTertunda, !!hasil.pembersihanTertunda);
     });
     ul.appendChild(li);
   });
@@ -1301,10 +1528,17 @@ async function tambahAcaraSlide() {
       const ekstensiMatch = /\.([a-z0-9]+)$/i.exec(file.name);
       const ext = ekstensiMatch ? ekstensiMatch[1].toLowerCase() : "jpg";
       const nama = `acara-${lama.id}.${ext}`;
-      const urlCloud = await cloudUploadMedia(nama, file);
-      if (!urlCloud) { alert("Gagal mengunggah gambar baru."); return; }
-      if (lama.urlCloud && lama.urlCloud.split("?")[0] !== urlCloud.split("?")[0]) cloudDeleteMedia(lama.urlCloud);
-      baru = { ...baru, file: nama, urlCloud };
+      const hasil = await simpanMedia({
+        file,
+        nama,
+        mediaLama: lama.urlCloud,
+        buatMetadata: (urlCloud) => slides.map((s) => (s.id === editAcaraId ? { ...baru, file: nama, urlCloud } : s)),
+        simpanMetadata: saveAcaraSlides,
+      });
+      if (!hasil.ok) { alert("Gagal menyimpan gambar dan metadata baru."); return; }
+      tampilkanStatus("status-acara-slide", hasil.pembersihanTertunda ? "Gambar diperbarui. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil.pembersihanTertunda, !!hasil.pembersihanTertunda);
+      batalEditAcara();
+      return;
     }
     saveAcaraSlides(slides.map((s) => (s.id === editAcaraId ? baru : s)));
     tampilkanStatus("status-acara-slide");
@@ -1320,10 +1554,13 @@ async function tambahAcaraSlide() {
   const ekstensiMatch = /\.([a-z0-9]+)$/i.exec(file.name);
   const ext = ekstensiMatch ? ekstensiMatch[1].toLowerCase() : "jpg";
   const nama = `acara-${id}.${ext}`;
-  const urlCloud = await cloudUploadMedia(nama, file);
-  if (!urlCloud) { alert("Gagal upload gambar ke cloud."); return; }
-
-  saveAcaraSlides([...loadAcaraSlides(), { id, file: nama, durasiDetik: durasi, urlCloud }]);
+  const hasil = await simpanMedia({
+    file,
+    nama,
+    buatMetadata: (urlCloud) => [...loadAcaraSlides(), { id, file: nama, durasiDetik: durasi, urlCloud }],
+    simpanMetadata: saveAcaraSlides,
+  });
+  if (!hasil.ok) { alert("Gagal menyimpan gambar dan metadata."); return; }
   $("acara-file").value = "";
   tampilkanStatus("status-acara-slide");
   renderAcaraSlides();
@@ -1337,6 +1574,7 @@ initFilePicker("nada");
 // beda dari kiosk, TIDAK auto-sync terus-menerus, jadi begitu dibuka perlu
 // tarik sekali biar tidak nampilin data basi kalau ada perubahan dari device lain.
 function renderSemuaData() {
+  renderKoreksiWaktu();
   renderIqomah();
   renderHening();
   renderTarawih();
@@ -1352,9 +1590,11 @@ function renderSemuaData() {
   LAYAR_BG.forEach(renderBgLayar);
 }
 renderSemuaData();
+muatJadwalKoreksiHariIni();
 
 async function tarikUlangDariCloud() {
   if (!cloudAktif()) return;
+  await cobaUlangPembersihanMedia();
   const rows = await cloudGetAll();
   tulisKeLocal(rows);
   renderSemuaData();
@@ -1362,6 +1602,9 @@ async function tarikUlangDariCloud() {
 tarikUlangDariCloud();
 
 $("form-iqomah").addEventListener("submit", simpanIqomah);
+$("form-koreksi-waktu").addEventListener("submit", simpanKoreksiWaktu);
+$("form-koreksi-waktu").addEventListener("input", renderRingkasanKoreksi);
+$("tombol-reset-koreksi-waktu").addEventListener("click", resetKoreksiWaktuForm);
 $("form-hening").addEventListener("submit", simpanHening);
 $("form-tarawih").addEventListener("submit", simpanTarawih);
 $("form-tarawih-tanggal").addEventListener("submit", simpanTarawihTanggal);
@@ -1375,16 +1618,21 @@ document.querySelectorAll('input[name="acara-mode"]').forEach((r) => {
 $("form-acara-sebelum").addEventListener("submit", simpanAcaraSebelum);
 $("form-acara-sesudah").addEventListener("submit", simpanAcaraSesudah);
 $("form-tampilan").addEventListener("submit", simpanTampilan);
-$("tombol-tambah-pengumuman").addEventListener("click", tambahBarisPengumuman);
+$("form-tambah-pengumuman").addEventListener("submit", tambahPengumuman);
+$("tampilan-maklumat").addEventListener("change", () => {
+  const dipilih = document.querySelector('input[name="tema-tampilan"]:checked');
+  syncTampilanToggle(dipilih?.value || "");
+});
 $("form-rotasi").addEventListener("submit", simpanRotasi);
 document.querySelector(`[data-tema-kartu="tampilan"]`).addEventListener("change", (e) => {
   if (e.target.name === "tema-tampilan") syncTampilanToggle(e.target.value);
 });
-$("form-tema-tampilan").addEventListener("submit", (e) => {
+$("form-tema-tampilan").addEventListener("submit", async (e) => {
   e.preventDefault();
   const dipilih = document.querySelector(`input[name="tema-tampilan"]:checked`);
-  if (dipilih) simpanTemaTampilan(dipilih.value);
-  tampilkanStatus("status-tema-tampilan");
+  if (!dipilih) return;
+  tampilkanStatus("status-tema-tampilan", "Menyimpan…", false, true);
+  await simpanDenganStatus("status-tema-tampilan", e.currentTarget, () => simpanTemaTampilan(dipilih.value));
 });
 // Stepper +/- generik. Delegasi click menjaga tombol tetap berfungsi setelah
 // renderSemuaData() mengganti baris dinamis saat sinkronisasi cloud selesai.
@@ -1400,6 +1648,9 @@ document.addEventListener("click", (e) => {
 });
 document.querySelectorAll('.stepper input[type="number"]').forEach((input) => {
   input.addEventListener("change", () => clampBarisInput(input));
+});
+document.addEventListener("change", (e) => {
+  if (e.target.matches?.('.stepper input[type="number"]')) clampBarisInput(e.target);
 });
 Object.values(ROTASI_FIELDS).forEach((f) => {
   $(f.input).addEventListener("input", recalcRotasiTimeline);
@@ -1468,22 +1719,190 @@ $("mg-rotasi-aktif").addEventListener("change", () => {
 });
 
 // ---------- Navigasi sidebar ----------
+const ADMIN_PANEL_INFO = {
+  "jadwal-sholat": {
+    eyebrow: "Kontrol layar",
+    title: "Jadwal Sholat",
+    desc: "Atur tema layar, header, dan maklumat berjalan.",
+  },
+  rotasi: {
+    eyebrow: "Kontrol layar",
+    title: "Rotasi Layar",
+    desc: "Tentukan durasi dan urutan perpindahan layar.",
+  },
+  adzan: {
+    eyebrow: "Kontrol layar",
+    title: "Mode Adzan",
+    desc: "Pilih tampilan adzan, unggah latar, dan atur suara adzan yang diputar otomatis.",
+  },
+  iqomah: {
+    eyebrow: "Kontrol layar",
+    title: "Iqomah",
+    desc: "Atur hitung mundur iqomah per waktu sholat serta nada pengingatnya.",
+  },
+  "sholat-mode": {
+    eyebrow: "Kontrol layar",
+    title: "Mode Sholat",
+    desc: "Atur durasi layar hening setelah iqomah dan audio penanda masuk mode sholat.",
+  },
+  donasi: {
+    eyebrow: "Kontrol layar",
+    title: "QR Donasi",
+    desc: "Judul, ajakan donasi, dan gambar QRIS.",
+  },
+  kegiatan: {
+    eyebrow: "Isi layar",
+    title: "Jadwal Kegiatan",
+    desc: "Tambah kegiatan mingguan atau tanggal khusus yang tampil otomatis di layar.",
+  },
+  acara: {
+    eyebrow: "Isi layar",
+    title: "Kegiatan Terdekat",
+    desc: "Unggah poster acara dan tentukan kapan poster muncul di rotasi layar.",
+  },
+  jumat: {
+    eyebrow: "Isi layar",
+    title: "Mode Jumat",
+    desc: "Siapkan poster, jadwal, dan aturan tampilan khusus untuk hari Jumat.",
+  },
+  tarawih: {
+    eyebrow: "Isi layar",
+    title: "Mode Tarawih",
+    desc: "Kelola jadwal imam, bilal, dan pengaturan layar Ramadhan.",
+  },
+  audio: {
+    eyebrow: "Isi layar",
+    title: "Murotal",
+    desc: "Atur playlist audio murotal, jadwal putar, dan volume untuk speaker layar.",
+  },
+};
+
+const ADMIN_PREVIEW_SRC = {
+  "jadwal-sholat": "index.html",
+  rotasi: "index.html",
+  adzan: "index.html?preview=1&view=iqomah&fase=adzan",
+  iqomah: "index.html?preview=1&view=iqomah&fase=iqomah",
+  "sholat-mode": "index.html?preview=1&view=hening",
+  donasi: "index.html?preview=1&view=qr",
+  kegiatan: "index.html?preview=1&view=kegiatan",
+  acara: "index.html?preview=1&view=acara",
+  jumat: "index.html?preview=1&view=jumat",
+  tarawih: "index.html?preview=1&view=hening",
+  audio: "index.html",
+};
+
+const panelAdmin = (nama) => document.querySelector(`.admin-main [data-panel="${nama}"]`);
+const panelAdminAktif = () => document.querySelector(".admin-main [data-panel]:not([hidden])");
+
+function formTersimpanDalam(section) {
+  const media = new Set([
+    "form-qr", "form-bg-adzan", "form-bg-iqomah", "form-bg-donasi",
+    "form-tambah-pengumuman",
+  ]);
+  return [...section.querySelectorAll("form")].filter((f) => !f.classList.contains("form-tambah-item") && !media.has(f.id));
+}
+
+async function simpanSection(section) {
+  if (!section) return;
+  const forms = formTersimpanDalam(section);
+  for (const f of forms) {
+    if (f.hasAttribute("data-skip-native-validation")) continue;
+    if (!f.checkValidity()) { f.reportValidity(); return; }
+  }
+  const tombol = $("tombol-simpan-global");
+  tombol.disabled = true;
+  tampilkanStatus("status-simpan-global", "Menyimpan…", false, true);
+  forms.forEach((f) => f.requestSubmit());
+  try {
+    const hasil = await tungguSemuaPengaturan();
+    const adaTertunda = hasil.some((item) => item && item.tertunda);
+    const lokalGagal = hasil.some((item) => item && item.lokal === false);
+    if (lokalGagal) tampilkanHasilSimpan("status-simpan-global", { lokal: false });
+    else if (adaTertunda) tampilkanHasilSimpan("status-simpan-global", { lokal: true, tertunda: true });
+    else tampilkanStatus("status-simpan-global", "Semua perubahan tersimpan.");
+  } finally {
+    tombol.disabled = false;
+  }
+}
+
+function updateAdminTopbar(nama) {
+  const info = ADMIN_PANEL_INFO[nama];
+  if (!info) return;
+
+  const eyebrow = $("admin-page-eyebrow");
+  const title = $("admin-page-title");
+  const desc = $("admin-page-desc");
+  if (eyebrow) eyebrow.textContent = info.eyebrow;
+  if (title) title.textContent = info.title;
+  if (desc) desc.textContent = info.desc;
+  const tombolPreviewGlobal = $("tombol-preview-global");
+  if (tombolPreviewGlobal) tombolPreviewGlobal.dataset.previewSrc = ADMIN_PREVIEW_SRC[nama] || "index.html";
+
+}
+
 function setupNavigasi() {
   // [data-section] sengaja disyaratkan - ".admin-nav-item" juga dipakai buat
   // tombol lain yang bukan navigasi panel (mis. tombol Keluar/logout admin).
   const items = document.querySelectorAll(".admin-nav-item[data-section]");
-  const panel = (nama) => document.querySelector(`.admin-main [data-panel="${nama}"]`);
+  const namaPanelValid = (nama) => Boolean(nama && panelAdmin(nama));
+  const tampilkanPanel = (nama, updateHash = true) => {
+    if (!namaPanelValid(nama)) return;
+    const itemAktif = [...items].find((b) => b.dataset.section === nama);
+    items.forEach((b) => {
+      const aktif = b === itemAktif;
+      b.classList.toggle("aktif", aktif);
+      b.toggleAttribute("aria-current", aktif);
+      if (aktif) b.setAttribute("aria-current", "page");
+    });
+    document.querySelectorAll(".admin-main [data-panel]").forEach((p) => {
+      p.hidden = p.dataset.panel !== nama;
+    });
+    updateAdminTopbar(nama);
+    if (itemAktif && window.matchMedia("(max-width: 860px)").matches) {
+      const nav = itemAktif.closest(".admin-nav");
+      nav?.scrollTo({
+        left: Math.max(0, itemAktif.offsetLeft - (nav.clientWidth - itemAktif.offsetWidth) / 2),
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    }
+    if (updateHash && location.hash !== `#${nama}`) {
+      history.replaceState(null, "", `#${nama}`);
+    }
+  };
+
   items.forEach((btn) => {
     btn.addEventListener("click", () => {
-      const nama = btn.dataset.section;
-      items.forEach((b) => b.classList.toggle("aktif", b === btn));
-      document.querySelectorAll(".admin-main [data-panel]").forEach((p) => {
-        p.hidden = p !== panel(nama);
-      });
+      tampilkanPanel(btn.dataset.section);
+    });
+  });
+
+  window.addEventListener("hashchange", () => {
+    const nama = location.hash.slice(1);
+    if (namaPanelValid(nama)) tampilkanPanel(nama, false);
+  });
+
+  const hashAwal = location.hash.slice(1);
+  const aktifAwal = namaPanelValid(hashAwal)
+    ? hashAwal
+    : (document.querySelector(".admin-nav-item[data-section].aktif") ?? items[0])?.dataset.section;
+  tampilkanPanel(aktifAwal, false);
+}
+setupNavigasi();
+
+function setupLabelUpload() {
+  [
+    { inputId: "qr-file", labelId: "qr-file-label", kosong: "PNG/JPG, disarankan bujur sangkar" },
+    { inputId: "donasi-bg-file", labelId: "donasi-bg-file-label", kosong: "PNG/JPG maks 5MB" },
+  ].forEach(({ inputId, labelId, kosong }) => {
+    const input = $(inputId);
+    const label = $(labelId);
+    if (!input || !label) return;
+    input.addEventListener("change", () => {
+      label.textContent = input.files[0]?.name || kosong;
     });
   });
 }
-setupNavigasi();
+setupLabelUpload();
 
 // ---------- Login Admin (Supabase Auth) ----------
 // Kalau cloud belum dikonfigurasi (supabase-config.js kosong), gerbang ini
@@ -1522,35 +1941,29 @@ async function terapkanTombolKeluar() {
 }
 terapkanTombolKeluar();
 
-// ---------- Aksi akhir tiap section sidebar: Simpan / Kembali / Preview ----------
-// Simpan = submit semua form pengaturan di section itu (form "Tambah" item
-// list dikecualikan lewat class .form-tambah-item, itu sudah simpan sendiri
-// per klik). Preview = buka layar aslinya di tab baru, coba layar penuh
+// ---------- Aksi akhir tiap section sidebar: Kembali / Preview ----------
+// Tombol simpan global mengirim semua form pada panel aktif. Form "Tambah"
+// item list dikecualikan lewat class .form-tambah-item karena sudah menyimpan
+// sendiri per klik. Preview membuka layar aslinya di tab baru, coba layar penuh
 // otomatis (fullscreen=1, lihat js/fullscreen.js). ?preview=1 pada beberapa
 // target memaksa halaman itu tampil dengan data contoh & tidak auto-pulang/
 // redirect (lihat js/*.js masing-masing). "Kembali ke Halaman" cukup link
 // biasa ke index.html, tidak butuh JS.
 function setupSimpanSection() {
-  document.querySelectorAll(".tombol-simpan-section").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const section = btn.closest("[data-panel]");
-      const forms = [...section.querySelectorAll("form")].filter((f) => !f.classList.contains("form-tambah-item"));
-      for (const f of forms) {
-        if (!f.checkValidity()) { f.reportValidity(); return; }
-      }
-      forms.forEach((f) => f.requestSubmit());
-    });
-  });
+  const tombolSimpanGlobal = $("tombol-simpan-global");
+  if (tombolSimpanGlobal) {
+    tombolSimpanGlobal.addEventListener("click", () => simpanSection(panelAdminAktif()));
+  }
 }
 setupSimpanSection();
 
 function setupPreviewSection() {
-  document.querySelectorAll(".tombol-preview-section").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const src = btn.dataset.previewSrc;
-      const pemisah = src.includes("?") ? "&" : "?";
-      window.open(`${src}${pemisah}fullscreen=1&_=${Date.now()}`, "_blank");
-    });
+  const btn = $("tombol-preview-global");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const src = btn.dataset.previewSrc || "index.html";
+    const pemisah = src.includes("?") ? "&" : "?";
+    window.open(`${src}${pemisah}fullscreen=1&_=${Date.now()}`, "_blank");
   });
 }
 setupPreviewSection();

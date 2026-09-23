@@ -22,6 +22,7 @@ const hari = (h, m) => new Date(2026, 8, 3, h, m, 0);
 
 // Dzuhur 11:52. Jendela = [11:37, 11:49). 11:40 -> aktif dzuhur.
 eq("dalam jendela dzuhur", murotalWindow(hari(11,40), jadwal, set), { key: "dzuhur" });
+eq("jendela bergeser mengikuti koreksi", murotalWindow(hari(11,50), { ...jadwal, dzuhur: "12:02" }, set), { key: "dzuhur" });
 // 11:37 tepat awal -> aktif (inklusif)
 eq("awal jendela inklusif", murotalWindow(hari(11,37), jadwal, set), { key: "dzuhur" });
 // 11:49 tepat akhir -> null (eksklusif, sudah masuk jeda hening)

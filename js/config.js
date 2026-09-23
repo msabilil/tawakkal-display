@@ -27,6 +27,14 @@ export const WAKTU_HARIAN = [
 
 export const SHOLAT = WAKTU_HARIAN.filter((w) => w.sholat).map(({ key, label }) => ({ key, label }));
 
+export const DEFAULT_KOREKSI_WAKTU = {
+  subuh: 0,
+  dzuhur: 0,
+  ashar: 0,
+  maghrib: 0,
+  isya: 0,
+};
+
 export const DEFAULT_IQOMAH = {
   subuh: { menit: 10, aktif: true },
   dzuhur: { menit: 10, aktif: true },

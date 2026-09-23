@@ -3,10 +3,11 @@
 <title>Test demo-slide.js (slideAktif)</title>
 <pre id="out"></pre>
 <script type="module">
-import { slideAktif } from "./demo-slide.js";
+import { slideAktif, sholatBerikutnya } from "./demo-slide.js";
 import { saveQr, clearQr } from "./rotasi.js";
 import { saveJadwalPengajian } from "./jadwal-pengajian.js";
 import { saveJumatSlides } from "./jumat-mode.js";
+import { saveKoreksiWaktu } from "./settings.js";
 
 const out = [];
 let pass = 0, fail = 0;
@@ -17,11 +18,20 @@ function eq(name, got, want) {
 }
 
 function label(list) { return list.map((s) => s.label); }
+const tanpaCloud = async () => ({ ok: true, active: false });
+
+localStorage.setItem("jadwalCache", JSON.stringify({ jadwal: {
+  subuh: "04:00", dzuhur: "12:00", ashar: "15:00", maghrib: "18:00", isya: "19:00",
+} }));
+await saveKoreksiWaktu({ dzuhur: -10 }, tanpaCloud);
+eq("preview demo memilih jadwal terkoreksi", sholatBerikutnya(new Date(2026, 8, 3, 11, 55, 0)), "ashar");
 
 // Semua fitur opsional kosong -> cuma sisa Jadwal Sholat/Adzan/Iqomah.
 clearQr();
 saveJadwalPengajian([]);
 saveJumatSlides([]);
+localStorage.removeItem("jadwalCache");
+await saveKoreksiWaktu({}, tanpaCloud);
 eq("semua nonaktif -> cuma 4 slide wajib", label(slideAktif(new Date())), ["Jadwal Sholat", "Adzan", "Iqomah", "Hening"]);
 
 // QR diisi -> slide QR ikut muncul.

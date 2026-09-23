@@ -3,7 +3,8 @@ import { loadJadwalPengajian, entriAktif } from "./jadwal-pengajian.js";
 import { loadAcara, acaraAktif, loadAcaraSlides } from "./acara-mode.js";
 import { readCache } from "./api.js";
 import { tampilkan } from "./navigasi.js";
-import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
+import { jadwalTerkoreksi } from "./jadwal-terkoreksi.js";
 
 const KEY_ROTASI = "rotasiSettings";
 const KEY_QR = "qrDonasi";
@@ -19,27 +20,25 @@ export function loadRotasi() {
   }
 }
 
-export function saveRotasi(s) {
-  localStorage.setItem(KEY_ROTASI, JSON.stringify(s));
-  cloudSet(KEY_ROTASI, s);
+export function saveRotasi(s, opsi) {
+  return simpanPengaturan(KEY_ROTASI, s, opsi);
 }
 
 export function loadQr() {
   try {
     const q = JSON.parse(localStorage.getItem(KEY_QR));
-    return q && q.dataUrl ? q : null;
+    return q && (q.dataUrl || q.urlCloud) ? q : null;
   } catch {
     return null;
   }
 }
 
 export function saveQr(obj) {
-  localStorage.setItem(KEY_QR, JSON.stringify(obj));
-  cloudSet(KEY_QR, obj);
+  return simpanPengaturan(KEY_QR, obj);
 }
 
 export function clearQr() {
-  localStorage.removeItem(KEY_QR);
+  return simpanPengaturan(KEY_QR, {});
 }
 
 // Kartu/layar sekunder yang lagi punya isi buat ditampilkan bergilir.
@@ -47,7 +46,7 @@ export function kartuTersedia(now) {
   const kartu = [];
   if (loadQr()) kartu.push("qr");
   const cache = readCache();
-  if (cache && cache.jadwal && loadAcaraSlides().length && acaraAktif(now, cache.jadwal, loadAcara())) kartu.push("acara");
+  if (cache && cache.jadwal && loadAcaraSlides().length && acaraAktif(now, jadwalTerkoreksi(cache.jadwal), loadAcara())) kartu.push("acara");
   if (entriAktif(now, loadJadwalPengajian()).length) kartu.push("kegiatan");
   return kartu;
 }

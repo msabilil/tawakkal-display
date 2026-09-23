@@ -1,12 +1,10 @@
 import { ID_KOTA } from "./config.js";
+import { dateKeyWIB } from "./waktu.js";
 
 const CACHE_KEY = "jadwalCache";
 
 export function dateKey(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return dateKeyWIB(date);
 }
 
 export function readCache() {

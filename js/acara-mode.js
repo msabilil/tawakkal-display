@@ -3,7 +3,7 @@
 // (view) supaya tidak circular import - lihat pola sama di jumat-mode.js.
 import { SHOLAT, DEFAULT_ACARA } from "./config.js";
 import { parseHM } from "./waktu.js";
-import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 import { loadIqomah, loadHening, loadAdzan } from "./settings.js";
 
 const KEY_SETTINGS = "acaraSettings";
@@ -19,8 +19,7 @@ export function loadAcaraSlides() {
 }
 
 export function saveAcaraSlides(slides) {
-  localStorage.setItem(KEY_SLIDES, JSON.stringify(slides));
-  cloudSet(KEY_SLIDES, slides);
+  return simpanPengaturan(KEY_SLIDES, slides);
 }
 
 export function loadAcara() {
@@ -36,9 +35,8 @@ export function loadAcara() {
   }
 }
 
-export function saveAcara(settings) {
-  localStorage.setItem(KEY_SETTINGS, JSON.stringify(settings));
-  cloudSet(KEY_SETTINGS, settings);
+export function saveAcara(settings, opsi) {
+  return simpanPengaturan(KEY_SETTINGS, settings, opsi);
 }
 
 // Titik balik ke rotasi normal buat sholat "key" - selesai iqomah, DITAMBAH

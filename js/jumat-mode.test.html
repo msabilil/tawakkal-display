@@ -31,6 +31,7 @@ eq("kosong slide -> null walau Jumat & jam pas", jumatState(new Date(2026,8,4,11
 saveJumatSlides([slide]);
 eq("Jumat, 3 menit setelah dzuhur, ada slide -> aktif", jumatState(new Date(2026,8,4,11,55,0), jadwal) !== null, true);
 eq("Jumat, saat Dzuhur -> fase Adzan", jumatState(new Date(2026,8,4,11,52,0), jadwal).fase, "adzan");
+eq("Jumat mengikuti waktu Dzuhur terkoreksi", jumatState(new Date(2026,8,4,12,0,0), { ...jadwal, dzuhur: "11:57" }).fase, "adzan");
 eq("Jumat, sesudah Adzan -> fase slide", jumatState(new Date(2026,8,4,11,57,0), jadwal).fase, "slide");
 eq("Jumat, setelah durasi slide -> Sholat Mode", jumatState(new Date(2026,8,4,12,57,0), jadwal).fase, "hening");
 eq("Jumat, selesai Sholat Mode -> lewat window", jumatState(new Date(2026,8,4,13,8,0), jadwal), null);

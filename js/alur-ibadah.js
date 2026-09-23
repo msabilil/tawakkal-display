@@ -1,0 +1,118 @@
+import { SHOLAT } from "./config.js";
+import { parseHM } from "./waktu.js";
+
+function waktuIqomah(now, jadwal, iqomah, adzanMenit) {
+  for (const { key, label } of SHOLAT) {
+    if (now.getDay() === 5 && key === "dzuhur") continue;
+    const pengaturan = iqomah[key] || {};
+    const menitIqomah = pengaturan.aktif && pengaturan.menit > 0 ? pengaturan.menit : 0;
+    if (adzanMenit + menitIqomah <= 0) continue;
+    const mulai = parseHM(jadwal[key], now);
+    const adzanSelesai = new Date(mulai.getTime() + adzanMenit * 60000);
+    const selesai = new Date(adzanSelesai.getTime() + menitIqomah * 60000);
+    if (now < mulai || now >= selesai) continue;
+    return {
+      view: "iqomah",
+      state: {
+        key,
+        label,
+        fase: now < adzanSelesai ? "adzan" : "iqomah",
+        adzanEndTime: adzanSelesai.toISOString(),
+        iqomahEndTime: selesai.toISOString(),
+        putarNadaSaatMulai: adzanMenit === 0,
+      },
+    };
+  }
+  return null;
+}
+
+function waktuHening(now, jadwal, iqomah, hening, adzanMenit) {
+  for (const { key } of SHOLAT) {
+    if (now.getDay() === 5 && key === "dzuhur") continue;
+    const pengaturan = hening[key] || {};
+    if (!pengaturan.aktif || !(pengaturan.menit > 0)) continue;
+    const iqomahSaatIni = iqomah[key] || {};
+    const menitIqomah = iqomahSaatIni.aktif && iqomahSaatIni.menit > 0 ? iqomahSaatIni.menit : 0;
+    const mulai = parseHM(jadwal[key], now);
+    const heningMulai = new Date(mulai.getTime() + (adzanMenit + menitIqomah) * 60000);
+    const selesai = new Date(heningMulai.getTime() + pengaturan.menit * 60000);
+    if (now >= heningMulai && now < selesai) {
+      return { view: "hening", state: { endTime: selesai.toISOString(), putarNada: true } };
+    }
+  }
+  return null;
+}
+
+function alurJumat(now, jadwal, hening, adzanMenit, jumat) {
+  if (now.getDay() !== 5 || !jumat?.adaSlide) return null;
+  const mulai = parseHM(jadwal.dzuhur, now);
+  const adzanSelesai = new Date(mulai.getTime() + adzanMenit * 60000);
+  const slideSelesai = new Date(adzanSelesai.getTime() + jumat.durasiMenit * 60000);
+  const menitHening = Math.max(0, hening.dzuhur?.menit || 0);
+  const selesai = new Date(slideSelesai.getTime() + (jumat.sholatModeAktif ? menitHening * 60000 : 0));
+  if (now < mulai || now >= selesai) return null;
+  if (now < adzanSelesai) {
+    return {
+      view: "iqomah",
+      state: {
+        key: "jumat",
+        label: "Dzuhur",
+        fase: "adzan",
+        adzanEndTime: adzanSelesai.toISOString(),
+        iqomahEndTime: adzanSelesai.toISOString(),
+        putarNadaSaatMulai: false,
+      },
+    };
+  }
+  if (now < slideSelesai) {
+    return {
+      view: "jumat",
+      state: {
+        slideEndTime: slideSelesai.toISOString(),
+        sholatModeAktif: !!jumat.sholatModeAktif,
+        endTime: selesai.toISOString(),
+        putarNada: false,
+      },
+    };
+  }
+  return { view: "hening", state: { endTime: selesai.toISOString(), putarNada: false } };
+}
+
+export function buatPratinjauIqomah({ sekarang, fase, key, label, adzanMenit, iqomahMenit }) {
+  const durasiAdzan = fase === "adzan" ? adzanMenit : 0;
+  const adzanSelesai = new Date(sekarang.getTime() + durasiAdzan * 60000);
+  const selesai = new Date(adzanSelesai.getTime() + iqomahMenit * 60000);
+  return {
+    view: "iqomah",
+    state: {
+      key,
+      label,
+      fase,
+      adzanEndTime: adzanSelesai.toISOString(),
+      iqomahEndTime: selesai.toISOString(),
+      putarNadaSaatMulai: true,
+    },
+  };
+}
+
+export function buatPratinjauJumat({ sekarang, durasiMenit, heningMenit, sholatModeAktif }) {
+  const slideSelesai = new Date(sekarang.getTime() + durasiMenit * 60000);
+  const selesai = new Date(slideSelesai.getTime() + (sholatModeAktif ? heningMenit * 60000 : 0));
+  return {
+    view: "jumat",
+    state: {
+      slideEndTime: slideSelesai.toISOString(),
+      sholatModeAktif: !!sholatModeAktif,
+      endTime: selesai.toISOString(),
+      putarNada: false,
+    },
+  };
+}
+
+export function tentukanAlur({ now, jadwal, iqomah, hening, adzanMenit, jumat, tarawih }) {
+  return alurJumat(now, jadwal, hening, adzanMenit, jumat)
+    || waktuIqomah(now, jadwal, iqomah, adzanMenit)
+    || tarawih
+    || waktuHening(now, jadwal, iqomah, hening, adzanMenit)
+    || null;
+}

@@ -1,5 +1,5 @@
 import { parseHM } from "./waktu.js";
-import { cloudSet } from "./cloud.js";
+import { simpanPengaturan } from "./penyimpanan-pengaturan.js";
 
 const KEY = "jadwalPengajian";
 
@@ -12,9 +12,8 @@ export function loadJadwalPengajian() {
   }
 }
 
-export function saveJadwalPengajian(arr) {
-  localStorage.setItem(KEY, JSON.stringify(arr));
-  cloudSet(KEY, arr);
+export function saveJadwalPengajian(arr, opsi) {
+  return simpanPengaturan(KEY, arr, opsi);
 }
 
 // "YYYY-MM-DD" -> Date lokal awal hari (hindari parsing UTC dari new Date("YYYY-MM-DD")).

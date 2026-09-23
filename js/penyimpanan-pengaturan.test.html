@@ -1,0 +1,157 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test penyimpanan pengaturan</title>
+<pre id="out"></pre>
+<script type="module">
+let penyimpanan = {};
+try {
+  penyimpanan = await import("./penyimpanan-pengaturan.js");
+} catch {
+  // Tes tetap menghasilkan FAIL yang menjelaskan perilaku yang belum ada.
+}
+
+const out = [];
+let pass = 0, fail = 0;
+function eq(name, got, want) {
+  const g = JSON.stringify(got), w = JSON.stringify(want);
+  if (g === w) { pass++; out.push(`PASS ${name}`); }
+  else { fail++; out.push(`FAIL ${name}\n  got:  ${g}\n  want: ${w}`); }
+}
+
+// Perubahan yang gagal ke cloud tidak boleh hilang dari perangkat. Kalau
+// implementasi berhenti mencatatnya untuk retry, tiga observasi ini gagal.
+localStorage.removeItem("tesPengaturan");
+localStorage.removeItem("pengaturanTertunda");
+const hasil = await penyimpanan.simpanPengaturan?.(
+  "tesPengaturan",
+  { header: false },
+  { sinkronkan: async () => ({ ok: false, active: true, error: "offline" }) },
+);
+
+eq("perubahan tetap tersimpan lokal saat cloud gagal", localStorage.getItem("tesPengaturan"), JSON.stringify({ header: false }));
+eq("hasil memberi tahu admin bahwa sinkronisasi tertunda", hasil && hasil.tertunda, true);
+eq("perubahan tertunda tersimpan untuk retry setelah halaman dibuka lagi", localStorage.getItem("pengaturanTertunda"), JSON.stringify({ tesPengaturan: { header: false } }));
+
+// Tarikan cloud lama tidak boleh membatalkan pilihan lokal yang masih menunggu
+// retry. Jika proteksi ini dihapus, pengaturan kembali menjadi header=true.
+localStorage.setItem("tesPengaturanLain", JSON.stringify({ mode: "lama" }));
+penyimpanan.terapkanDariCloud?.([
+  { key: "tesPengaturan", value: { header: true } },
+  { key: "tesPengaturanLain", value: { mode: "baru" } },
+]);
+eq("tarikan cloud lama tidak menimpa perubahan lokal tertunda", localStorage.getItem("tesPengaturan"), JSON.stringify({ header: false }));
+eq("tarikan cloud tetap memperbarui pengaturan tanpa perubahan tertunda", localStorage.getItem("tesPengaturanLain"), JSON.stringify({ mode: "baru" }));
+
+// Retry harus mengirim nilai lokal yang ditahan, lalu baru melepas penanda
+// tertunda. Menghapus penanda sebelum cloud menerima nilai adalah kehilangan
+// perubahan saat koneksi putus lagi.
+const cloudPalsu = {};
+await penyimpanan.cobaUlangPengaturanTertunda?.({
+  sinkronkan: async (key, value) => {
+    cloudPalsu[key] = value;
+    return { ok: true, active: true };
+  },
+});
+eq("retry mengirim nilai lokal yang tertunda ke cloud", cloudPalsu, { tesPengaturan: { header: false } });
+eq("retry sukses menghapus penanda perubahan tertunda", localStorage.getItem("pengaturanTertunda"), null);
+
+// localStorage dapat menolak tulisan ketika kuotanya penuh. Cloud masih harus
+// menerima perubahan; kalau tidak, admin di perangkat yang penuh tidak dapat
+// memperbarui kiosk lain yang tersambung.
+const setItemAsli = Storage.prototype.setItem;
+const cloudSaatPenuh = {};
+let hasilSaatPenuh;
+try {
+  Storage.prototype.setItem = function(key, value) {
+    if (key === "tesPenuh") throw new DOMException("Quota exceeded", "QuotaExceededError");
+    return setItemAsli.call(this, key, value);
+  };
+  hasilSaatPenuh = await penyimpanan.simpanPengaturan?.(
+    "tesPenuh",
+    { header: true },
+    { sinkronkan: async (key, value) => {
+      cloudSaatPenuh[key] = value;
+      return { ok: true, active: true };
+    } },
+  );
+} catch {
+  hasilSaatPenuh = null;
+} finally {
+  Storage.prototype.setItem = setItemAsli;
+}
+eq("cloud tetap menerima pengaturan saat penyimpanan perangkat penuh", cloudSaatPenuh, { tesPenuh: { header: true } });
+eq("hasil membedakan penyimpanan perangkat yang gagal", hasilSaatPenuh && hasilSaatPenuh.lokal, false);
+
+// Posisi murotal bersifat lokal, sedangkan konfigurasi harus tetap dapat
+// disinkronkan. Jika nilai cloud ikut membawa posisi, kiosk lain dapat
+// melompat ke posisi pemutaran perangkat ini.
+const cloudMurotal = {};
+await penyimpanan.simpanPengaturan?.(
+  "tesMurotal",
+  { aktif: true, posisi: { index: 2, detik: 91 } },
+  {
+    nilaiCloud: { aktif: true },
+    sinkronkan: async (key, value) => {
+      cloudMurotal[key] = value;
+      return { ok: true, active: true };
+    },
+  },
+);
+eq("nilai lokal dapat menyimpan posisi khusus kiosk", localStorage.getItem("tesMurotal"), JSON.stringify({ aktif: true, posisi: { index: 2, detik: 91 } }));
+eq("nilai cloud tidak memuat posisi murotal", cloudMurotal, { tesMurotal: { aktif: true } });
+
+// Tombol Simpan global membutuhkan hasil lengkap tiap penyimpanan, bukan
+// sekadar respons cloud. Jika fungsi tunggu hanya mengembalikan respons cloud,
+// UI tidak dapat membedakan perubahan yang masih tertunda untuk diulang.
+const simpanUntukRingkasan = penyimpanan.simpanPengaturan?.(
+  "tesRingkasan",
+  { mode: "baru" },
+  { sinkronkan: async () => ({ ok: false, active: true, error: "offline" }) },
+);
+const hasilRingkasan = await penyimpanan.tungguSemuaPengaturan?.();
+await simpanUntukRingkasan;
+eq("ringkasan menunggu hasil penyimpanan lengkap", hasilRingkasan && hasilRingkasan[0] && hasilRingkasan[0].tertunda, true);
+
+// Jika pengguna menyimpan dua kali dengan cepat, kegagalan kiriman pertama
+// tidak boleh meninggalkan retry nilai lama setelah kiriman kedua berhasil.
+// Jika tidak, reconnect berikutnya dapat membalikkan pilihan terbaru.
+localStorage.removeItem("tesUrutan");
+localStorage.removeItem("pengaturanTertunda");
+let lepasKirimanPertama;
+let tandaiKirimanPertama;
+const kirimanPertamaMulai = new Promise((resolve) => { tandaiKirimanPertama = resolve; });
+const nilaiCloudBerurutan = [];
+const simpanPertama = penyimpanan.simpanPengaturan?.(
+  "tesUrutan",
+  { versi: 1 },
+  { sinkronkan: async (key, value) => {
+    nilaiCloudBerurutan.push(value);
+    tandaiKirimanPertama();
+    await new Promise((resolve) => { lepasKirimanPertama = resolve; });
+    return { ok: false, active: true, error: "offline" };
+  } },
+);
+const simpanKedua = penyimpanan.simpanPengaturan?.(
+  "tesUrutan",
+  { versi: 2 },
+  { sinkronkan: async (key, value) => {
+    nilaiCloudBerurutan.push(value);
+    return { ok: true, active: true };
+  } },
+);
+await kirimanPertamaMulai;
+lepasKirimanPertama();
+await Promise.all([simpanPertama, simpanKedua]);
+eq("kiriman berurutan tetap memakai nilai lama lalu terbaru", nilaiCloudBerurutan, [{ versi: 1 }, { versi: 2 }]);
+eq("kiriman terbaru sukses menghapus retry nilai lama", localStorage.getItem("pengaturanTertunda"), null);
+
+localStorage.removeItem("tesPengaturan");
+localStorage.removeItem("tesPengaturanLain");
+localStorage.removeItem("pengaturanTertunda");
+localStorage.removeItem("tesMurotal");
+localStorage.removeItem("tesRingkasan");
+localStorage.removeItem("tesUrutan");
+out.unshift(`${pass} PASS, ${fail} FAIL\n`);
+document.getElementById("out").textContent = out.join("\n");
+console.log(out.join("\n"));
+</script>

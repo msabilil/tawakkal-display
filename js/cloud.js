@@ -42,13 +42,21 @@ export async function cloudGetAll() {
   return data;
 }
 
-// Fire-and-forget dengan sengaja - pemanggil (saveX() di admin.js) tidak
-// boleh nunggu network, biar UI admin tetap instan seperti sekarang.
+export async function cloudSetDenganClient(key, value, c) {
+  if (!c) return { ok: false, active: true, error: "Supabase client tidak tersedia" };
+  const { error } = await c.from("settings").upsert({ key, value, updated_at: new Date().toISOString() });
+  return error ? { ok: false, active: true, error } : { ok: true, active: true };
+}
+
 export function cloudSet(key, value) {
-  if (!cloudAktif()) return;
-  getSupabaseClient()
-    .then((c) => c && c.from("settings").upsert({ key, value, updated_at: new Date().toISOString() }))
-    .catch(() => {}); // gagal diam-diam, lihat spec bagian Error Handling
+  if (!cloudAktif()) return Promise.resolve({ ok: true, active: false });
+  const operasi = getSupabaseClient()
+    .then((c) => cloudSetDenganClient(key, value, c))
+    .catch((error) => ({ ok: false, active: true, error }));
+  const timeout = new Promise((resolve) => setTimeout(() => resolve({
+    ok: false, active: true, error: "Timeout sinkronisasi Supabase",
+  }), 8000));
+  return Promise.race([operasi, timeout]);
 }
 
 export async function cloudUploadMedia(path, file) {
@@ -66,14 +74,19 @@ export async function cloudUploadMedia(path, file) {
 // Hapus file di Storage - terima path bare ATAU URL publik penuh (termasuk
 // query ?v=... dari cloudUploadMedia), diekstrak sendiri di sini biar
 // pemanggil (admin.js) tinggal oper apa yang sudah tersimpan di metadata.
-// Fire-and-forget sama seperti cloudSet - gagal diam-diam, tidak nge-block
-// hapus dari daftar/metadata yang sudah jalan lebih dulu.
-export function cloudDeleteMedia(urlAtauPath) {
-  if (!cloudAktif() || !urlAtauPath) return;
+// Mengembalikan boolean agar pengelola media dapat menunda pembersihan yang
+// gagal tanpa membuang metadata atau cache aktif secara prematur.
+export async function cloudDeleteMedia(urlAtauPath) {
+  if (!cloudAktif() || !urlAtauPath) return false;
   const path = urlAtauPath.includes("/media/") ? urlAtauPath.split("/media/")[1].split("?")[0] : urlAtauPath;
-  getSupabaseClient()
-    .then((c) => c && c.storage.from("media").remove([path]))
-    .catch(() => {});
+  try {
+    const c = await getSupabaseClient();
+    if (!c) return false;
+    const { error } = await c.storage.from("media").remove([path]);
+    return !error;
+  } catch {
+    return false;
+  }
 }
 
 // Path URL Storage publik Supabase deterministik - tidak butuh network call.

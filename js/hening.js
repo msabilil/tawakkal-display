@@ -31,17 +31,7 @@ export function start(opsi) {
       durasiDetik: nada.sholatModeDetik,
     });
   }
-  if (opsi.preview) return; // preview dibuka manual oleh admin
-
-  const sisaMs = state ? state.endTime - Date.now() : 0;
-  if (sisaMs <= 0) {
-    localStorage.removeItem(KEY);
-    tampilkan("sholat");
-    return;
-  }
-  const id = setTimeout(() => {
-    localStorage.removeItem(KEY);
-    tampilkan("sholat");
-  }, sisaMs);
-  return () => clearTimeout(id);
+  // Tenggat dan perpindahan layar dimiliki Alur Layar Ibadah di app.js.
+  // View ini hanya menampilkan fase yang sudah diputuskan.
+  if (opsi.preview) return;
 }

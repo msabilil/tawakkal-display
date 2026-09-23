@@ -1,7 +1,7 @@
 import { loadJumatSlides, loadJumatSettings } from "./jumat-mode.js";
 import { tampilkan } from "./navigasi.js";
-import { mulaiHening } from "./hening.js";
 import { loadHening } from "./settings.js";
+import { buatPratinjauJumat } from "./alur-ibadah.js";
 
 const KEY = "jumatAktif";
 const elMedia = document.getElementById("jumat-media");
@@ -28,15 +28,14 @@ function bacaState() {
 }
 
 function statePreview() {
-  const now = Date.now();
   const settings = loadJumatSettings();
-  const slideEnd = now + settings.durasiMenit * 60000;
   const heningMenit = Math.max(0, loadHening().dzuhur.menit || 0);
-  return {
-    slideEndTime: new Date(slideEnd).toISOString(),
-    sholatModeAktif: !!settings.sholatModeAktif,
-    endTime: new Date(slideEnd + (settings.sholatModeAktif ? heningMenit * 60000 : 0)).toISOString(),
-  };
+  return buatPratinjauJumat({
+    sekarang: new Date(),
+    durasiMenit: settings.durasiMenit,
+    heningMenit,
+    sholatModeAktif: settings.sholatModeAktif,
+  }).state;
 }
 
 const DURASI_TRANSISI_MS = 700;
@@ -77,8 +76,6 @@ function tampilkanSlide(slides, i, state) {
 
 function lanjut(slides, i, state) {
   if (new Date() >= new Date(state.endTime)) {
-    localStorage.removeItem(KEY);
-    tampilkan("sholat");
     return;
   }
   tampilkanSlide(slides, i, state);
@@ -86,16 +83,8 @@ function lanjut(slides, i, state) {
 
 function selesaiSlide(state) {
   if (new Date() >= new Date(state.endTime)) {
-    localStorage.removeItem(KEY);
-    tampilkan("sholat");
     return;
   }
-  if (state.sholatModeAktif) {
-    mulaiHening(state.endTime, { putarNada: false });
-    return;
-  }
-  localStorage.removeItem(KEY);
-  tampilkan("sholat");
 }
 
 // Dipanggil router (navigasi.js) tiap masuk view "jumat".

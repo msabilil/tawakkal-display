@@ -1,5 +1,5 @@
 import { SHOLAT } from "./config.js";
-import { parseHM } from "./waktu.js";
+import { dayWIB, formatJamWIB, formatTanggalWIB, parseHM, applyKoreksiWaktu } from "./waktu.js";
 export { parseHM };
 
 export function nextSholat(now, jadwal) {
@@ -8,8 +8,7 @@ export function nextSholat(now, jadwal) {
     if (t > now) return { key, label, time: t };
   }
   // semua lewat -> Subuh besok
-  const besok = new Date(now);
-  besok.setDate(besok.getDate() + 1);
+  const besok = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const subuh = SHOLAT[0];
   return { key: subuh.key, label: subuh.label, time: parseHM(jadwal[subuh.key], besok) };
 }
@@ -21,7 +20,7 @@ export function nextSholat(now, jadwal) {
 // iqomah.js tick - adzanEndTime === iqomahEndTime kalau iqomah nonaktif).
 export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
   for (const { key, label } of SHOLAT) {
-    if (now.getDay() === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
+    if (dayWIB(now) === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
     const set = iqomahSettings[key] || {};
     const iqomahMenit = set.aktif && set.menit > 0 ? set.menit : 0;
     const totalMenit = adzanMenit + iqomahMenit;
@@ -43,7 +42,7 @@ export function iqomahState(now, jadwal, iqomahSettings, adzanMenit) {
 // dari SELESAI iqomah, bukan dari azan.
 export function heningState(now, jadwal, iqomahSettings, heningSettings, adzanMenit) {
   for (const { key, label } of SHOLAT) {
-    if (now.getDay() === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
+    if (dayWIB(now) === 5 && key === "dzuhur") continue; // Jumat: dzuhur dilewati
     const hSet = heningSettings[key] || {};
     if (!hSet.aktif || !(hSet.menit > 0)) continue;
     const iqSet = iqomahSettings[key] || {};
@@ -58,15 +57,16 @@ export function heningState(now, jadwal, iqomahSettings, heningSettings, adzanMe
 
 import { NAMA_MASJID, TAGLINE_MASJID, WAKTU_HARIAN } from "./config.js";
 import { getJadwal, dateKey } from "./api.js";
-import { loadIqomah, loadAdzan, loadHening, loadPengumuman } from "./settings.js";
+import { loadIqomah, loadAdzan, loadHening, loadKoreksiWaktu, loadPengumuman } from "./settings.js";
 import { tarawihState } from "./ramadhan.js";
 import { mulaiHening } from "./hening.js";
 import { loadTampilan } from "./tampilan.js";
 import { ICONS } from "./icons.js";
 import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
 import { tickHalamanSholat, mulaiSesiSholat } from "./rotasi.js";
-import { jumatState } from "./jumat-mode.js";
+import { loadJumatSettings, loadJumatSlides } from "./jumat-mode.js";
 import { tampilkan, viewAktif } from "./navigasi.js";
+import { tentukanAlur } from "./alur-ibadah.js";
 
 const IQOMAH_KEY = "iqomahAktif";
 const JUMAT_KEY = "jumatAktif";
@@ -75,7 +75,9 @@ const JUMAT_KEY = "jumatAktif";
 const modeDemo = new URLSearchParams(location.search).get("demo") === "1";
 
 // State modul
-let jadwal = null;         // {imsak,subuh,terbit,dzuhur,ashar,maghrib,isya} dari API/cache
+let jadwal = null;         // jadwal yang sudah dikoreksi untuk seluruh logika layar
+let jadwalMentah = null;   // jadwal asli dari API/cache, tidak pernah ditimpa koreksi
+let koreksiTerakhir = null;
 let jadwalDateKey = null;  // "YYYY-MM-DD" jadwal yang sedang dipakai
 let offline = false;
 let fetchedAt = null;
@@ -107,11 +109,10 @@ function renderMarquee() {
 }
 
 function renderTanggal(now) {
-  $("tanggal-masehi").textContent = now.toLocaleDateString("id-ID", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
+  $("tanggal-masehi").textContent = formatTanggalWIB(now);
   try {
     $("tanggal-hijriah").textContent = new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
+      timeZone: "Asia/Jakarta",
       day: "numeric", month: "long", year: "numeric",
     }).format(now);
   } catch {
@@ -142,7 +143,8 @@ function renderOffline() {
   const el = $("offline-indikator");
   if (offline && fetchedAt) {
     const t = new Date(fetchedAt);
-    el.textContent = `Data offline, update terakhir ${pad(t.getDate())}/${pad(t.getMonth()+1)} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
+    const waktu = formatTanggalWIB(t);
+    el.textContent = `Data offline, update terakhir ${waktu} ${formatJamWIB(t).slice(0, 5)}`;
     el.hidden = false;
   } else {
     el.hidden = true;
@@ -163,9 +165,8 @@ function buatJamAnalogAngka() {
 }
 
 function tickJamAnalog(now) {
-  const jam = now.getHours() % 12;
-  const menit = now.getMinutes();
-  const detik = now.getSeconds();
+  const [jamMentah, menit, detik] = formatJamWIB(now).split(":").map(Number);
+  const jam = jamMentah % 12;
   const derajatJam = jam * 30 + menit * 0.5;
   const derajatMenit = menit * 6 + detik * 0.1;
   const derajatDetik = detik * 6;
@@ -179,16 +180,28 @@ async function muatJadwal(now) {
   sedangMuatJadwal = true;
   try {
     const r = await getJadwal(now);
-    jadwal = r.jadwal;
+    jadwalMentah = r.jadwal;
+    koreksiTerakhir = null;
+    sinkronkanKoreksi();
     offline = r.fromCache;
     fetchedAt = r.fetchedAt;
     jadwalDateKey = dateKey(now);
   } catch (e) {
+    jadwalMentah = null;
     jadwal = null;
     offline = true;
   }
   sedangMuatJadwal = false;
   renderOffline();
+}
+
+function sinkronkanKoreksi() {
+  if (!jadwalMentah) return;
+  const koreksi = loadKoreksiWaktu();
+  const serial = JSON.stringify(koreksi);
+  if (serial === koreksiTerakhir) return;
+  jadwal = applyKoreksiWaktu(jadwalMentah, koreksi);
+  koreksiTerakhir = serial;
 }
 
 // Exported murni buat testable - lihat app.test.html. Nentuin apa hitung
@@ -206,10 +219,10 @@ function bacaIqomahState() {
   }
 }
 
-function mulaiIqomah(iq) {
+function mulaiIqomah(state) {
   stopMurotal();
   const now = Date.now();
-  if (harusResumeIqomah(bacaIqomahState(), iq.key, now)) {
+  if (harusResumeIqomah(bacaIqomahState(), state.key, now)) {
     // Sudah ada hitung mundur berjalan buat sholat yang sama (mis. balik
     // dari refresh) - lanjutkan pakai endTime lama, jangan reset ke awal.
     tampilkan("iqomah");
@@ -224,92 +237,65 @@ function mulaiIqomah(iq) {
   // reset balik ke fase adzan penuh walau azan aslinya sudah lama lewat
   // (bug: ganti setting durasi adzan pas lagi iqomah bikin layar balik ke
   // "Waktu X Telah Masuk" dengan durasi adzan yang baru).
-  const adzanDetik = loadAdzan().menit * 60;
-  const adzanEndTime = new Date(iq.start.getTime() + adzanDetik * 1000).toISOString();
-  const iqomahEndTime = new Date(iq.start.getTime() + (adzanDetik + iq.totalDetik) * 1000).toISOString();
   localStorage.setItem(IQOMAH_KEY, JSON.stringify({
-    key: iq.key,
-    label: iq.label,
-    adzanEndTime,
-    iqomahEndTime,
-    // Bila durasi Adzan nol, langsung bunyikan nada saat Iqomah dimulai.
-    putarNadaSaatMulai: adzanDetik === 0,
+    ...state,
     nadaDimainkan: false,
   }));
   tampilkan("iqomah");
 }
 
-function mulaiJumat(jum) {
+function mulaiJumat(state) {
   stopMurotal();
-  localStorage.setItem(JUMAT_KEY, JSON.stringify(jum));
+  localStorage.setItem(JUMAT_KEY, JSON.stringify(state));
   tampilkan("jumat");
-}
-
-function mulaiAdzanJumat(jum) {
-  stopMurotal();
-  const now = Date.now();
-  if (harusResumeIqomah(bacaIqomahState(), "jumat", now)) {
-    tampilkan("iqomah");
-    return;
-  }
-  // Jumat tetap memakai layar Adzan Dzuhur. Fase iqomah sengaja tidak dibuat
-  // karena sesudah adzan alurnya pindah ke nada lalu slide khutbah.
-  localStorage.setItem(IQOMAH_KEY, JSON.stringify({
-    key: "jumat",
-    label: "Dzuhur",
-    adzanEndTime: jum.adzanEndTime,
-    iqomahEndTime: jum.adzanEndTime,
-    nadaDimainkan: false,
-  }));
-  tampilkan("iqomah");
-}
-
-function mulaiTarawih(tw) {
-  stopMurotal();
-  mulaiHening(tw.endTime);
 }
 
 function tick() {
   const now = new Date();
-  $("jam").textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  $("jam").textContent = formatJamWIB(now);
   renderTanggal(now);
   tickJamAnalog(now);
 
   if (!jadwal) return; // belum ada data
-
-  const view = viewAktif();
-  const jum = jumatState(now, jadwal);
-  if (jum) {
-    if (jum.fase === "adzan" && view !== "iqomah") mulaiAdzanJumat(jum);
-    else if (jum.fase === "hening" && view !== "hening") mulaiHening(jum.endTime, { putarNada: false });
-    else if (jum.fase === "slide" && view !== "jumat") mulaiJumat(jum);
-    return;
-  }
+  sinkronkanKoreksi();
 
   const iqSettings = loadIqomah();
   const adzanMenit = loadAdzan().menit;
-  const iq = iqomahState(now, jadwal, iqSettings, adzanMenit);
-  if (iq) {
-    if (view !== "iqomah") mulaiIqomah(iq);
-    return;
-  }
-
   const tw = tarawihState(now, jadwal, iqSettings, adzanMenit);
-  if (tw) {
-    if (view !== "hening") mulaiTarawih(tw);
+  const keputusan = tentukanAlur({
+    now,
+    jadwal,
+    iqomah: iqSettings,
+    hening: loadHening(),
+    adzanMenit,
+    jumat: { ...loadJumatSettings(), adaSlide: loadJumatSlides().length > 0 },
+    tarawih: tw ? { view: "hening", state: { endTime: tw.endTime, putarNada: true } } : null,
+  });
+  if (keputusan) {
+    const view = viewAktif();
+    if (keputusan.view === "iqomah" && view !== "iqomah") mulaiIqomah(keputusan.state);
+    else if (keputusan.view === "jumat" && view !== "jumat") mulaiJumat(keputusan.state);
+    else if (keputusan.view === "hening" && view !== "hening") {
+      stopMurotal();
+      mulaiHening(keputusan.state.endTime, { putarNada: keputusan.state.putarNada !== false });
+    }
     return;
   }
 
-  const hening = heningState(now, jadwal, iqSettings, loadHening(), adzanMenit);
-  if (hening) {
-    if (view !== "hening") mulaiHening(hening.endTime);
+  // View fase tidak menentukan perpindahan sendiri. Saat keputusan alur
+  // berakhir, pemilik tunggal ini membersihkan state dan kembali normal.
+  if (["iqomah", "jumat", "hening"].includes(viewAktif())) {
+    localStorage.removeItem(IQOMAH_KEY);
+    localStorage.removeItem(JUMAT_KEY);
+    localStorage.removeItem("heningAktif");
+    tampilkan("sholat");
     return;
   }
 
   // Murotal perlu dipantau walau layar sekunder sedang tampil. Kalau tidak,
   // audio baru mulai saat rotasi selesai dan terasa terlambat.
   tickMurotal(now, jadwal, modeDemo);
-  if (view !== "sholat") return;
+  if (viewAktif() !== "sholat") return;
 
   const next = nextSholat(now, jadwal);
   renderGrid(next);
