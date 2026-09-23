@@ -92,6 +92,6 @@ export function tarawihState(now, jadwal, iqomahSettings, adzanMenit) {
 
   const mulai = new Date(isyaIqomahEnd.getTime() + settings.jedaMenit * 60000);
   const selesai = new Date(mulai.getTime() + settings.durasiMenit * 60000);
-  if (now >= mulai && now < selesai) return { endTime: selesai.toISOString() };
+  if (now >= mulai && now < selesai) return { startTime: mulai.toISOString(), endTime: selesai.toISOString() };
   return null;
 }

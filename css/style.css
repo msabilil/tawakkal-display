@@ -2583,77 +2583,240 @@ body.admin .stepper-btn {
    donasi, dan QRIS tetap terbaca. Latar donasi dari admin tetap menimpa
    fallback ini lewat style inline. */
 #layar-16x9.halaman-qr { background-image: url("../img/WhatsApp Image 2026-09-07 at 20.02.40 (3).jpeg") !important; }
-#layar-16x9.halaman-kegiatan { background-image: url("../img/bg-jadwal-kegiatan.jpeg") !important; }
+#layar-16x9.halaman-kegiatan { background-image: url("../img/WhatsApp Image 2026-09-07 at 20.02.40 (3).jpeg") !important; }
 
+/* Layar QR dan kegiatan berbagi bahasa visual referensi: malam biru, aksen
+   emas, konten berlapis, serta jadwal salat yang tetap terbaca dari jauh. */
+.halaman-qr .fokus-isi,
+.halaman-kegiatan .fokus-isi { position: absolute; inset: 0; }
 
-.halaman-qr .fokus-isi {
-  position: absolute;
-  left: 22%; top: 44%; width: 56%; height: 44%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.4cqh;
-  text-align: center;
-}
-/* Judul besar di atas kotak (mis. "Sesaat Lagi Iqomah", "Donasi") - posisi &
-   ukuran dikunci ke koordinat mockup img/iqomah.jpeg, bukan di dalam kotak
-   putih (yang cuma zona aman buat angka/QR). */
 .iqomah-judul,
 .halaman-qr .fokus-judul {
-  position: fixed;
-  left: 8%; top: 23%; width: 84%; height: 14%;
+  position: absolute;
+  z-index: 1;
+  left: 8%; top: 15%; width: 84%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-size: clamp(22px, 4.8cqw, 80px);
-  line-height: 1.1;
   color: #fff;
+  font-size: clamp(22px, 4.5cqw, 76px);
   font-weight: 800;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, .35);
+  letter-spacing: .025em;
+  line-height: 1.08;
+  text-align: center;
+  text-shadow: 0 3px 16px rgba(0, 7, 31, .8);
+  text-transform: uppercase;
 }
-.fokus-qr-img { width: clamp(160px, 32cqh, 340px); height: auto; border-radius: 18px; box-shadow: none; }
-.fokus-qr-teks {
-  font-size: clamp(13px, 1.6cqw, 20px);
-  margin: 0;
-  color: #e6f7ff;
-  font-weight: 600;
-  text-shadow: 0 1px 5px rgba(0, 20, 56, 0.8);
-}
-.fokus-kosong { opacity: 0.7; font-size: clamp(16px, 1.8cqw, 24px); color: #fff; }
-
-/* Kotak foto jadwal kegiatan: img/bg-jadwal-kegiatan.jpeg, grid 2 kolom x 4 baris tetap. */
-.halaman-kegiatan .fokus-judul { display: none; }
-.halaman-kegiatan .fokus-isi { position: static; }
-.fokus-list { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; width: auto; }
-.fokus-item {
+.qr-donasi-isi {
   position: absolute;
-  background: transparent;
-  border: none;
-  padding: 0;
+  z-index: 1;
+  left: 50%; top: 35%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: clamp(7px, .9cqh, 13px);
+  min-width: 0;
+  transform: translateX(-50%);
   text-align: center;
 }
-.fokus-item-nama { display: block; font-size: clamp(16px, 1.9cqw, 26px); font-weight: 700; line-height: 1.15; color: #000; }
-.fokus-item-kapan { font-size: clamp(14px, 1.5cqw, 21px); color: #334155; margin-top: 3px; }
-.fokus-item-pengisi { display: block; font-size: clamp(14px, 1.4cqw, 19px); font-weight: 700; color: #000; opacity: 1; margin-top: 1px; }
-/* Nama kegiatan dan pengisi wajib hitam pada semua tema, termasuk Tosca. */
-#layar-16x9.halaman-kegiatan .fokus-item-nama,
-#layar-16x9.halaman-kegiatan .fokus-item-pengisi { color: #000 !important; opacity: 1; }
-/* Tinggi slot 17.8% (bukan ~9%) - itu tinggi kotak putih beneran di foto,
-   diukur dari screenshot render nyata. */
-.fokus-item:nth-child(1) { left: 19.4%; top: 21.7%; width: 27.7%; height: 17.8%; }
-.fokus-item:nth-child(2) { left: 48.0%; top: 21.8%; width: 27.8%; height: 17.8%; }
-.fokus-item:nth-child(3) { left: 19.4%; top: 41.3%; width: 27.8%; height: 17.8%; }
-.fokus-item:nth-child(4) { left: 47.9%; top: 41.3%; width: 27.9%; height: 17.8%; }
-.fokus-item:nth-child(5) { left: 19.4%; top: 61.1%; width: 27.7%; height: 17.8%; }
-.fokus-item:nth-child(6) { left: 47.9%; top: 61.1%; width: 27.8%; height: 17.8%; }
-.fokus-item:nth-child(7) { left: 19.4%; top: 80.5%; width: 27.8%; height: 17.8%; }
-.fokus-item:nth-child(8) { left: 48.0%; top: 80.5%; width: 27.7%; height: 17.8%; }
+.fokus-qr-img {
+  width: clamp(154px, 29cqh, 292px);
+  height: auto;
+  padding: clamp(6px, .75cqh, 10px);
+  border: 2px solid rgba(255, 255, 255, .92);
+  border-radius: clamp(13px, 1.3cqw, 20px);
+  background: #fff;
+  box-shadow: 0 18px 30px -18px rgba(0, 8, 34, .94);
+}
+.fokus-qr-teks {
+  max-width: 42cqw;
+  margin: 0;
+  color: #f6f9ff;
+  font-size: clamp(13px, 1.55cqw, 21px);
+  font-weight: 700;
+  line-height: 1.25;
+  text-shadow: 0 2px 8px rgba(0, 8, 34, .9);
+}
+
+.jadwal-strip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(190px, 29%) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(216, 174, 65, .52);
+  border-radius: clamp(18px, 2cqw, 32px);
+  box-shadow: 0 20px 36px -26px rgba(0, 5, 28, .95);
+}
+.jadwal-strip-info {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.4cqw, 22px);
+  padding: clamp(13px, 1.7cqh, 23px) clamp(16px, 2cqw, 31px);
+  background: linear-gradient(135deg, #071d49 0%, #06376d 100%);
+  color: #fff;
+  text-align: left;
+}
+.jadwal-strip-info-ikon {
+  width: clamp(32px, 3.6cqw, 52px);
+  min-width: clamp(32px, 3.6cqw, 52px);
+  fill: none;
+  stroke: #ffd456;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+}
+.jadwal-strip-judul,
+.jadwal-strip-tanggal { margin: 0; }
+.jadwal-strip-judul {
+  color: inherit;
+  font-size: clamp(15px, 1.85cqw, 28px);
+  font-weight: 800;
+  letter-spacing: -.025em;
+  line-height: 1.16;
+}
+.jadwal-strip-tanggal {
+  margin-top: clamp(3px, .45cqh, 7px);
+  color: rgba(237, 245, 255, .83);
+  font-size: clamp(11px, 1.3cqw, 19px);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.jadwal-strip-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.jadwal-strip-list li {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  justify-items: center;
+  align-content: center;
+  gap: clamp(1px, .25cqh, 4px);
+  min-width: 0;
+  padding: clamp(9px, 1.15cqh, 17px) clamp(5px, .8cqw, 12px);
+  color: #f8fbff;
+  font-size: clamp(12px, 1.5cqw, 21px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+.jadwal-strip-list li + li::before {
+  position: absolute;
+  top: 18%; bottom: 18%; left: 0;
+  width: 1px;
+  background: rgba(154, 196, 242, .5);
+  content: "";
+}
+.jadwal-strip-list time {
+  color: #ffd456;
+  font-size: clamp(16px, 2cqw, 30px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.035em;
+}
+.jadwal-strip-waktu-ikon {
+  position: relative;
+  width: clamp(19px, 2.05cqw, 31px);
+  height: clamp(19px, 2.05cqw, 31px);
+  border: 2px solid #ffd456;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.jadwal-strip-waktu-ikon::before,
+.jadwal-strip-waktu-ikon::after {
+  position: absolute;
+  background: #ffd456;
+  content: "";
+}
+.jadwal-strip-waktu-ikon::before { width: 2px; height: 35%; top: -42%; left: calc(50% - 1px); box-shadow: 0 calc(100% + 7px) 0 #ffd456; }
+.jadwal-strip-waktu-ikon::after { height: 2px; width: 35%; left: -42%; top: calc(50% - 1px); box-shadow: calc(100% + 7px) 0 0 #ffd456; }
+.jadwal-strip-waktu-ikon-maghrib { border-bottom-color: transparent; border-radius: 50% 50% 0 0; }
+.jadwal-strip-waktu-ikon-isya { border-color: #ffd456; border-left-color: transparent; transform: rotate(-25deg); }
+.qr-jadwal svg.jadwal-strip-waktu-ikon,
+.kegiatan-jadwal svg.jadwal-strip-waktu-ikon {
+  border: 0;
+  border-radius: 0;
+  color: #ffd456;
+  stroke: currentColor;
+  transform: none;
+}
+.jadwal-strip-kosong { grid-column: 1 / -1; color: inherit; font-size: clamp(13px, 1.5cqw, 20px); }
+
+.qr-jadwal { left: 3%; right: 3%; bottom: 11%; min-height: 18%; background: rgba(2, 26, 69, .94); }
+.qr-jadwal .jadwal-strip-info { justify-content: center; }
+.qr-jadwal .jadwal-strip-list { background: rgba(2, 39, 92, .86); }
+.qr-jadwal .jadwal-strip-kosong { color: #e7f1ff; }
+
+/* Kegiatan selalu menjadi fokus pertama. Pita jadwal salat melengkapi layar
+   di bawahnya; tidak ada kontrol "Lihat Semua" karena entri aktif langsung
+   mengisi grid. */
+.kegiatan-jadwal { left: 12%; right: 12%; bottom: 10%; height: 17%; min-height: 0; display: block; background: rgba(2, 39, 92, .86); }
+.kegiatan-jadwal .jadwal-strip-list { height: 100%; }
+.kegiatan-jadwal .jadwal-strip-list { background: rgba(2, 39, 92, .86); }
+.kegiatan-jadwal .jadwal-strip-list li { padding-top: clamp(7px, .9cqh, 12px); padding-bottom: clamp(7px, .9cqh, 12px); }
+.kegiatan-jadwal .jadwal-strip-kosong { color: #e7f1ff; }
+.kegiatan-daftar {
+  position: absolute;
+  left: 12%; right: 12%; top: 11%; bottom: 29%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(20px, 2.5cqh, 32px);
+  padding: clamp(15px, 1.8cqh, 25px) clamp(18px, 2cqw, 30px) clamp(18px, 2cqh, 28px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.kegiatan-daftar h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(20px, 2.7cqw, 40px);
+  font-weight: 800;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+  text-align: center;
+  transform: translateY(-clamp(16px, 2.1cqh, 30px));
+}
+.fokus-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: clamp(9px, 1.1cqh, 15px) clamp(12px, 1.25cqw, 20px);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fokus-item {
+  display: grid;
+  align-content: center;
+  min-width: 0;
+  padding: clamp(9px, 1.1cqh, 16px) clamp(13px, 1.45cqw, 22px);
+  border: 1px solid rgba(214, 232, 255, .85);
+  border-radius: clamp(13px, 1.3cqw, 20px);
+  background: linear-gradient(135deg, #fff 0%, #edf5ff 100%);
+  box-shadow: 0 11px 20px -19px rgba(0, 8, 31, .9);
+  text-align: left;
+}
+.fokus-item-nama {
+  display: block;
+  overflow: hidden;
+  color: #08275e;
+  font-size: clamp(13px, 1.55cqw, 23px);
+  font-weight: 800;
+  letter-spacing: -.018em;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fokus-item-kapan { display: block; margin-top: clamp(3px, .45cqh, 6px); color: #1f5799; font-size: clamp(11px, 1.17cqw, 17px); font-weight: 600; line-height: 1.2; }
+.fokus-item-pengisi { display: block; overflow: hidden; margin-top: clamp(2px, .3cqh, 4px); color: #183b70 !important; font-size: clamp(11px, 1.15cqw, 17px); font-weight: 700; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.fokus-kosong { grid-column: 1 / -1; align-self: center; margin: 0; color: #dcecff; font-size: clamp(16px, 1.8cqw, 24px); }
 
 .opsi-radio { display: flex; align-items: center; gap: 10px; margin: 6px 0; cursor: pointer; font-size: 15px; }
 /* Radio custom - satu lingkaran (bukan track on/off spt toggle), tinggi
@@ -2740,13 +2903,30 @@ body.admin .stepper-btn {
 }
 .admin-login-submit { margin-top: 8px; width: 100%; }
 
-/* ---------- Halaman Hening (view "hening") - layar hitam polos pasca-iqomah/tarawih ---------- */
+/* ---------- Sholat Mode: himbauan awal, lalu layar hitam pasca-iqomah/tarawih ---------- */
 /* !important - sama alasannya kayak #layar-16x9.iqomah-page/halaman-qr: shorthand
    `background` tema (html[data-versi="baru"] body dkk) spesifisitasnya
    ketemu lebih tinggi (2 elemen html+body vs 1 elemen+1 class di sini),
    jadi menang duluan tanpa !important - bikin hening keliatan putih di
    tema Zamrud Emas alih-alih hitam. */
-#layar-16x9.halaman-hening { margin: 0; background: #000 !important; }
+#layar-16x9.halaman-hening {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  background: #000 !important;
+}
+.hening-himbauan {
+  max-width: min(74cqw, 30ch);
+  margin: 0;
+  color: #f8fbff;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: clamp(28px, 4.1cqw, 62px);
+  font-weight: 700;
+  line-height: 1.28;
+  text-align: center;
+  text-shadow: 0 3px 16px rgba(0, 0, 0, 0.72);
+}
 
 /* ---------- Halaman Kegiatan Terdekat (view "acara") - slideshow gambar full-bleed, bisa lebih dari satu ---------- */
 /* !important background-color - sama alasan seperti hening di atas, jaga

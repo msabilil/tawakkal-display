@@ -67,7 +67,7 @@ import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
 import { tickHalamanSholat, mulaiSesiSholat } from "./rotasi.js";
 import { loadJumatSettings, loadJumatSlides } from "./jumat-mode.js";
 import { tampilkan, viewAktif } from "./navigasi.js";
-import { tentukanAlur } from "./alur-ibadah.js";
+import { bolehPutarNadaPadaTransisi, tentukanAlur } from "./alur-ibadah.js";
 import { loadJadwalPengajian } from "./jadwal-pengajian.js";
 import { kegiatanTerdekat } from "./hero-kegiatan.js";
 
@@ -85,6 +85,7 @@ let jadwalDateKey = null;  // "YYYY-MM-DD" jadwal yang sedang dipakai
 let offline = false;
 let fetchedAt = null;
 let sedangMuatJadwal = false;
+let alurAwalSudahDinilai = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -232,7 +233,7 @@ function bacaIqomahState() {
   }
 }
 
-function mulaiIqomah(state) {
+function mulaiIqomah(state, { putarNada = true } = {}) {
   stopMurotal();
   const now = Date.now();
   if (harusResumeIqomah(bacaIqomahState(), state.key, now)) {
@@ -252,7 +253,7 @@ function mulaiIqomah(state) {
   // "Waktu X Telah Masuk" dengan durasi adzan yang baru).
   localStorage.setItem(IQOMAH_KEY, JSON.stringify({
     ...state,
-    nadaDimainkan: false,
+    nadaDimainkan: !putarNada,
   }));
   tampilkan("iqomah");
 }
@@ -282,18 +283,25 @@ function tick() {
     hening: loadHening(),
     adzanMenit,
     jumat: { ...loadJumatSettings(), adaSlide: loadJumatSlides().length > 0 },
-    tarawih: tw ? { view: "hening", state: { endTime: tw.endTime, putarNada: true } } : null,
+    tarawih: tw ? { view: "hening", state: { startTime: tw.startTime, endTime: tw.endTime, putarNada: true } } : null,
   });
+  const putarNada = bolehPutarNadaPadaTransisi(alurAwalSudahDinilai);
   if (keputusan) {
     const view = viewAktif();
-    if (keputusan.view === "iqomah" && view !== "iqomah") mulaiIqomah(keputusan.state);
+    if (keputusan.view === "iqomah" && view !== "iqomah") mulaiIqomah(keputusan.state, { putarNada });
     else if (keputusan.view === "jumat" && view !== "jumat") mulaiJumat(keputusan.state);
     else if (keputusan.view === "hening" && view !== "hening") {
       stopMurotal();
-      mulaiHening(keputusan.state.endTime, { putarNada: keputusan.state.putarNada !== false });
+      mulaiHening(keputusan.state.endTime, {
+        startTime: keputusan.state.startTime,
+        putarNada: putarNada && keputusan.state.putarNada !== false,
+      });
     }
+    alurAwalSudahDinilai = true;
     return;
   }
+
+  alurAwalSudahDinilai = true;
 
   // View fase tidak menentukan perpindahan sendiri. Saat keputusan alur
   // berakhir, pemilik tunggal ini membersihkan state dan kembali normal.

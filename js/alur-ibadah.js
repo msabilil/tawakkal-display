@@ -1,6 +1,22 @@
 import { ADZAN_LEBIH_AWAL_DETIK, SHOLAT } from "./config.js";
 import { parseHM } from "./waktu.js";
 
+// Nada hanya boleh dipicu oleh perpindahan fase yang dilihat aplikasi setelah
+// sinkronisasi awal. Saat display baru dibuka di tengah fase, layarnya tetap
+// ditampilkan tetapi tanpa memutar ulang nada pemberitahuan.
+export function bolehPutarNadaPadaTransisi(sudahSinkronAwal) {
+  return sudahSinkronAwal;
+}
+
+const DURASI_HIMBAUAN_SHOLAT_MODE_MS = 10_000;
+
+export function himbauanSholatModeMasihTampil(mulai, sekarang) {
+  const mulaiMs = new Date(mulai).getTime();
+  const sekarangMs = new Date(sekarang).getTime();
+  return Number.isFinite(mulaiMs) && Number.isFinite(sekarangMs)
+    && sekarangMs >= mulaiMs && sekarangMs < mulaiMs + DURASI_HIMBAUAN_SHOLAT_MODE_MS;
+}
+
 function waktuIqomah(now, jadwal, iqomah, adzanMenit) {
   for (const { key, label } of SHOLAT) {
     if (now.getDay() === 5 && key === "dzuhur") continue;
@@ -39,7 +55,7 @@ function waktuHening(now, jadwal, iqomah, hening, adzanMenit) {
     const heningMulai = new Date(mulai.getTime() + (adzanMenit + menitIqomah) * 60000);
     const selesai = new Date(heningMulai.getTime() + pengaturan.menit * 60000);
     if (now >= heningMulai && now < selesai) {
-      return { view: "hening", state: { endTime: selesai.toISOString(), putarNada: true } };
+      return { view: "hening", state: { startTime: heningMulai.toISOString(), endTime: selesai.toISOString(), putarNada: true } };
     }
   }
   return null;
@@ -79,7 +95,7 @@ function alurJumat(now, jadwal, hening, adzanMenit, jumat) {
       },
     };
   }
-  return { view: "hening", state: { endTime: selesai.toISOString(), putarNada: false } };
+  return { view: "hening", state: { startTime: slideSelesai.toISOString(), endTime: selesai.toISOString(), putarNada: false } };
 }
 
 export function buatPratinjauIqomah({ sekarang, fase, key, label, adzanMenit, iqomahMenit }) {
