@@ -45,6 +45,7 @@ window.addEventListener("orientationchange", skalakanLayar);
 const daftarView = {}; // nama -> start(opsi) => stop|void
 let namaAktif = null;
 let stopAktif = null;
+let opsiAktif = {};
 
 export function daftarkan(nama, start) {
   daftarView[nama] = start;
@@ -66,10 +67,17 @@ export function tampilkan(nama, opsi) {
       el.hidden = el.dataset.view !== nama;
     });
     namaAktif = nama;
-    stopAktif = daftarView[nama](opsi || {}) || null;
+    opsiAktif = opsi || {};
+    stopAktif = daftarView[nama](opsiAktif) || null;
   };
   if (document.startViewTransition) document.startViewTransition(ganti);
   else ganti();
+}
+
+export function segarkanViewAktif() {
+  if (!namaAktif || !daftarView[namaAktif]) return;
+  if (stopAktif) stopAktif();
+  stopAktif = daftarView[namaAktif](opsiAktif) || null;
 }
 
 export function viewAktif() {

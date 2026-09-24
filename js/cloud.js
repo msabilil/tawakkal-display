@@ -95,14 +95,44 @@ export function cloudUrlMedia(path) {
   return `${SUPABASE_URL}/storage/v1/object/public/media/${path}`;
 }
 
-export async function cloudSubscribe(onChange) {
+export async function cloudSubscribe(onChange, onReconnect = () => {}) {
   const c = await getSupabaseClient();
   if (!c) return () => {};
-  const channel = c
-    .channel("settings-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "settings" }, (payload) => {
-      onChange(payload.new || payload.old);
-    })
-    .subscribe();
+  let pernahTerhubung = false;
+  const channel = c.channel("settings-sync")
+    .on("broadcast", { event: "SYNC_SETTINGS" }, () => onChange())
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        if (pernahTerhubung) onReconnect();
+        pernahTerhubung = true;
+      }
+    });
   return () => c.removeChannel(channel);
+}
+
+export async function cloudBroadcastSync() {
+  const c = await getSupabaseClient();
+  if (!c) return false;
+  const channel = c.channel("settings-sync");
+  try {
+    const siap = await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(false), 8000);
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          clearTimeout(timer);
+          resolve(true);
+        } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+          clearTimeout(timer);
+          resolve(false);
+        }
+      });
+    });
+    if (!siap) return false;
+    const status = await channel.send({ type: "broadcast", event: "SYNC_SETTINGS", payload: {} });
+    return status === "ok";
+  } catch {
+    return false;
+  } finally {
+    await c.removeChannel(channel);
+  }
 }

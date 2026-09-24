@@ -1,11 +1,9 @@
 // Sisi kiosk lapisan sync cloud - tarik tabel `settings` Supabase ke
-// localStorage saat boot + realtime + polling. Modul lain (app.js, rotasi.js,
+// localStorage saat boot + Broadcast Realtime. Modul lain (app.js, rotasi.js,
 // dll) TIDAK berubah sama sekali - mereka baca localStorage seperti biasa,
 // cuma sekarang isinya bisa dimutakhirkan dari luar device ini.
 import { cloudAktif, cloudGetAll, cloudSubscribe } from "./cloud.js";
 import { cobaUlangPengaturanTertunda, terapkanDariCloud } from "./penyimpanan-pengaturan.js";
-
-const POLL_MS = 60000;
 
 function pertahankanPosisiMurotal(rows) {
   return rows.map((row) => {
@@ -46,16 +44,12 @@ export async function mulaiCloudSync(onUpdate) {
   if (!cloudAktif()) return;
   const notify = () => { if (onUpdate) onUpdate(); };
 
-  // Pull awal dikasih timeout 3 detik biar internet lambat/mati tidak
-  // macetkan boot kiosk - kalau timeout, lanjut pakai localStorage yang
-  // sudah ada (mirror dari sync sebelumnya, atau default tiap modul kalau
-  // kiosk baru).
+  cloudSubscribe(
+    () => sinkronkanLaluTarik(notify),
+    () => sinkronkanLaluTarik(notify),
+  );
+
+  // Muat data saat startup; Realtime mengisi ulang ketika Broadcast diterima
+  // atau channel tersambung kembali. Tidak ada polling berkala.
   await Promise.race([sinkronkanLaluTarik(notify), new Promise((resolve) => setTimeout(resolve, 3000))]);
-
-  cloudSubscribe((row) => {
-    if (row && row.key) { tulisKeLocal([row]); notify(); }
-  });
-
-  window.addEventListener("online", () => sinkronkanLaluTarik(notify));
-  setInterval(() => sinkronkanLaluTarik(notify), POLL_MS);
 }

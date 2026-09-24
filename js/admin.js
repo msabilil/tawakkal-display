@@ -13,7 +13,7 @@ import { TEMA_TAMPILAN } from "./tema/tampilan/registry.js";
 import { simpanBgLayar, hapusBgLayar, urlBgLayar } from "./bg-layar.js";
 import { readCache, dateKey, getJadwal } from "./api.js";
 import { parseHM, ringkasKoreksiWaktu } from "./waktu.js";
-import { cloudAktif, cloudGetAll } from "./cloud.js";
+import { cloudAktif, cloudBroadcastSync, cloudGetAll } from "./cloud.js";
 import { cobaUlangPembersihanMedia, hapusMedia, simpanMedia } from "./kelola-media.js";
 import { sesiAktif, login, logout } from "./cloud-auth.js";
 import { tulisKeLocal } from "./cloud-sync.js";
@@ -1822,7 +1822,12 @@ async function simpanSection(section) {
     const lokalGagal = hasil.some((item) => item && item.lokal === false);
     if (lokalGagal) tampilkanHasilSimpan("status-simpan-global", { lokal: false });
     else if (adaTertunda) tampilkanHasilSimpan("status-simpan-global", { lokal: true, tertunda: true });
-    else tampilkanStatus("status-simpan-global", "Semua perubahan tersimpan.");
+    else if (cloudAktif()) {
+      const terkirim = await cloudBroadcastSync();
+      tampilkanStatus("status-simpan-global", terkirim
+        ? "Semua perubahan tersimpan dan display disinkronkan."
+        : "Perubahan tersimpan di cloud, tetapi notifikasi ke display gagal dikirim.", !terkirim, !terkirim);
+    } else tampilkanStatus("status-simpan-global", "Semua perubahan tersimpan.");
   } finally {
     tombol.disabled = false;
   }
@@ -1955,6 +1960,7 @@ terapkanTombolKeluar();
 function setupSimpanSection() {
   const tombolSimpanGlobal = $("tombol-simpan-global");
   if (tombolSimpanGlobal) {
+    tombolSimpanGlobal.textContent = "Simpan & Sinkronkan";
     tombolSimpanGlobal.addEventListener("click", () => simpanSection(panelAdminAktif()));
   }
 }
