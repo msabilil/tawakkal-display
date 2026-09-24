@@ -2747,17 +2747,58 @@ body.admin .stepper-btn {
 }
 .jadwal-strip-kosong { grid-column: 1 / -1; color: inherit; font-size: clamp(13px, 1.5cqw, 20px); }
 
-.qr-jadwal { left: 3%; right: 3%; bottom: 11%; min-height: 18%; background: rgba(2, 26, 69, .94); }
-.qr-jadwal .jadwal-strip-info { justify-content: center; }
-.qr-jadwal .jadwal-strip-list { background: rgba(2, 39, 92, .86); }
+.jadwal-dengan-jam {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 25%) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(216, 174, 65, .52);
+  border-radius: clamp(18px, 2cqw, 32px);
+  background: rgba(2, 26, 69, .94);
+  box-shadow: 0 20px 36px -26px rgba(0, 5, 28, .95);
+}
+.fokus-jam,
+.qr-jadwal,
+.kegiatan-jadwal {
+  position: relative;
+  inset: auto;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+.qr-jadwal,
+.kegiatan-jadwal {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.fokus-jam {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-right: 1px solid rgba(154, 196, 242, .5);
+  color: #fff;
+  font-size: clamp(27px, 3.6cqw, 52px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.04em;
+  white-space: nowrap;
+}
+.qr-jadwal-bawah { left: 3%; right: 3%; bottom: 11%; height: 18%; }
+.kegiatan-jadwal-bawah { left: 12%; right: 12%; bottom: 10%; height: 17%; }
+.qr-jadwal { display: block; background: transparent; }
+.qr-jadwal .jadwal-strip-list,
+.kegiatan-jadwal .jadwal-strip-list { background: transparent; }
+.qr-jadwal .jadwal-strip-list { height: 100%; }
 .qr-jadwal .jadwal-strip-kosong { color: #e7f1ff; }
 
 /* Kegiatan selalu menjadi fokus pertama. Pita jadwal salat melengkapi layar
    di bawahnya; tidak ada kontrol "Lihat Semua" karena entri aktif langsung
    mengisi grid. */
-.kegiatan-jadwal { left: 12%; right: 12%; bottom: 10%; height: 17%; min-height: 0; display: block; background: rgba(2, 39, 92, .86); }
+.kegiatan-jadwal { min-height: 0; display: block; background: rgba(2, 39, 92, .86); }
 .kegiatan-jadwal .jadwal-strip-list { height: 100%; }
-.kegiatan-jadwal .jadwal-strip-list { background: rgba(2, 39, 92, .86); }
 .kegiatan-jadwal .jadwal-strip-list li { padding-top: clamp(7px, .9cqh, 12px); padding-bottom: clamp(7px, .9cqh, 12px); }
 .kegiatan-jadwal .jadwal-strip-kosong { color: #e7f1ff; }
 .kegiatan-daftar {

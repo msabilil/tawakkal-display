@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20260912-ustaz-hitam">
+<link rel="stylesheet" href="css/style.css?v=20260924-jam-fokus-terpadu">
 <link rel="stylesheet" href="css/versi-baru.css">
 <link rel="stylesheet" href="css/versi-biru.css">
 </head>
@@ -229,15 +229,12 @@
         <img class="fokus-qr-img" id="qr-gambar" src="img/qr-sample.svg" alt="QR Donasi">
         <p class="fokus-qr-teks" id="qr-teks"></p>
       </section>
-      <section class="jadwal-strip qr-jadwal" aria-labelledby="qr-jadwal-judul">
-        <div class="jadwal-strip-info">
-          <svg class="jadwal-strip-info-ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v4M17 2v4M3.5 9.5h17M5.5 4.5h13a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2Z"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>
-          <div>
-            <p class="jadwal-strip-judul" id="qr-jadwal-judul">Jadwal Salat Hari Ini</p>
-          </div>
-        </div>
-        <ul class="jadwal-strip-list qr-jadwal-list" id="qr-jadwal-list"></ul>
-      </section>
+      <div class="jadwal-dengan-jam qr-jadwal-bawah">
+        <time class="fokus-jam" aria-label="Jam WIB">--:--:--</time>
+        <section class="jadwal-strip qr-jadwal" aria-label="Jadwal salat hari ini">
+          <ul class="jadwal-strip-list qr-jadwal-list" id="qr-jadwal-list"></ul>
+        </section>
+      </div>
     </div>
   </div>
 
@@ -247,9 +244,12 @@
         <h2 id="kegiatan-judul">Jadwal Kegiatan</h2>
         <ul class="fokus-list" id="fokus-list"></ul>
       </section>
-      <section class="jadwal-strip kegiatan-jadwal" aria-label="Jadwal salat hari ini">
-        <ul class="jadwal-strip-list kegiatan-jadwal-list" id="kegiatan-jadwal-list"></ul>
-      </section>
+      <div class="jadwal-dengan-jam kegiatan-jadwal-bawah">
+        <time class="fokus-jam" aria-label="Jam WIB">--:--:--</time>
+        <section class="jadwal-strip kegiatan-jadwal" aria-label="Jadwal salat hari ini">
+          <ul class="jadwal-strip-list kegiatan-jadwal-list" id="kegiatan-jadwal-list"></ul>
+        </section>
+      </div>
     </div>
   </div>
 

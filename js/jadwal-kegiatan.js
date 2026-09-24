@@ -4,6 +4,7 @@ import { tampilkan } from "./navigasi.js";
 import { readCache } from "./api.js";
 import { jadwalTerkoreksi, ringkasJadwalSholat } from "./jadwal-terkoreksi.js";
 import { buatIkonJadwal } from "./ikon-jadwal.js";
+import { mulaiJamFokus } from "./jam-fokus.js";
 
 const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
 
@@ -59,9 +60,14 @@ export function start(opsi) {
   const list = document.getElementById("fokus-list");
   list.innerHTML = entri.length ? entri.map(baris).join("") : `<p class="fokus-kosong">Belum ada jadwal kegiatan.</p>`;
   renderJadwalSalat();
+  const stopJam = mulaiJamFokus();
 
   if (!opsi.preview) {
     const id = setTimeout(() => lanjutRotasi(new Date()), loadRotasi().jadwalPengajianDetik * 1000);
-    return () => clearTimeout(id);
+    return () => {
+      clearTimeout(id);
+      stopJam();
+    };
   }
+  return stopJam;
 }
