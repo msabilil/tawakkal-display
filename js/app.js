@@ -65,7 +65,7 @@ import { loadTampilan } from "./tampilan.js";
 import { ICONS } from "./icons.js";
 import { initMurotal, tickMurotal, stopMurotal } from "./murotal.js";
 import { tickHalamanSholat, mulaiSesiSholat } from "./rotasi.js";
-import { loadJumatSettings, loadJumatSlides } from "./jumat-mode.js";
+import { loadJumatSettings } from "./jumat-mode.js";
 import { tampilkan, viewAktif } from "./navigasi.js";
 import { bolehPutarNadaPadaTransisi, tentukanAlur } from "./alur-ibadah.js";
 import { loadJadwalPengajian } from "./jadwal-pengajian.js";
@@ -282,7 +282,7 @@ function tick() {
     iqomah: iqSettings,
     hening: loadHening(),
     adzanMenit,
-    jumat: { ...loadJumatSettings(), adaSlide: loadJumatSlides().length > 0 },
+    jumat: loadJumatSettings(),
     tarawih: tw ? { view: "hening", state: { startTime: tw.startTime, endTime: tw.endTime, putarNada: true } } : null,
   });
   const putarNada = bolehPutarNadaPadaTransisi(alurAwalSudahDinilai);

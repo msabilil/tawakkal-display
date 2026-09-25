@@ -24,7 +24,7 @@ const hening = { subuh: { menit: 10, aktif: true }, dzuhur: { menit: 10, aktif: 
 
 const biasa = alur.tentukanAlur?.({
   now: new Date(2026, 8, 3, 11, 55), jadwal, iqomah, hening,
-  adzanMenit: 5, jumat: { adaSlide: false }, tarawih: null,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
 });
 eq("hari biasa saat adzan memutuskan layar iqomah", biasa && biasa.view, "iqomah");
 eq("hari biasa menyimpan fase adzan", biasa && biasa.state && biasa.state.fase, "adzan");
@@ -34,7 +34,7 @@ eq("hari biasa membawa tenggat iqomah", biasa && biasa.state && biasa.state.iqom
 // memajukan akhir Adzan maupun awal Iqomah yang sudah dikonfigurasi.
 const sebelumAdzan = alur.tentukanAlur?.({
   now: new Date(2026, 8, 3, 11, 51, 50), jadwal, iqomah, hening,
-  adzanMenit: 5, jumat: { adaSlide: false }, tarawih: null,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
 });
 eq("10 detik sebelum jadwal memutuskan layar adzan", sebelumAdzan && sebelumAdzan.view, "iqomah");
 eq("10 detik sebelum jadwal tetap fase adzan", sebelumAdzan && sebelumAdzan.state && sebelumAdzan.state.fase, "adzan");
@@ -43,27 +43,45 @@ eq("adzan awal tidak memajukan tenggat iqomah", sebelumAdzan && sebelumAdzan.sta
 
 const heningBiasa = alur.tentukanAlur?.({
   now: new Date(2026, 8, 3, 12, 10), jadwal, iqomah, hening,
-  adzanMenit: 5, jumat: { adaSlide: false }, tarawih: null,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
 });
 eq("hari biasa setelah iqomah memutuskan layar hening", heningBiasa && heningBiasa.view, "hening");
 
+const jumatTanpaSlide = (jam, sholatModeAktif = true) => alur.tentukanAlur?.({
+  now: new Date(`2026-09-04T${jam}:00.000Z`), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif }, tarawih: null,
+});
+eq("slide kosong tetap menampilkan adzan Jumat", jumatTanpaSlide("04:52")?.state?.key, "jumat");
+eq("slide kosong masuk layar khutbah setelah adzan", jumatTanpaSlide("04:57")?.view, "jumat");
+eq("slide kosong masuk Sholat Mode setelah khutbah", jumatTanpaSlide("05:17")?.view, "hening");
+eq("slide kosong selesai setelah Sholat Mode", jumatTanpaSlide("05:27"), null);
+eq("Sholat Mode nonaktif selesai setelah khutbah", jumatTanpaSlide("05:17", false), null);
+
 const jumatSlide = alur.tentukanAlur?.({
   now: new Date(2026, 8, 4, 12, 0), jadwal, iqomah, hening,
-  adzanMenit: 5, jumat: { adaSlide: true, durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
 });
 eq("Jumat setelah adzan memutuskan layar slide", jumatSlide && jumatSlide.view, "jumat");
 eq("slide Jumat tidak memutar nada Sholat Mode", jumatSlide && jumatSlide.state && jumatSlide.state.putarNada, false);
 
 const jumatSebelumAdzan = alur.tentukanAlur?.({
   now: new Date(2026, 8, 4, 11, 51, 50), jadwal, iqomah, hening,
-  adzanMenit: 5, jumat: { adaSlide: true, durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
 });
 eq("Jumat 10 detik sebelum jadwal memutuskan layar adzan", jumatSebelumAdzan && jumatSebelumAdzan.view, "iqomah");
 eq("Jumat 10 detik sebelum jadwal tetap fase adzan", jumatSebelumAdzan && jumatSebelumAdzan.state && jumatSebelumAdzan.state.fase, "adzan");
 
+// Waktu absolut ini adalah Jumat 11:52 WIB; di Los Angeles masih Kamis.
+const jumatZonaPerangkatBerbeda = alur.tentukanAlur?.({
+  now: new Date("2026-09-04T04:52:00.000Z"), jadwal, iqomah, hening,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
+});
+eq("Jumat berdasarkan WIB tetap masuk alur adzan khusus", jumatZonaPerangkatBerbeda && jumatZonaPerangkatBerbeda.view, "iqomah");
+eq("Jumat berdasarkan WIB tidak menjalankan iqomah Dzuhur biasa", jumatZonaPerangkatBerbeda && jumatZonaPerangkatBerbeda.state && jumatZonaPerangkatBerbeda.state.key, "jumat");
+
 const jumatHening = alur.tentukanAlur?.({
   now: new Date(2026, 8, 4, 12, 20), jadwal, iqomah, hening,
-  adzanMenit: 5, jumat: { adaSlide: true, durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
+  adzanMenit: 5, jumat: { durasiMenit: 20, sholatModeAktif: true }, tarawih: null,
 });
 eq("Jumat setelah slide memutuskan layar hening", jumatHening && jumatHening.view, "hening");
 eq("hening Jumat tetap tanpa nada kedua", jumatHening && jumatHening.state && jumatHening.state.putarNada, false);

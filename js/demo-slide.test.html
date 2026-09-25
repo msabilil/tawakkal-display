@@ -26,13 +26,13 @@ localStorage.setItem("jadwalCache", JSON.stringify({ jadwal: {
 await saveKoreksiWaktu({ dzuhur: -10 }, tanpaCloud);
 eq("preview demo memilih jadwal terkoreksi", sholatBerikutnya(new Date(2026, 8, 3, 11, 55, 0)), "ashar");
 
-// Semua fitur opsional kosong -> cuma sisa Jadwal Sholat/Adzan/Iqomah.
+// Semua fitur opsional kosong -> Jumat tetap punya layar khutbah bawaan.
 clearQr();
 saveJadwalPengajian([]);
 saveJumatSlides([]);
 localStorage.removeItem("jadwalCache");
 await saveKoreksiWaktu({}, tanpaCloud);
-eq("semua nonaktif -> cuma 4 slide wajib", label(slideAktif(new Date())), ["Jadwal Sholat", "Adzan", "Iqomah", "Hening"]);
+eq("slide Jumat kosong -> demo tetap memuat layar khutbah", label(slideAktif(new Date())), ["Jadwal Sholat", "Adzan", "Iqomah", "Hening", "Jum'at"]);
 
 // QR diisi -> slide QR ikut muncul.
 saveQr({ dataUrl: "data:image/png;base64,AAAA" });
@@ -43,7 +43,7 @@ clearQr();
 saveJumatSlides([{ id: "1", tipe: "gambar", file: "jumat-1.jpg", durasiDetik: 8 }]);
 eq("Jum'at ada slide -> slide Jum'at ikut", label(slideAktif(new Date())).includes("Jum'at"), true);
 saveJumatSlides([]);
-eq("Jum'at kosong lagi -> slide Jum'at hilang", label(slideAktif(new Date())).includes("Jum'at"), false);
+eq("Jum'at kosong lagi -> layar khutbah bawaan tampil", label(slideAktif(new Date())).includes("Jum'at"), true);
 
 out.unshift(`${pass} PASS, ${fail} FAIL\n`);
 document.getElementById("out").textContent = out.join("\n");

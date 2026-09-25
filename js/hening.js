@@ -41,7 +41,9 @@ function tampilkanHimbauan(state) {
 
 // Dipanggil router (navigasi.js) tiap masuk view "hening".
 export function start(opsi) {
-  const state = bacaState();
+  const state = opsi.preview && opsi.startTime
+    ? { startTime: new Date(opsi.startTime) }
+    : bacaState();
   const stopHimbauan = tampilkanHimbauan(state);
   if (!opsi.preview && state && !state.nadaDimainkan) {
     localStorage.setItem(KEY, JSON.stringify({

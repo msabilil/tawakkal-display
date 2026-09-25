@@ -58,8 +58,8 @@ export const QORI = {
 export const DEFAULT_ADZAN = { menit: 5 };
 export const ADZAN_LEBIH_AWAL_DETIK = 10;
 
-// Durasi slide Jum'at setelah layar Adzan Dzuhur. Cuma aktif kalau ada
-// minimal 1 slide tersimpan (lihat jumat-mode.js jumatState).
+// Durasi fase khutbah Jum'at setelah layar Adzan Dzuhur, termasuk saat
+// slide kosong dan layar pesan bawaan ditampilkan.
 export const DEFAULT_JUMAT = { durasiMenit: 60, sholatModeAktif: true };
 
 // Durasi bunyi untuk notifikasi ketika fase Iqomah dan Sholat Mode dimulai.

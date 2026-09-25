@@ -26,7 +26,9 @@ saveHening({
 });
 
 localStorage.removeItem("jumatSlides");
-eq("kosong slide -> null walau Jumat & jam pas", jumatState(new Date(2026,8,4,11,55,0), jadwal), null);
+eq("slide kosong tetap masuk fase adzan Jumat", jumatState(new Date(2026,8,4,11,55,0), jadwal)?.fase, "adzan");
+eq("slide kosong tetap masuk fase khutbah", jumatState(new Date(2026,8,4,11,57,0), jadwal)?.fase, "slide");
+eq("slide kosong tetap masuk Sholat Mode", jumatState(new Date(2026,8,4,12,57,0), jadwal)?.fase, "hening");
 
 saveJumatSlides([slide]);
 eq("Jumat, 3 menit setelah dzuhur, ada slide -> aktif", jumatState(new Date(2026,8,4,11,55,0), jadwal) !== null, true);

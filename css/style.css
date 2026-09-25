@@ -3001,7 +3001,13 @@ body.admin .stepper-btn {
 @media (prefers-reduced-motion: reduce) {
   .jumat-media img, .jumat-media video { transition-duration: 1ms; }
 }
-.jumat-kosong { position: relative; color: #fff; opacity: 0.7; font-size: clamp(16px, 1.8cqw, 24px); }
+.jumat-kosong { position: fixed; inset: 0; color: #fff; background: #101214; text-align: center; }
+.jumat-kosong[hidden] { display: none; }
+.jumat-jam { position: absolute; top: 5%; right: 5%; color: #c4c9c7; font-size: clamp(18px, 2cqw, 30px); font-variant-numeric: tabular-nums; }
+.jumat-pesan { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8%; }
+.jumat-judul { color: #c4c9c7; font-size: clamp(18px, 2cqw, 30px); letter-spacing: 0.18em; }
+.jumat-pesan h1 { max-width: 90%; margin: 1em 0 0; font-size: clamp(32px, 5cqw, 76px); line-height: 1.2; font-weight: 600; }
+.jumat-anjuran { margin-top: 1.5em; color: #c4c9c7; font-size: clamp(20px, 2.5cqw, 38px); }
 
 /* Overlay unlock audio (hanya muncul kalau autoplay diblok) */
 .unlock-audio {

@@ -1,5 +1,5 @@
 import { ADZAN_LEBIH_AWAL_DETIK, SHOLAT } from "./config.js";
-import { parseHM } from "./waktu.js";
+import { dayWIB, parseHM } from "./waktu.js";
 
 // Nada hanya boleh dipicu oleh perpindahan fase yang dilihat aplikasi setelah
 // sinkronisasi awal. Saat display baru dibuka di tengah fase, layarnya tetap
@@ -19,7 +19,7 @@ export function himbauanSholatModeMasihTampil(mulai, sekarang) {
 
 function waktuIqomah(now, jadwal, iqomah, adzanMenit) {
   for (const { key, label } of SHOLAT) {
-    if (now.getDay() === 5 && key === "dzuhur") continue;
+    if (dayWIB(now) === 5 && key === "dzuhur") continue;
     const pengaturan = iqomah[key] || {};
     const menitIqomah = pengaturan.aktif && pengaturan.menit > 0 ? pengaturan.menit : 0;
     if (adzanMenit + menitIqomah <= 0) continue;
@@ -46,7 +46,7 @@ function waktuIqomah(now, jadwal, iqomah, adzanMenit) {
 
 function waktuHening(now, jadwal, iqomah, hening, adzanMenit) {
   for (const { key } of SHOLAT) {
-    if (now.getDay() === 5 && key === "dzuhur") continue;
+    if (dayWIB(now) === 5 && key === "dzuhur") continue;
     const pengaturan = hening[key] || {};
     if (!pengaturan.aktif || !(pengaturan.menit > 0)) continue;
     const iqomahSaatIni = iqomah[key] || {};
@@ -62,7 +62,7 @@ function waktuHening(now, jadwal, iqomah, hening, adzanMenit) {
 }
 
 function alurJumat(now, jadwal, hening, adzanMenit, jumat) {
-  if (now.getDay() !== 5 || !jumat?.adaSlide) return null;
+  if (dayWIB(now) !== 5) return null;
   const mulai = parseHM(jadwal.dzuhur, now);
   const adzanMulai = new Date(mulai.getTime() - ADZAN_LEBIH_AWAL_DETIK * 1000);
   const adzanSelesai = new Date(mulai.getTime() + adzanMenit * 60000);

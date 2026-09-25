@@ -2,10 +2,12 @@ import { loadJumatSlides, loadJumatSettings } from "./jumat-mode.js";
 import { tampilkan } from "./navigasi.js";
 import { loadHening } from "./settings.js";
 import { buatPratinjauJumat } from "./alur-ibadah.js";
+import { formatJamWIB } from "./waktu.js";
 
 const KEY = "jumatAktif";
 const elMedia = document.getElementById("jumat-media");
 const elKosong = document.getElementById("jumat-kosong");
+const elJam = document.getElementById("jumat-jam");
 
 let previewAktif = false;
 let timerId = null;
@@ -92,16 +94,31 @@ export function start(opsi) {
   previewAktif = !!opsi.preview;
   elMedia.innerHTML = ""; // buang sisa slide dari sesi jum'at sebelumnya
   elKosong.hidden = true;
-  const slides = loadJumatSlides();
-  if (!slides.length) {
-    elKosong.hidden = false;
-    return;
-  }
   const state = previewAktif ? statePreview() : bacaState();
   if (!state || (!previewAktif && !bacaEndTime())) {
     tampilkan("sholat");
     return;
   }
+  // Pada demo, pemantau jadwal app.js tidak berjalan; pratinjau memiliki
+  // tenggat sendiri, sedangkan akhir demo tetap diatur oleh halaman induk.
+  const previewTimer = previewAktif && state.sholatModeAktif
+    && new Date(state.endTime) > new Date(state.slideEndTime)
+    ? setTimeout(() => tampilkan("hening", { preview: true, startTime: state.slideEndTime }),
+      Math.max(0, new Date(state.slideEndTime).getTime() - Date.now()))
+    : null;
+  const stop = () => {
+    clearTimeout(timerId);
+    clearInterval(timerId);
+    clearTimeout(previewTimer);
+  };
+  const slides = loadJumatSlides();
+  if (!slides.length) {
+    elKosong.hidden = false;
+    const perbaruiJam = () => { elJam.textContent = `${formatJamWIB(new Date()).slice(0, 5)} WIB`; };
+    perbaruiJam();
+    timerId = setInterval(perbaruiJam, 1000);
+    return stop;
+  }
   tampilkanSlide(slides, 0, state);
-  return () => clearTimeout(timerId);
+  return stop;
 }

@@ -705,7 +705,7 @@
       <!-- ================= Jum'at ================= -->
       <section class="admin-kotak" data-panel="jumat" hidden>
         <h1>Jum'at</h1>
-        <p class="admin-ket">Alurnya pada Jumat: layar Adzan Dzuhur, nada dering, slide khutbah, lalu Sholat Mode. Cuma aktif kalau ada minimal 1 slide.</p>
+        <p class="admin-ket">Alurnya pada Jumat: layar Adzan Dzuhur, nada dering, slide atau pesan khutbah bawaan, lalu Sholat Mode jika diaktifkan. Jika slide kosong, pesan khutbah bawaan tetap tampil.</p>
 
         <div class="admin-subsection admin-kolom-sempit">
           <h2 class="admin-subpanel-judul">Durasi Total</h2>
@@ -716,7 +716,7 @@
               </span>
               <div class="baris-kaya-teks">
                 <label class="label-sholat" for="jumat-menit">Tampil selama</label>
-                <p class="hint-baris">Lama slide khutbah tampil setelah layar Adzan Dzuhur selesai.</p>
+                <p class="hint-baris">Lama slide atau pesan khutbah bawaan tampil setelah layar Adzan Dzuhur selesai.</p>
               </div>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-target="jumat-menit" data-arah="-1" aria-label="Kurangi durasi Jum'at">&minus;</button>
@@ -730,10 +730,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg>
               </span>
               <div class="baris-kaya-teks">
-                <label class="label-sholat" for="jumat-sholat-mode-aktif">Sholat Mode setelah slide</label>
-                <p class="hint-baris">Jika aktif, layar langsung masuk Sholat Mode setelah durasi slide Jumat habis. Durasi layar hitam mengikuti pengaturan Dzuhur di halaman Sholat Mode.</p>
+                <label class="label-sholat" for="jumat-sholat-mode-aktif">Sholat Mode setelah khutbah</label>
+                <p class="hint-baris">Jika aktif, layar langsung masuk Sholat Mode setelah durasi khutbah habis. Durasi layar hitam mengikuti pengaturan Dzuhur di halaman Sholat Mode.</p>
               </div>
-              <label class="aktif-cek"><input type="checkbox" id="jumat-sholat-mode-aktif" aria-label="Aktifkan Sholat Mode setelah slide Jumat"></label>
+              <label class="aktif-cek"><input type="checkbox" id="jumat-sholat-mode-aktif" aria-label="Aktifkan Sholat Mode setelah khutbah Jumat"></label>
             </div>
             <p id="status-jumat" class="status" role="status" aria-live="polite" hidden>Tersimpan.</p>
           </form>

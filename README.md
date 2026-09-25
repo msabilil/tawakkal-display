@@ -8,7 +8,7 @@ Aplikasi web statis untuk layar monitor di masjid At-Tawakkal 2. Menampilkan jam
 
 - **sholat** - view default, jalan terus selama tidak ada sholat yang masuk waktunya.
 - **iqomah** - otomatis tampil 10 detik sebelum waktu sholat dan menyalakan nada Adzan. Tepat saat waktu sholat masuk, hitung mundur fase Adzan dimulai dengan efek berkedip; setelahnya fase Iqomah (hitung mundur), lalu kembali sendiri ke view sholat.
-- **jumat** - otomatis tampil di jam Dzuhur hari Jumat (kalau ada slide diatur), gambar/video bergilir, lalu balik sendiri ke view sholat.
+- **jumat** - otomatis tampil setelah Adzan Dzuhur hari Jumat; slide gambar/video bergilir atau pesan khutbah bawaan jika slide kosong, lalu kembali ke jadwal sesuai pengaturan Sholat Mode.
 - **qr**, **kegiatan** - layar sekunder yang gantian otomatis di antara jadwal sholat.
 
 `admin.html` - pengaturan semua view di atas (durasi, latar belakang, koreksi waktu, dll). `demo.html` - preview semua view berurutan lewat iframe, dipakai buat nunjukin ke pengurus tanpa buka admin.
@@ -85,10 +85,12 @@ dikonfigurasi (`js/supabase-config.js` terisi) sebelum bisa upload apa pun.
 ## Catatan
 
 - Jadwal memakai waktu **Kota Bandung** (id 1219, API MyQuran). Selisih antar kecamatan <1 menit, diabaikan.
-- **Hari Jumat:** mode iqomah normal untuk Dzuhur dilewati, gantinya view jumat yang tampil (lihat "Latar belakang per layar & slide Jum'at") - tapi cuma kalau ada minimal 1 slide diatur di admin, kalau kosong ya dilewati diam-diam seperti sebelumnya.
+- **Hari Jumat:** setelah Adzan Dzuhur, layar menampilkan slide atau pesan khutbah bawaan selama durasi Jumat. Mode iqomah Dzuhur biasa dilewati; Sholat Mode setelah khutbah mengikuti pengaturan Jumat.
 - Jika internet mati, layar tetap jalan memakai jadwal cache terakhir dan menampilkan indikator offline.
 - Ikon waktu sholat dari [Tabler Icons](https://tabler.io/icons) (lisensi MIT), disimpan di `js/icons.js`.
 
 ## Menjalankan test logika
+
+Regresi Jumat dapat diperiksa tanpa browser dengan `node --experimental-vm-modules js/jumat-regresi.test.mjs`. Pemeriksaan mencakup tiga zona waktu, batas fase, koreksi Dzuhur, serta pratinjau dengan dan tanpa slide. DOM dan penyimpanan pada tes ini terisolasi; tampilan visual tetap perlu diperiksa di browser.
 
 Fungsi murni (hitung sholat berikutnya, state iqomah, dan koreksi jadwal) diuji lewat `js/app.test.html`, `js/koreksi-waktu.test.html`, dan `js/jadwal-terkoreksi.test.html` - buka file itu di Chrome, hasil PASS/FAIL tampil di layar dan console. Test serupa juga ada untuk fitur lain: `js/media-db.test.html`, `js/jadwal-pengajian.test.html`, `js/rotasi.test.html`, `js/murotal.test.html`, `js/jumat-mode.test.html`, `js/demo-slide.test.html`, `js/acara-mode.test.html` - dibuka dengan cara yang sama (lewat server lokal, sama seperti `app.test.html`).

@@ -1,5 +1,5 @@
-// Data & state mode Jum'at (layar khusus pas jam Dzuhur hari Jumat, gantiin
-// skip-diam-diam yang lama). File slide (gambar/video) diupload ke Supabase
+// Data & state mode Jum'at (layar khusus pas jam Dzuhur hari Jumat).
+// File slide (gambar/video) diupload ke Supabase
 // Storage dari admin.js, di sini cuma urus metadata (localStorage/cloud) &
 // logika kapan mode ini aktif.
 import { DEFAULT_JUMAT } from "./config.js";
@@ -36,8 +36,8 @@ export function saveJumatSlides(slides) {
   return simpanPengaturan(KEY_SLIDES, slides);
 }
 
-// Alur Jumat: Adzan Dzuhur -> slide khutbah -> (opsional) Sholat Mode.
-// Durasi slide dihitung setelah Adzan selesai; kalau Sholat Mode aktif,
+// Alur Jumat: Adzan Dzuhur -> slide/pesan khutbah -> (opsional) Sholat Mode.
+// Durasi khutbah dihitung setelah Adzan selesai; kalau Sholat Mode aktif,
 // durasi layar hitam mengikuti durasi Dzuhur di pengaturan Sholat Mode.
 export function jumatState(now, jadwal) {
   const settings = loadJumatSettings();
@@ -47,7 +47,7 @@ export function jumatState(now, jadwal) {
     iqomah: {},
     hening: loadHening(),
     adzanMenit: loadAdzan().menit,
-    jumat: { ...settings, adaSlide: loadJumatSlides().length > 0 },
+    jumat: settings,
     tarawih: null,
   });
   if (!keputusan) return null;
