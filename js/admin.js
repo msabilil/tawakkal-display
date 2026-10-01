@@ -933,16 +933,17 @@ function renderQr() {
 }
 
 async function simpanQr(e) {
-  e.preventDefault();
+  e?.preventDefault();
   const file = $("qr-file").files[0];
   const judul = $("qr-judul").value.trim();
   const teks = $("qr-teks").value.trim();
   const simpanObj = async (obj) => {
     const hasil = await saveQr(obj);
-    if (!hasil.lokal && !hasil.cloud?.ok) { alert("Gambar terlalu besar untuk disimpan. Pakai gambar QR yang lebih kecil."); return; }
+    if (!hasil.lokal && !hasil.cloud?.ok) { alert("Gambar terlalu besar untuk disimpan. Pakai gambar QR yang lebih kecil."); return false; }
     $("qr-preview").src = obj.urlCloud || obj.dataUrl;
     $("qr-preview").hidden = false;
     tampilkanHasilSimpan("status-qr", hasil);
+    return true;
   };
   if (file) {
     if (cloudAktif()) {
@@ -955,20 +956,35 @@ async function simpanQr(e) {
         buatMetadata: (urlCloud) => ({ urlCloud, judul, teks }),
         simpanMetadata: saveQr,
       });
-      if (!hasil.ok) { alert("Gagal menyimpan QR dan metadata."); return; }
+      if (!hasil.ok) { alert("Gagal menyimpan QR dan metadata."); return false; }
       $("qr-preview").src = loadQr()?.urlCloud || "";
       $("qr-preview").hidden = false;
       tampilkanStatus("status-qr", hasil.pembersihanTertunda ? "QR diperbarui. File lama akan dibersihkan otomatis." : "Tersimpan.", !!hasil.pembersihanTertunda, !!hasil.pembersihanTertunda);
-      return;
+      $("qr-file").value = "";
+      $("qr-file").dispatchEvent(new Event("change"));
+      return true;
     }
-    const reader = new FileReader();
-    reader.onerror = () => alert("Gagal membaca file gambar.");
-    reader.onload = () => simpanObj({ dataUrl: reader.result, judul, teks });
-    reader.readAsDataURL(file);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+      const tersimpan = await simpanObj({ dataUrl, judul, teks });
+      if (tersimpan) {
+        $("qr-file").value = "";
+        $("qr-file").dispatchEvent(new Event("change"));
+      }
+      return tersimpan;
+    } catch {
+      alert("Gagal membaca file gambar.");
+      return false;
+    }
   } else {
     const q = loadQr();
-    if (!q) { alert("Pilih gambar QR dulu."); return; }
-    await simpanObj({ ...q, judul, teks });
+    if (!q) { alert("Pilih gambar QR dulu."); return false; }
+    return simpanObj({ ...q, judul, teks });
   }
 }
 async function hapusQr() {
@@ -1815,8 +1831,20 @@ async function simpanSection(section) {
   const tombol = $("tombol-simpan-global");
   tombol.disabled = true;
   tampilkanStatus("status-simpan-global", "Menyimpan…", false, true);
-  forms.forEach((f) => f.requestSubmit());
   try {
+    if (section.dataset.panel === "donasi") {
+      const q = loadQr();
+      if (!q && !$("qr-file").files.length) {
+        tampilkanStatus("status-simpan-global", "Pilih gambar QRIS sebelum menyimpan.", true, true);
+        return;
+      }
+      const berubah = $("qr-file").files.length || (q && (q.judul || "") !== $("qr-judul").value.trim()) || (q && (q.teks || "") !== $("qr-teks").value.trim());
+      if (berubah && !await simpanQr()) {
+        tampilkanStatus("status-simpan-global", "QR belum tersimpan.", true, true);
+        return;
+      }
+    }
+    forms.forEach((f) => f.requestSubmit());
     const hasil = await tungguSemuaPengaturan();
     const adaTertunda = hasil.some((item) => item && item.tertunda);
     const lokalGagal = hasil.some((item) => item && item.lokal === false);

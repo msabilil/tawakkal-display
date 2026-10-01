@@ -13,9 +13,10 @@
 // di HTML - tombol layar penuh di dalam iframe sengaja dimatikan.
 import { setupFullscreen } from "./fullscreen.js";
 import { slideAktif } from "./demo-slide.js";
+import { mulaiCloudSync } from "./cloud-sync.js";
 setupFullscreen();
 
-const URUTAN = slideAktif();
+let URUTAN = slideAktif();
 
 const $ = (id) => document.getElementById(id);
 const frame = $("demo-frame");
@@ -58,6 +59,14 @@ function togglePlay() {
 $("demo-prev").addEventListener("click", () => geser(-1));
 $("demo-next").addEventListener("click", () => geser(1));
 btnPlay.addEventListener("click", togglePlay);
+
+await mulaiCloudSync(() => {
+  const labelAktif = URUTAN[idx]?.label;
+  URUTAN = slideAktif();
+  idx = Math.max(0, URUTAN.findIndex((slide) => slide.label === labelAktif));
+  render();
+  jadwalkanBerikutnya();
+});
 
 render();
 jadwalkanBerikutnya(); // mulai jalan sendiri (main = true)
